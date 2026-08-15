@@ -64,9 +64,27 @@ export async function deleteEvent(gymId: string, key: string): Promise<void> {
   if (error) throw error;
 }
 
+// New gyms start on the free plan, which caps events at 2 (enforced by the
+// enforce_event_limit DB trigger). Seeding all 6 built-in events at signup
+// would trip that trigger mid-insert and roll back the whole batch -- so
+// free-plan gyms get this starter pair instead of the full set.
+const FREE_PLAN_DEFAULT_EVENT_KEYS = ['30s_basic', '30s_alternate'];
+
 /** Idempotent: inserts the built-in event set for a gym that has none yet. */
 export async function seedDefaultEvents(gymId: string): Promise<void> {
-  const rows = Object.values(DEFAULT_EVENTS).map((meta) => toEventRow(gymId, { ...meta, isCustom: false }));
+  const { data: gymRow, error: gymFetchError } = await supabase
+    .from('gyms')
+    .select('plan')
+    .eq('id', gymId)
+    .single();
+  if (gymFetchError) throw gymFetchError;
+
+  const eventsToSeed =
+    gymRow.plan === 'paid'
+      ? Object.values(DEFAULT_EVENTS)
+      : FREE_PLAN_DEFAULT_EVENT_KEYS.map((key) => DEFAULT_EVENTS[key]);
+
+  const rows = eventsToSeed.map((meta) => toEventRow(gymId, { ...meta, isCustom: false }));
   const { error } = await supabase.from('events').insert(rows);
   if (error) throw error;
 }
