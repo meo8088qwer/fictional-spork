@@ -1298,7 +1298,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
       {/* Add Custom Event Modal */}
       {showAddEventModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs grid place-items-center p-4 overflow-y-auto">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-xl">
             <h3 className="text-base font-extrabold text-slate-900 mb-1">
               🎯 커스텀 줄넘기 종목 추가
@@ -1436,7 +1436,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
       {/* Add Student Modal */}
       {showAddStudentModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs grid place-items-center p-4 overflow-y-auto">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-xl">
             <h3 className="text-base font-extrabold text-slate-900 mb-4">
               신규 수련생 등록

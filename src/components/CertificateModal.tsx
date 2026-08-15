@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta } from '../types';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { Trophy, Printer, Download, X, CheckCircle2, Award, Loader2, Image as ImageIcon, Share2 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
 
 interface CertificateModalProps {
@@ -183,7 +183,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs grid place-items-center p-3 sm:p-6 overflow-y-auto">
       <div className="bg-slate-100 border border-slate-300 rounded-3xl max-w-3xl w-full p-4 sm:p-6 shadow-2xl relative my-auto">
         {/* Header Controls (Hidden during print) */}
         <div className="no-print flex flex-wrap items-center justify-between gap-3 mb-4 bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs">
