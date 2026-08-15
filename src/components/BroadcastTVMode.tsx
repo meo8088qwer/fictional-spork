@@ -4,6 +4,7 @@ import { getLeaderboardData } from '../lib/storage';
 import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight } from 'lucide-react';
 
 interface BroadcastTVModeProps {
+  gymName: string;
   students: Student[];
   records: JumpRecord[];
   events: Record<string, EventMeta>;
@@ -11,6 +12,7 @@ interface BroadcastTVModeProps {
 }
 
 export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
+  gymName,
   students,
   records,
   events,
@@ -25,6 +27,15 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   const eventMeta = events[currentEventKey] || events[eventKeys[0]];
 
   const leaderboardItems = getLeaderboardData(students, records, currentEventKey, 'ALL', '', events);
+
+  // Ticker tape is computed from real records, not placeholder names.
+  const overallChampion = getLeaderboardData(students, records, 'OVERALL', 'ALL', '', events)[0];
+  const perEventTopEntries = eventKeys
+    .map((key) => {
+      const top = getLeaderboardData(students, records, key, 'ALL', '', events)[0];
+      return top ? { key, meta: events[key], student: top.student, count: top.personalBestCount } : null;
+    })
+    .filter((entry): entry is { key: string; meta: EventMeta; student: Student; count: number } => entry !== null);
 
   // Auto slide every 8 seconds
   useEffect(() => {
@@ -58,7 +69,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
           <div>
             <div className="flex items-center gap-3">
               <span className="text-2xl font-black text-slate-900">
-                용인대 파워점핑 TV 랭킹 전광판
+                {gymName} TV 랭킹 전광판
               </span>
               <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 border border-red-200 text-red-600 font-extrabold flex items-center gap-1.5 animate-pulse">
                 <span className="w-2 h-2 rounded-full bg-red-500"></span>
@@ -66,7 +77,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-500 font-semibold mt-0.5">
-              용인대 파워점핑줄넘기 체육관 명예의 전당 • 실시간 기록 보드
+              {gymName} 명예의 전당 • 실시간 기록 보드
             </p>
           </div>
         </div>
@@ -205,22 +216,23 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       {/* Bottom Ticker Tape */}
       <div className="relative z-10 bg-white border border-slate-200/90 py-2.5 px-4 overflow-hidden rounded-2xl shadow-xs">
         <div className="whitespace-nowrap animate-marquee flex items-center gap-8 text-xs text-slate-700 font-bold">
-          <span className="text-orange-600 flex items-center gap-1">
-            <Crown className="w-3.5 h-3.5 text-amber-500" />
-            파워점핑 줄넘기 체육관 최다 기록 챔피언: 강도현 (30초 번갈아 142회)
-          </span>
-          <span>•</span>
-          <span className="text-slate-800">
-            30초 양발모아뛰기 1위: 김지후 (128회)
-          </span>
-          <span>•</span>
-          <span className="text-slate-800">
-            30초 이중뛰기 1위: 박준우 (82회)
-          </span>
-          <span>•</span>
-          <span className="text-slate-800">
-            10초 번갈아뛰기 1위: 이서아 (51회)
-          </span>
+          {overallChampion && (
+            <>
+              <span className="text-orange-600 flex items-center gap-1">
+                <Crown className="w-3.5 h-3.5 text-amber-500" />
+                {gymName} 종합 챔피언: {overallChampion.student.name} ({overallChampion.overallScore}점)
+              </span>
+              <span>•</span>
+            </>
+          )}
+          {perEventTopEntries.map((entry, idx) => (
+            <React.Fragment key={entry.key}>
+              <span className="text-slate-800">
+                {entry.meta.shortTitle} 1위: {entry.student.name} ({entry.count}회)
+              </span>
+              {idx < perEventTopEntries.length - 1 && <span>•</span>}
+            </React.Fragment>
+          ))}
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
 interface CertificateModalProps {
+  gymName: string;
   student: Student;
   records: JumpRecord[];
   events: Record<string, EventMeta>;
@@ -13,6 +14,7 @@ interface CertificateModalProps {
 }
 
 export const CertificateModal: React.FC<CertificateModalProps> = ({
+  gymName,
   student,
   records,
   events,
@@ -341,7 +343,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 <div className="flex items-center justify-between border-b border-slate-200/90 pb-2">
                   <span className="text-slate-700 font-bold w-28 shrink-0 tracking-wider">소 속 :</span>
                   <span className="font-bold text-slate-800 text-sm sm:text-base text-right flex-1">
-                    용인대 파워점핑줄넘기 ({student.grade})
+                    {gymName} ({student.grade})
                   </span>
                 </div>
 
@@ -376,7 +378,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
               {/* Citation Body Text */}
               <div className="my-6 space-y-2 text-slate-800 font-serif leading-relaxed text-sm sm:text-base tracking-normal text-center">
-                <p>위 수련생은 용인대 파워점핑줄넘기 체육관의</p>
+                <p>위 수련생은 {gymName}의</p>
                 <p>스피드 측정 훈련에서 불굴의 의지와 탁월한 집중력으로</p>
                 <p>위와 같이 우수한 줄넘기 최고 기록을 달성하였으므로</p>
                 <p className="pt-1 font-semibold">이 상장을 수여합니다.</p>
@@ -394,7 +396,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                     <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
                   </div>
                   <div className="text-lg sm:text-xl font-black text-[#0f1d3a] font-serif tracking-tight">
-                    용인대 파워점핑줄넘기 관장 (직인)
+                    {gymName} 관장 (직인)
                   </div>
                 </div>
               </div>

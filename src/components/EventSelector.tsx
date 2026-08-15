@@ -3,6 +3,7 @@ import { DisplayTab, TimeFilter, EventMeta } from '../types';
 import { Footprints, Zap, Flame, Clock, Gauge, Trophy, Award, Crown, Sparkles } from 'lucide-react';
 
 interface EventSelectorProps {
+  gymName: string;
   events: Record<string, EventMeta>;
   activeTab: DisplayTab;
   setActiveTab: (tab: DisplayTab) => void;
@@ -11,6 +12,7 @@ interface EventSelectorProps {
 }
 
 export const EventSelector: React.FC<EventSelectorProps> = ({
+  gymName,
   events,
   activeTab,
   setActiveTab,
@@ -48,7 +50,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
         <div>
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-            용인대 파워점핑줄넘기
+            {gymName}
           </h2>
           <p className="text-base font-black text-slate-900 mt-0.5 flex items-center gap-2">
             공식 스피드 측정 종목 ({allEventEntries.length}개) & 종합 랭킹
