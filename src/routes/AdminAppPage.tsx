@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Users, ClipboardList, CalendarDays, Trophy } from 'lucide-react';
 import { Student, DisplayTab, TimeFilter, GradeCategoryFilter, EventKey } from '../types';
 import { getLeaderboardData } from '../lib/scoring';
 import { Header } from '../components/Header';
@@ -78,6 +80,24 @@ export default function AdminAppPage() {
   const leaderboardItems = getLeaderboardData(students, records, activeTab, gradeFilter, searchQuery, events);
   const topThree = leaderboardItems.slice(0, 3);
 
+  const thisMonthPrefix = new Date().toISOString().slice(0, 7); // YYYY-MM
+  const thisMonthCount = records.filter((r) => r.date.startsWith(thisMonthPrefix)).length;
+
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const iso = d.toISOString().slice(0, 10);
+    return { date: iso, count: records.filter((r) => r.date === iso).length };
+  });
+  const last7DaysTotal = last7Days.reduce((sum, d) => sum + d.count, 0);
+
+  const summaryStats = [
+    { icon: Users, label: '전체 수련생', value: `${students.length}명` },
+    { icon: ClipboardList, label: '누적 측정 기록', value: `${records.length}건` },
+    { icon: CalendarDays, label: '이번 달 기록', value: `${thisMonthCount}건` },
+    { icon: Trophy, label: '운영 종목', value: `${Object.keys(events).length}개` },
+  ];
+
   const handleAddSingleRecord = async (entry: {
     studentId: string;
     studentName: string;
@@ -143,6 +163,49 @@ export default function AdminAppPage() {
 
         {activeView === 'LEADERBOARD' && (
           <div>
+            {/* Summary stat tiles */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              {summaryStats.map(({ icon: Icon, label, value }) => (
+                <div
+                  key={label}
+                  className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm flex items-center gap-3"
+                >
+                  <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                    <Icon className="w-5 h-5 text-slate-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-slate-500 font-semibold truncate">{label}</p>
+                    <p className="text-xl font-black text-slate-900">{value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Dark hero trend card */}
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 mb-6 text-white shadow-lg">
+              <p className="text-xs text-slate-400 font-semibold mb-1">최근 7일 측정 활동</p>
+              <p className="text-3xl font-black mb-3">{last7DaysTotal}건</p>
+              <div className="h-20">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={last7Days}>
+                    <defs>
+                      <linearGradient id="heroTrendGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <Area
+                      type="monotone"
+                      dataKey="count"
+                      stroke="#fb923c"
+                      strokeWidth={2}
+                      fill="url(#heroTrendGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
             <EventSelector
               gymName={gymName}
               activeTab={activeTab}
