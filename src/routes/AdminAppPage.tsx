@@ -14,7 +14,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStudents, useEvents, useRecords } from '../hooks/useGymData';
 
 export default function AdminAppPage() {
-  const { gym } = useAuth();
+  const { gym, gymLoading, gymError, refreshGym, signOut } = useAuth();
   const gymName = gym?.name || '내 체육관';
 
   useEffect(() => {
@@ -40,7 +40,34 @@ export default function AdminAppPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [certificateStudent, setCertificateStudent] = useState<Student | null>(null);
 
-  if (!gym || studentsLoading || eventsLoading || recordsLoading) {
+  if (!gym && gymError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8] p-4">
+        <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-8 shadow-lg text-center">
+          <h2 className="text-lg font-black text-slate-900 mb-2">체육관 정보를 불러오지 못했어요</h2>
+          <p className="text-xs text-slate-500 font-medium leading-relaxed mb-6">{gymError}</p>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => refreshGym()}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-extrabold text-sm shadow-md shadow-orange-500/20"
+            >
+              다시 시도
+            </button>
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="w-full py-3 rounded-2xl bg-slate-100 text-slate-700 font-bold text-sm"
+            >
+              로그아웃
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!gym || gymLoading || studentsLoading || eventsLoading || recordsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8]">
         <span className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />

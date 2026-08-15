@@ -36,13 +36,23 @@ export async function getMyGym(): Promise<Gym | null> {
 }
 
 async function createGym(name: string): Promise<Gym> {
+  // owner_id must be set explicitly on insert -- it's NOT NULL and the
+  // gyms_owner_insert RLS policy requires owner_id = auth.uid(), so an
+  // insert without it fails the not-null constraint (or the RLS check)
+  // and throws, leaving the caller stuck with no gym.
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    throw userError ?? new Error('No authenticated user');
+  }
+  const ownerId = userData.user.id;
+
   let lastError: unknown = null;
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const slug = makeSlug(name);
     const { data, error } = await supabase
       .from('gyms')
-      .insert({ name, slug })
+      .insert({ owner_id: ownerId, name, slug })
       .select('*')
       .single();
 

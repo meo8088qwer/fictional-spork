@@ -8,6 +8,8 @@ interface AuthContextValue {
   user: User | null;
   gym: Gym | null;
   loading: boolean;
+  gymLoading: boolean;
+  gymError: string | null;
   signUp: (
     email: string,
     password: string,
@@ -24,6 +26,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [gym, setGym] = useState<Gym | null>(null);
   const [loading, setLoading] = useState(true);
+  const [gymLoading, setGymLoading] = useState(false);
+  const [gymError, setGymError] = useState<string | null>(null);
   // Carries the gym name typed on the signup form across to the first
   // post-auth gym-creation call (session may not exist yet if email
   // confirmation is required, so this can't just be an argument to
@@ -33,17 +37,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadGymForSession = useCallback(async (activeSession: Session | null) => {
     if (!activeSession) {
       setGym(null);
+      setGymError(null);
       return;
     }
     const fallbackName =
       pendingGymNameRef.current || activeSession.user.email?.split('@')[0] || '내 체육관';
     pendingGymNameRef.current = null;
+    setGymLoading(true);
+    setGymError(null);
     try {
       const g = await ensureGymForUser(fallbackName);
       setGym(g);
     } catch (e) {
       console.error('Failed to load/create gym for user', e);
       setGym(null);
+      setGymError(
+        e instanceof Error ? e.message : '체육관 정보를 불러오지 못했습니다. 다시 시도해 주세요.'
+      );
+    } finally {
+      setGymLoading(false);
     }
   }, []);
 
@@ -96,6 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user: session?.user ?? null,
     gym,
     loading,
+    gymLoading,
+    gymError,
     signUp,
     signIn,
     signOut,
