@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Tv, ClipboardEdit, Timer, LogOut, Share2 } from 'lucide-react';
+import { Trophy, Tv, ClipboardEdit, Timer, LogOut, Share2, Pencil } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { GymNameModal } from './GymNameModal';
 
 interface HeaderProps {
   activeView: 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'TIMER';
@@ -12,6 +13,43 @@ interface HeaderProps {
   onOpenSelectedCertificate?: () => void;
 }
 
+const NAV_ITEMS: Array<{
+  view: 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'TIMER';
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  activeClass: string;
+  idleClass: string;
+}> = [
+  {
+    view: 'LEADERBOARD',
+    label: '실시간 랭킹보드',
+    icon: Trophy,
+    activeClass: 'bg-orange-500 text-white shadow-sm shadow-orange-500/30',
+    idleClass: 'text-slate-600 hover:text-slate-900 hover:bg-white/60',
+  },
+  {
+    view: 'ADMIN_BATCH',
+    label: '일괄등록',
+    icon: ClipboardEdit,
+    activeClass: 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30',
+    idleClass: 'text-emerald-700 hover:text-emerald-900 hover:bg-white/60',
+  },
+  {
+    view: 'TV_MODE',
+    label: 'TV 전광판',
+    icon: Tv,
+    activeClass: 'bg-purple-600 text-white shadow-sm shadow-purple-600/30',
+    idleClass: 'text-purple-700 hover:text-purple-900 hover:bg-white/60',
+  },
+  {
+    view: 'TIMER',
+    label: '스피드 타이머',
+    icon: Timer,
+    activeClass: 'bg-cyan-600 text-white shadow-sm shadow-cyan-600/30',
+    idleClass: 'text-cyan-700 hover:text-cyan-900 hover:bg-white/60',
+  },
+];
+
 export const Header: React.FC<HeaderProps> = ({
   activeView,
   setActiveView,
@@ -19,112 +57,54 @@ export const Header: React.FC<HeaderProps> = ({
   studentCount,
   totalRecordCount,
 }) => {
-  const { user, gym, signOut } = useAuth();
+  const { user, gym, signOut, updateGymName } = useAuth();
+  const [showRenameModal, setShowRenameModal] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 text-slate-900 px-4 lg:px-8 py-3.5 transition-all shadow-sm">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Brand & Gym Status */}
-        <div className="flex items-center justify-between md:justify-start gap-4">
-          <button
-            onClick={() => setActiveView('LEADERBOARD')}
-            className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer"
-          >
-            <div className="w-10 h-10 bg-gradient-to-tr from-orange-500 to-amber-500 rounded-xl flex items-center justify-center font-black text-white text-xl shadow-md shadow-orange-500/20 group-hover:scale-105 transition-transform">
-              {gymName.charAt(0)}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-black text-base sm:text-lg tracking-tight text-slate-900">
-                  {gymName}
-                </span>
-                <span className="text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-orange-600 uppercase">
-                  RANKING
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium tracking-wide">
-                {gymName} 스피드 측정 랭킹보드
-              </p>
-            </div>
-          </button>
-
-          {/* Quick Counter & Live Status Pills */}
-          <div className="hidden lg:flex items-center gap-3 border-l border-slate-200 pl-4 text-xs">
-            <div>
-              <p className="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Gym Status</p>
-              <p className="text-xs text-emerald-700 flex items-center gap-1.5 font-bold tracking-wide">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> LIVE SYNC ACTIVE
-              </p>
-            </div>
-            <div className="h-7 w-[1px] bg-slate-200"></div>
-            <div className="flex items-center gap-2.5 font-semibold text-slate-600 text-[11px]">
-              <span>수련생: <strong className="text-orange-600 font-bold">{studentCount}명</strong></span>
-              <span>기록: <strong className="text-amber-600 font-bold">{totalRecordCount}건</strong></span>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Controls & Navigation */}
-        <div className="flex items-center justify-between md:justify-end gap-2 overflow-x-auto pb-1 md:pb-0">
-          <nav className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80">
+      <div className="max-w-7xl mx-auto flex flex-col gap-3">
+        {/* Row 1: Brand + Account */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-1 min-w-0">
             <button
               onClick={() => setActiveView('LEADERBOARD')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                activeView === 'LEADERBOARD'
-                  ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/30'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
+              className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer min-w-0"
             >
-              <Trophy className="w-3.5 h-3.5" />
-              <span>실시간 랭킹보드</span>
+              <div className="w-10 h-10 shrink-0 bg-gradient-to-tr from-orange-500 to-amber-500 rounded-xl flex items-center justify-center font-black text-white text-xl shadow-md shadow-orange-500/20 group-hover:scale-105 transition-transform">
+                {gymName.charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-base sm:text-lg tracking-tight text-slate-900 whitespace-nowrap truncate">
+                    {gymName}
+                  </span>
+                  <span className="text-[10px] font-bold tracking-widest px-2 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-orange-600 uppercase whitespace-nowrap shrink-0">
+                    RANKING
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-medium tracking-wide whitespace-nowrap truncate">
+                  {studentCount}명 수련생 · {totalRecordCount}건 기록
+                </p>
+              </div>
             </button>
-
             <button
-              onClick={() => setActiveView('ADMIN_BATCH')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                activeView === 'ADMIN_BATCH'
-                  ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
-                  : 'text-emerald-700 hover:text-emerald-900 hover:bg-white/60'
-              }`}
+              type="button"
+              onClick={() => setShowRenameModal(true)}
+              title="체육관 이름 변경"
+              className="p-1.5 text-slate-300 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors shrink-0 cursor-pointer"
             >
-              <ClipboardEdit className="w-3.5 h-3.5" />
-              <span>일괄등록</span>
+              <Pencil className="w-3.5 h-3.5" />
             </button>
+          </div>
 
-            <button
-              onClick={() => setActiveView('TV_MODE')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                activeView === 'TV_MODE'
-                  ? 'bg-purple-600 text-white shadow-sm shadow-purple-600/30'
-                  : 'text-purple-700 hover:text-purple-900 hover:bg-white/60'
-              }`}
-            >
-              <Tv className="w-3.5 h-3.5" />
-              <span>TV 전광판</span>
-            </button>
-
-            <button
-              onClick={() => setActiveView('TIMER')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                activeView === 'TIMER'
-                  ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-600/30'
-                  : 'text-cyan-700 hover:text-cyan-900 hover:bg-white/60'
-              }`}
-            >
-              <Timer className="w-3.5 h-3.5" />
-              <span>스피드 타이머</span>
-            </button>
-          </nav>
-
-          {/* Account status */}
-          <div className="flex items-center gap-1.5 pl-1">
+          <div className="flex items-center gap-1.5 shrink-0">
             {gym && (
               <Link
                 to={`/g/${gym.slug}`}
                 target="_blank"
                 rel="noreferrer"
                 title="학부모님 공개 랭킹보드 링크 (로그인 불필요)"
-                className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all border border-slate-200 flex items-center gap-1 cursor-pointer"
+                className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all border border-slate-200 flex items-center gap-1 whitespace-nowrap cursor-pointer"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">공개 링크</span>
@@ -132,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
             )}
             <div
               title={user?.email}
-              className="px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-extrabold border border-amber-300 flex items-center gap-1.5 shadow-2xs max-w-[10rem] truncate"
+              className="hidden md:flex px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-extrabold border border-amber-300 items-center gap-1.5 shadow-2xs max-w-[9rem] truncate whitespace-nowrap"
             >
               <span className="truncate">{user?.email}</span>
             </div>
@@ -140,15 +120,39 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={() => signOut()}
               title="로그아웃"
-              className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all border border-slate-200 flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all border border-slate-200 flex items-center gap-1 whitespace-nowrap cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">로그아웃</span>
             </button>
           </div>
         </div>
+
+        {/* Row 2: Navigation */}
+        <nav className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 overflow-x-auto">
+          {NAV_ITEMS.map(({ view, label, icon: Icon, activeClass, idleClass }) => (
+            <button
+              key={view}
+              onClick={() => setActiveView(view)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                activeView === view ? activeClass : idleClass
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
       </div>
+
+      {gym && (
+        <GymNameModal
+          isOpen={showRenameModal}
+          currentName={gym.name}
+          onSave={updateGymName}
+          onClose={() => setShowRenameModal(false)}
+        />
+      )}
     </header>
   );
 };
-

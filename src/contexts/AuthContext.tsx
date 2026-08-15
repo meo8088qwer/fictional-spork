@@ -1,7 +1,14 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
-import { ensureGymForUser, Gym } from '../data/api/gyms';
+import { ensureGymForUser, updateGymName as apiUpdateGymName, Gym } from '../data/api/gyms';
+
+// Signup asks for the gym name before email confirmation exists -- if
+// confirmation is required, the user leaves the tab (opens their email
+// client) and often confirms in a new tab/window, where an in-memory ref
+// would already be gone. localStorage survives that gap as long as they're
+// on the same browser/device, which covers the common case.
+const PENDING_GYM_NAME_KEY = 'pending_gym_name';
 
 interface AuthContextValue {
   session: Session | null;
@@ -18,6 +25,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshGym: () => Promise<void>;
+  updateGymName: (name: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -28,11 +36,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [gymLoading, setGymLoading] = useState(false);
   const [gymError, setGymError] = useState<string | null>(null);
-  // Carries the gym name typed on the signup form across to the first
-  // post-auth gym-creation call (session may not exist yet if email
-  // confirmation is required, so this can't just be an argument to
-  // loadGymForSession at call time).
-  const pendingGymNameRef = useRef<string | null>(null);
 
   const loadGymForSession = useCallback(async (activeSession: Session | null) => {
     if (!activeSession) {
@@ -41,13 +44,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     const fallbackName =
-      pendingGymNameRef.current || activeSession.user.email?.split('@')[0] || '내 체육관';
-    pendingGymNameRef.current = null;
+      localStorage.getItem(PENDING_GYM_NAME_KEY) ||
+      activeSession.user.email?.split('@')[0] ||
+      '내 체육관';
     setGymLoading(true);
     setGymError(null);
     try {
       const g = await ensureGymForUser(fallbackName);
       setGym(g);
+      localStorage.removeItem(PENDING_GYM_NAME_KEY);
     } catch (e) {
       console.error('Failed to load/create gym for user', e);
       setGym(null);
@@ -82,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loadGymForSession]);
 
   const signUp = useCallback(async (email: string, password: string, gymName: string) => {
-    pendingGymNameRef.current = gymName;
+    localStorage.setItem(PENDING_GYM_NAME_KEY, gymName);
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
     // If email confirmation is required, there's no session yet -- the gym
@@ -103,6 +108,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await loadGymForSession(session);
   }, [session, loadGymForSession]);
 
+  const updateGymName = useCallback(
+    async (name: string) => {
+      if (!gym) throw new Error('체육관 정보가 없습니다.');
+      const updated = await apiUpdateGymName(gym.id, name);
+      setGym(updated);
+    },
+    [gym]
+  );
+
   const value: AuthContextValue = {
     session,
     user: session?.user ?? null,
@@ -114,6 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     refreshGym,
+    updateGymName,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

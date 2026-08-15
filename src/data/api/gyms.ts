@@ -83,3 +83,17 @@ export async function ensureGymForUser(fallbackName: string): Promise<Gym> {
   if (existing) return existing;
   return createGym(fallbackName);
 }
+
+export async function updateGymName(gymId: string, name: string): Promise<Gym> {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('체육관 이름을 입력해 주세요.');
+
+  const { data, error } = await supabase
+    .from('gyms')
+    .update({ name: trimmed })
+    .eq('id', gymId)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return mapGymRow(data);
+}

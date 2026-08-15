@@ -53,7 +53,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
             {gymName}
           </h2>
           <p className="text-base font-black text-slate-900 mt-0.5 flex items-center gap-2">
-            공식 스피드 측정 종목 ({allEventEntries.length}개) & 종합 랭킹
+            종합 랭킹
           </p>
         </div>
 
