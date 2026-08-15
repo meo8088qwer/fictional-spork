@@ -126,15 +126,17 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const [showResetEventsConfirm, setShowResetEventsConfirm] = useState<boolean>(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
-  // Filter students for batch entry
-  const filteredStudents = students.filter((student) => {
-    const matchesGrade = gradeFilter === 'ALL' || student.grade === gradeFilter;
-    const matchesSearch =
-      !searchQuery ||
-      student.name.includes(searchQuery) ||
-      student.studentNo.includes(searchQuery);
-    return matchesGrade && matchesSearch;
-  });
+  // Filter students for batch entry, sorted to match a printed roster order
+  const filteredStudents = students
+    .filter((student) => {
+      const matchesGrade = gradeFilter === 'ALL' || student.grade === gradeFilter;
+      const matchesSearch =
+        !searchQuery ||
+        student.name.includes(searchQuery) ||
+        student.studentNo.includes(searchQuery);
+      return matchesGrade && matchesSearch;
+    })
+    .sort((a, b) => a.studentNo.localeCompare(b.studentNo));
 
   const handleInputChange = (studentId: string, value: string) => {
     setCountsMap((prev) => ({ ...prev, [studentId]: value }));
@@ -249,7 +251,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
       // Auto-create student if not exists
       if (!student) {
-        const nextNo = `2026-${String(students.length + createdStudentNames.length + 1).padStart(3, '0')}`;
+        const nextNo = `${new Date().getFullYear()}-${String(students.length + createdStudentNames.length + 1).padStart(3, '0')}`;
         const avatarColors = [
           'from-orange-500 to-amber-500',
           'from-blue-500 to-cyan-500',
@@ -372,7 +374,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         continue;
       }
 
-      const nextNo = `2026-${String(students.length + addedCount + 1).padStart(3, '0')}`;
+      const nextNo = `${new Date().getFullYear()}-${String(students.length + addedCount + 1).padStart(3, '0')}`;
       const randomColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
 
       try {
@@ -412,7 +414,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       return;
     }
 
-    const nextNo = `2026-${String(students.length + 1).padStart(3, '0')}`;
+    const nextNo = `${new Date().getFullYear()}-${String(students.length + 1).padStart(3, '0')}`;
     const avatarColors = [
       'from-orange-500 to-amber-500',
       'from-blue-500 to-cyan-500',
@@ -656,8 +658,13 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     const pb = getStudentPersonalBest(records, student.id, selectedEventKey);
                     const currentVal = countsMap[student.id] || '';
 
+                    const isDone = currentVal !== '';
+
                     return (
-                      <tr key={student.id} className="hover:bg-slate-50 transition-colors">
+                      <tr
+                        key={student.id}
+                        className={`transition-colors ${isDone ? 'bg-emerald-50/60' : 'hover:bg-slate-50'}`}
+                      >
                         <td className="p-3 text-slate-400 font-mono">{student.studentNo}</td>
                         <td className="p-3 font-extrabold text-slate-900 flex items-center gap-2">
                           <div
@@ -666,6 +673,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                             {student.name.substring(0, 1)}
                           </div>
                           <span>{student.name}</span>
+                          {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                         </td>
                         <td className="p-3 text-slate-500 font-medium">{student.grade}</td>
                         <td className="p-3 text-amber-700 font-bold">
@@ -674,6 +682,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                         <td className="p-3 text-right">
                           <input
                             type="number"
+                            inputMode="numeric"
                             min="0"
                             placeholder="0"
                             value={currentVal}

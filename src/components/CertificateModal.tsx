@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta } from '../types';
 import { getStudentPersonalBest } from '../lib/scoring';
-import { Trophy, Printer, Download, X, CheckCircle2, Award, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Trophy, Printer, Download, X, CheckCircle2, Award, Loader2, Image as ImageIcon, Share2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -25,7 +25,9 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   const [selectedEventKey, setSelectedEventKey] = useState<string>('OVERALL');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState<boolean>(false);
+  const [isSharing, setIsSharing] = useState<boolean>(false);
   const [pdfSuccess, setPdfSuccess] = useState<string>('');
+  const canShareFiles = typeof navigator !== 'undefined' && !!navigator.share && !!navigator.canShare;
 
   // Find overall best record or selected event record
   let bestEventName = '30초 번갈아뛰기';
@@ -144,6 +146,42 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
     window.print();
   };
 
+  // Share the certificate image via the native share sheet (KakaoTalk, SMS,
+  // etc.) so a coach can send it to a parent in one tap instead of
+  // download-then-attach.
+  const handleShare = async () => {
+    if (!certificateRef.current) return;
+    setIsSharing(true);
+    setPdfSuccess('');
+
+    try {
+      const canvas = await html2canvas(certificateRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('이미지 생성에 실패했습니다.');
+
+      const file = new File([blob], `${student.name}_줄넘기_기록인증상장.png`, { type: 'image/png' });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: `${student.name} 기록 인증상장` });
+      } else {
+        alert('이 브라우저는 공유를 지원하지 않아요. "이미지 저장" 버튼으로 저장한 뒤 직접 보내주세요.');
+      }
+    } catch (err) {
+      if ((err as { name?: string })?.name !== 'AbortError') {
+        console.error('Share error:', err);
+        alert('공유 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       <div className="bg-slate-100 border border-slate-300 rounded-3xl max-w-3xl w-full p-4 sm:p-6 shadow-2xl relative my-auto">
@@ -198,6 +236,19 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               )}
               <span>이미지 저장</span>
             </button>
+
+            {/* Share Button (native share sheet, e.g. KakaoTalk/SMS) */}
+            {canShareFiles && (
+              <button
+                type="button"
+                onClick={handleShare}
+                disabled={isSharing}
+                className="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md shadow-sky-600/20 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              >
+                {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                <span>학부모에게 공유</span>
+              </button>
+            )}
 
             {/* Print Button */}
             <button

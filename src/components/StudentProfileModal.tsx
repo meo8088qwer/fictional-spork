@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Student, JumpRecord, AICoachReport, EventKey, EventMeta } from '../types';
 import { getStudentPersonalBest } from '../lib/scoring';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { Trophy, Award, Sparkles, TrendingUp, Calendar, Bot, Printer, X, Trash2 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { supabase } from '../lib/supabaseClient';
@@ -47,6 +47,23 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     date: r.date.substring(5), // MM-DD
     count: r.count,
   }));
+
+  // Monthly best -- e.g. 6월 112개 / 7월 127개 / 8월 142개, with the
+  // headline % change from the first month to the latest.
+  const monthlyBestMap = new Map<string, number>();
+  for (const r of studentEventRecords) {
+    const month = r.date.slice(0, 7); // YYYY-MM
+    monthlyBestMap.set(month, Math.max(monthlyBestMap.get(month) ?? 0, r.count));
+  }
+  const monthlyBest = [...monthlyBestMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, best]) => ({ label: `${Number(month.slice(5, 7))}월`, best }));
+  const firstMonth = monthlyBest[0];
+  const lastMonth = monthlyBest[monthlyBest.length - 1];
+  const growthPercent =
+    monthlyBest.length >= 2 && firstMonth.best > 0
+      ? (((lastMonth.best - firstMonth.best) / firstMonth.best) * 100).toFixed(1)
+      : null;
 
   // Fetch AI Coach Report
   const handleFetchAiReport = async () => {
@@ -219,6 +236,39 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             )}
           </div>
         </div>
+
+        {/* Monthly Growth Summary */}
+        {monthlyBest.length >= 2 && (
+          <div className="mb-6 bg-gradient-to-br from-orange-50 to-amber-50 p-4.5 rounded-2xl border border-orange-200/80">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <TrendingUp className="w-4 h-4 text-orange-500" />
+                {student.name} 학생의 월별 성장
+              </h4>
+              {growthPercent && (
+                <span
+                  className={`text-xs font-black px-2.5 py-1 rounded-full ${
+                    Number(growthPercent) >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                  }`}
+                >
+                  {monthlyBest.length}개월 동안 {Number(growthPercent) >= 0 ? '+' : ''}
+                  {growthPercent}% {Number(growthPercent) >= 0 ? '향상' : '변화'}
+                </span>
+              )}
+            </div>
+            <div className="h-36 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyBest}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#fde8d3" />
+                  <XAxis dataKey="label" stroke="#c2650a" fontSize={11} />
+                  <YAxis stroke="#c2650a" fontSize={10} />
+                  <Tooltip formatter={(v: number) => [`${v}회`, '월간 최고기록']} />
+                  <Bar dataKey="best" fill="#f97316" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
 
         {/* AI Coach Analysis Section */}
         <div className="bg-slate-50/80 p-4.5 rounded-2xl border border-slate-200/80">
