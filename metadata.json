@@ -1,0 +1,6 @@
+{
+  "name": "용인대 파워점핑줄넘기 랭킹보드",
+  "description": "용인대 파워점핑줄넘기 수련생 스피드 측정 랭킹보드, 실시간 전광판 및 기록 관리 시스템",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
