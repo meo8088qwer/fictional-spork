@@ -1,18 +1,6 @@
-import React, { useState } from 'react';
-import { Student, JumpRecord, DisplayTab, TimeFilter, GradeCategoryFilter, EventKey, EventMeta } from '../types';
-import {
-  getLocalStudents,
-  saveLocalStudents,
-  getLocalRecords,
-  saveLocalRecords,
-  getLocalEvents,
-  addCustomEvent,
-  deleteCustomEvent,
-  resetDefaultEvents,
-  getLeaderboardData,
-  batchSaveRecords,
-  resetToDefaultData,
-} from '../lib/storage';
+import React, { useState, useEffect } from 'react';
+import { Student, DisplayTab, TimeFilter, GradeCategoryFilter, EventKey } from '../types';
+import { getLeaderboardData } from '../lib/scoring';
 import { Header } from '../components/Header';
 import { EventSelector } from '../components/EventSelector';
 import { Podium } from '../components/Podium';
@@ -23,19 +11,25 @@ import { SpeedTimer } from '../components/SpeedTimer';
 import { StudentProfileModal } from '../components/StudentProfileModal';
 import { CertificateModal } from '../components/CertificateModal';
 import { useAuth } from '../contexts/AuthContext';
+import { useStudents, useEvents, useRecords } from '../hooks/useGymData';
 
-// NOTE: this page is still localStorage-backed (via lib/storage.ts), same as
-// the original single-gym app. It is only reachable while authenticated
-// (see ProtectedRoute), so the old client-side admin-password gate is gone.
-// The Supabase-backed, gym-scoped data layer replaces lib/storage.ts in the
-// next milestone -- this step is deliberately scoped to auth + routing only.
 export default function AdminAppPage() {
   const { gym } = useAuth();
   const gymName = gym?.name || '내 체육관';
 
-  const [students, setStudents] = useState<Student[]>(() => getLocalStudents());
-  const [records, setRecords] = useState<JumpRecord[]>(() => getLocalRecords());
-  const [events, setEvents] = useState<Record<string, EventMeta>>(() => getLocalEvents());
+  useEffect(() => {
+    document.title = `${gymName} 관리자 | 줄넘기 실시간 랭킹보드`;
+  }, [gymName]);
+
+  const { students, isLoading: studentsLoading, addStudent, deleteStudent } = useStudents();
+  const {
+    events,
+    isLoading: eventsLoading,
+    addCustomEvent,
+    deleteCustomEvent,
+    resetDefaultEvents,
+  } = useEvents();
+  const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord } = useRecords();
 
   const [activeView, setActiveView] = useState<'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'TIMER'>('LEADERBOARD');
   const [activeTab, setActiveTab] = useState<DisplayTab>('30s_alternate');
@@ -46,78 +40,32 @@ export default function AdminAppPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [certificateStudent, setCertificateStudent] = useState<Student | null>(null);
 
-  React.useEffect(() => {
-    saveLocalStudents(students);
-  }, [students]);
-
-  React.useEffect(() => {
-    saveLocalRecords(records);
-  }, [records]);
-
-  const handleAddCustomEvent = (eventMeta: EventMeta) => {
-    const updated = addCustomEvent(eventMeta);
-    setEvents(updated);
-  };
-
-  const handleDeleteCustomEvent = (eventKey: string) => {
-    const updated = deleteCustomEvent(eventKey);
-    setEvents(updated);
-    if (activeTab === eventKey) {
-      const firstRemainingKey = Object.keys(updated)[0] || '30s_alternate';
-      setActiveTab(firstRemainingKey);
-    }
-  };
-
-  const handleResetDefaultEvents = () => {
-    const updated = resetDefaultEvents();
-    setEvents(updated);
-    setActiveTab('30s_alternate');
-  };
+  if (!gym || studentsLoading || eventsLoading || recordsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8]">
+        <span className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const leaderboardItems = getLeaderboardData(students, records, activeTab, gradeFilter, searchQuery, events);
   const topThree = leaderboardItems.slice(0, 3);
 
-  const handleBatchSaveRecords = (
-    entries: Array<{ studentId: string; studentName: string; eventKey: EventKey; count: number; date: string }>
-  ) => {
-    const updated = batchSaveRecords(records, entries);
-    setRecords(updated);
-  };
-
-  const handleAddSingleRecord = (entry: {
+  const handleAddSingleRecord = async (entry: {
     studentId: string;
     studentName: string;
     eventKey: EventKey;
     count: number;
     date: string;
   }) => {
-    handleBatchSaveRecords([entry]);
+    await batchSaveRecords([entry]);
   };
 
-  const handleAddStudent = (newStudentData: Omit<Student, 'id'>) => {
-    const newStudent: Student = {
-      ...newStudentData,
-      id: `s-${Date.now()}`,
-    };
-    setStudents((prev) => [...prev, newStudent]);
-  };
-
-  const handleDeleteStudent = (studentId: string) => {
-    setStudents((prev) => prev.filter((s) => s.id !== studentId));
-    setRecords((prev) => prev.filter((r) => r.studentId !== studentId));
+  const handleDeleteStudent = async (studentId: string) => {
+    await deleteStudent(studentId);
     if (selectedStudent?.id === studentId) {
       setSelectedStudent(null);
     }
-  };
-
-  const handleDeleteRecord = (recordId: string) => {
-    setRecords((prev) => prev.filter((r) => r.id !== recordId));
-  };
-
-  const handleResetData = () => {
-    const { students: defStudents, records: defRecords } = resetToDefaultData();
-    setStudents(defStudents);
-    setRecords(defRecords);
   };
 
   return (
@@ -128,7 +76,6 @@ export default function AdminAppPage() {
         gymName={gymName}
         studentCount={students.length}
         totalRecordCount={records.length}
-        onResetData={handleResetData}
       />
 
       <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6">
@@ -153,15 +100,16 @@ export default function AdminAppPage() {
 
         {activeView === 'ADMIN_BATCH' && (
           <AdminBatchEntry
+            gym={gym}
             students={students}
             records={records}
             events={events}
-            onBatchSaveRecords={handleBatchSaveRecords}
-            onAddStudent={handleAddStudent}
+            onBatchSaveRecords={batchSaveRecords}
+            onAddStudent={addStudent}
             onDeleteStudent={handleDeleteStudent}
-            onAddCustomEvent={handleAddCustomEvent}
-            onDeleteCustomEvent={handleDeleteCustomEvent}
-            onResetDefaultEvents={handleResetDefaultEvents}
+            onAddCustomEvent={addCustomEvent}
+            onDeleteCustomEvent={deleteCustomEvent}
+            onResetDefaultEvents={resetDefaultEvents}
             onClose={() => setActiveView('LEADERBOARD')}
           />
         )}
@@ -188,6 +136,7 @@ export default function AdminAppPage() {
 
             <Leaderboard
               items={leaderboardItems}
+              events={events}
               activeTab={activeTab}
               gradeFilter={gradeFilter}
               setGradeFilter={setGradeFilter}
@@ -210,7 +159,7 @@ export default function AdminAppPage() {
           events={events}
           isAdmin
           onDeleteStudent={handleDeleteStudent}
-          onDeleteRecord={handleDeleteRecord}
+          onDeleteRecord={deleteRecord}
           onOpenCertificate={(st) => {
             setSelectedStudent(null);
             setCertificateStudent(st);

@@ -5,6 +5,8 @@ import { ProtectedRoute } from './routes/ProtectedRoute';
 import SignUpPage from './routes/SignUpPage';
 import LoginPage from './routes/LoginPage';
 import AdminAppPage from './routes/AdminAppPage';
+import PublicBoardPage from './routes/PublicBoardPage';
+import PublicTvPage from './routes/PublicTvPage';
 
 function RootRedirect() {
   const { session, loading } = useAuth();
@@ -18,6 +20,8 @@ export default function App() {
       <Route path="/" element={<RootRedirect />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/g/:slug" element={<PublicBoardPage />} />
+      <Route path="/g/:slug/tv" element={<PublicTvPage />} />
       <Route
         path="/admin/*"
         element={

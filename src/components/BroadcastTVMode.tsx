@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta } from '../types';
-import { getLeaderboardData } from '../lib/storage';
+import { getLeaderboardData } from '../lib/scoring';
 import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight } from 'lucide-react';
 
 interface BroadcastTVModeProps {

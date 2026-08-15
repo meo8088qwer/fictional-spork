@@ -1,12 +1,11 @@
 import * as XLSX from 'xlsx';
 import { EventKey, EventMeta, GradeGroup, Student, JumpRecord } from '../types';
 import { DEFAULT_EVENTS, GRADE_GROUPS } from '../data/constants';
-import { getLocalEvents } from './storage';
 
 // Helper to normalize event title to EventKey dynamically
 export function resolveEventKey(
   inputStr: string,
-  eventsMap: Record<string, EventMeta> = getLocalEvents()
+  eventsMap: Record<string, EventMeta>
 ): EventKey | null {
   if (!inputStr) return null;
   const cleaned = String(inputStr).trim().toLowerCase().replace(/\s+/g, '');
@@ -110,7 +109,7 @@ export interface ExcelImportResult {
 }
 
 // Generate and Download Excel Template File
-export function downloadExcelTemplate(eventsMap: Record<string, EventMeta> = getLocalEvents()) {
+export function downloadExcelTemplate(eventsMap: Record<string, EventMeta>) {
   const wb = XLSX.utils.book_new();
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -163,7 +162,7 @@ export function downloadExcelTemplate(eventsMap: Record<string, EventMeta> = get
 }
 
 // Generate and Download Student Roster Template
-export function downloadStudentRosterTemplate() {
+export function downloadStudentRosterTemplate(gymName: string) {
   const wb = XLSX.utils.book_new();
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -183,7 +182,7 @@ export function downloadStudentRosterTemplate() {
   ws['!cols'] = [{ wch: 16 }, { wch: 16 }, { wch: 12 }];
 
   XLSX.utils.book_append_sheet(wb, ws, '수련생_명단');
-  XLSX.writeFile(wb, `용인대_줄넘기체육관_수련생명단_양식_${todayStr}.xlsx`);
+  XLSX.writeFile(wb, `${gymName}_수련생명단_양식_${todayStr}.xlsx`);
 }
 
 export interface ParsedStudentRow {
@@ -263,7 +262,7 @@ export async function parseStudentRosterExcelFile(file: File): Promise<ParsedStu
 // Parse uploaded Excel File
 export async function parseExcelFile(
   file: File,
-  eventsMap: Record<string, EventMeta> = getLocalEvents()
+  eventsMap: Record<string, EventMeta>
 ): Promise<ExcelParsedRecord[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

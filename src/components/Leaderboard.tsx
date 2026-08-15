@@ -1,21 +1,23 @@
 import React from 'react';
-import { StudentLeaderboardItem, DisplayTab, GradeCategoryFilter } from '../types';
-import { EVENTS, GRADE_CATEGORY_LABELS, getBadgeForCount } from '../data/constants';
+import { StudentLeaderboardItem, DisplayTab, GradeCategoryFilter, EventMeta } from '../types';
+import { GRADE_CATEGORY_LABELS, getBadgeForCount } from '../data/constants';
 import { Search, Filter, Trophy, Sparkles, ArrowRight } from 'lucide-react';
 
 interface LeaderboardProps {
   items: StudentLeaderboardItem[];
+  events: Record<string, EventMeta>;
   activeTab: DisplayTab;
   gradeFilter: GradeCategoryFilter;
   setGradeFilter: (filter: GradeCategoryFilter) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onSelectStudent: (studentId: string) => void;
-  onOpenBatchEntry: () => void;
+  onOpenBatchEntry?: () => void;
 }
 
 export const Leaderboard: React.FC<LeaderboardProps> = ({
   items,
+  events,
   activeTab,
   gradeFilter,
   setGradeFilter,
@@ -24,7 +26,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   onSelectStudent,
   onOpenBatchEntry,
 }) => {
-  const currentEventMeta = activeTab !== 'OVERALL' ? EVENTS[activeTab] : null;
+  const currentEventMeta = activeTab !== 'OVERALL' ? events[activeTab] : null;
   const maxCountInList = items.length > 0 ? items[0].personalBestCount || 1 : 1;
 
   const gradeFilterOptions: GradeCategoryFilter[] = [
@@ -103,13 +105,15 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={onOpenBatchEntry}
-          className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-          <span>기록 일괄등록</span>
-        </button>
+        {onOpenBatchEntry && (
+          <button
+            onClick={onOpenBatchEntry}
+            className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>기록 일괄등록</span>
+          </button>
+        )}
       </div>
 
       {/* Table Header Bar */}
@@ -139,7 +143,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
 
             const badgeTitle =
               activeTab !== 'OVERALL'
-                ? getBadgeForCount(activeTab, item.personalBestCount)
+                ? getBadgeForCount(events[activeTab], item.personalBestCount)
                 : item.rank === 1
                 ? '👑 종합 챔피언'
                 : item.rank <= 3

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Trophy, Tv, ClipboardEdit, Timer, RotateCcw, LogOut } from 'lucide-react';
-import { ConfirmModal } from './ConfirmModal';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Trophy, Tv, ClipboardEdit, Timer, LogOut, Share2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
@@ -9,7 +9,6 @@ interface HeaderProps {
   gymName: string;
   studentCount: number;
   totalRecordCount: number;
-  onResetData: () => void;
   onOpenSelectedCertificate?: () => void;
 }
 
@@ -19,10 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   gymName,
   studentCount,
   totalRecordCount,
-  onResetData,
 }) => {
-  const { user, signOut } = useAuth();
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const { user, gym, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 text-slate-900 px-4 lg:px-8 py-3.5 transition-all shadow-sm">
@@ -121,6 +118,18 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Account status */}
           <div className="flex items-center gap-1.5 pl-1">
+            {gym && (
+              <Link
+                to={`/g/${gym.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                title="학부모님 공개 랭킹보드 링크 (로그인 불필요)"
+                className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all border border-slate-200 flex items-center gap-1 cursor-pointer"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">공개 링크</span>
+              </Link>
+            )}
             <div
               title={user?.email}
               className="px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-extrabold border border-amber-300 flex items-center gap-1.5 shadow-2xs max-w-[10rem] truncate"
@@ -136,28 +145,9 @@ export const Header: React.FC<HeaderProps> = ({
               <LogOut className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">로그아웃</span>
             </button>
-
-            <button
-              type="button"
-              onClick={() => setShowResetConfirm(true)}
-              title="기초 데모 데이터로 초기화"
-              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all border border-slate-200/80 shadow-xs cursor-pointer"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>
-
-      <ConfirmModal
-        isOpen={showResetConfirm}
-        title="샘플 데이터 초기화"
-        message="체육관 수련생 명단 및 측정 기록을 기초 샘플 데이터로 초기화하시겠습니까?"
-        confirmText="초기화 실행"
-        variant="warning"
-        onConfirm={onResetData}
-        onClose={() => setShowResetConfirm(false)}
-      />
     </header>
   );
 };

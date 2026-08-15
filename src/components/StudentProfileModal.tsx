@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Student, JumpRecord, AICoachReport, EventKey, EventMeta } from '../types';
-import { getStudentPersonalBest } from '../lib/storage';
+import { getStudentPersonalBest } from '../lib/scoring';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { Trophy, Award, Sparkles, TrendingUp, Calendar, Bot, Printer, X, Trash2 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
+import { supabase } from '../lib/supabaseClient';
 
 interface StudentProfileModalProps {
   student: Student;
@@ -57,19 +58,16 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
         if (pb) pbs[key] = pb.count;
       });
 
-      const res = await fetch('/api/ai/coach', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('ai-coach', {
+        body: {
           studentName: student.name,
           grade: student.grade,
           gender: student.gender,
           records: pbs,
           overallStats: { totalRecords: records.filter((r) => r.studentId === student.id).length },
-        }),
+        },
       });
-
-      const data = await res.json();
+      if (error) throw error;
       setAiReport(data);
     } catch (e) {
       console.error(e);
@@ -228,7 +226,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <div className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-amber-500" />
               <h4 className="text-xs font-extrabold text-slate-900">
-                AI 점프파이어 코칭 리포트
+                AI 코칭 리포트
               </h4>
             </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta } from '../types';
-import { getStudentPersonalBest } from '../lib/storage';
+import { getStudentPersonalBest } from '../lib/scoring';
 import { Trophy, Printer, Download, X, CheckCircle2, Award, Loader2, Image as ImageIcon } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';

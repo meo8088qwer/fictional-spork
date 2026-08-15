@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabaseClient';
-import { DEFAULT_EVENTS } from '../constants';
+import { seedDefaultEvents } from './events';
 
 export interface Gym {
   id: string;
@@ -33,27 +33,6 @@ export async function getMyGym(): Promise<Gym | null> {
   const { data, error } = await supabase.from('gyms').select('*').maybeSingle();
   if (error) throw error;
   return data ? mapGymRow(data) : null;
-}
-
-async function seedDefaultEvents(gymId: string): Promise<void> {
-  const rows = Object.values(DEFAULT_EVENTS).map((meta) => ({
-    gym_id: gymId,
-    key: meta.key,
-    time_seconds: meta.timeSeconds,
-    title: meta.title,
-    short_title: meta.shortTitle,
-    technique: meta.technique,
-    icon_name: meta.iconName ?? null,
-    badge_bg: meta.badgeBg ?? null,
-    badge_text: meta.badgeText ?? null,
-    benchmark_good: meta.benchmarkGood ?? null,
-    benchmark_pro: meta.benchmarkPro ?? null,
-    description: meta.description ?? null,
-    is_custom: false,
-  }));
-
-  const { error } = await supabase.from('events').insert(rows);
-  if (error) throw error;
 }
 
 async function createGym(name: string): Promise<Gym> {

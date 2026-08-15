@@ -1,6 +1,6 @@
 {
-  "name": "용인대 파워점핑줄넘기 랭킹보드",
-  "description": "용인대 파워점핑줄넘기 수련생 스피드 측정 랭킹보드, 실시간 전광판 및 기록 관리 시스템",
+  "name": "줄넘기 실시간 랭킹보드",
+  "description": "줄넘기 체육관을 위한 실시간 랭킹보드 SaaS. 종목별/학년별 순위 자동 정렬, 기록 입력, TV 전광판 모드를 제공합니다.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

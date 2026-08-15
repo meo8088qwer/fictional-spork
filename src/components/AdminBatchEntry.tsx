@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
 import { GRADE_GROUPS } from '../data/constants';
-import { getStudentPersonalBest } from '../lib/storage';
+import { getStudentPersonalBest } from '../lib/scoring';
+import { PlanLimitError, planLimitMessage } from '../data/api/errors';
+import { Gym } from '../data/api/gyms';
 import {
   downloadExcelTemplate,
   parseExcelFile,
@@ -39,21 +41,23 @@ import {
 import { ConfirmModal } from './ConfirmModal';
 
 interface AdminBatchEntryProps {
+  gym: Gym;
   students: Student[];
   records: JumpRecord[];
   events: Record<string, EventMeta>;
   onBatchSaveRecords: (
     entries: Array<{ studentId: string; studentName: string; eventKey: EventKey; count: number; date: string }>
-  ) => void;
-  onAddStudent: (newStudent: Omit<Student, 'id'>) => void;
-  onDeleteStudent: (studentId: string) => void;
-  onAddCustomEvent: (eventMeta: EventMeta) => void;
-  onDeleteCustomEvent: (eventKey: string) => void;
-  onResetDefaultEvents: () => void;
+  ) => Promise<JumpRecord[]>;
+  onAddStudent: (newStudent: Omit<Student, 'id'>) => Promise<Student>;
+  onDeleteStudent: (studentId: string) => Promise<void>;
+  onAddCustomEvent: (eventMeta: EventMeta) => Promise<EventMeta>;
+  onDeleteCustomEvent: (eventKey: string) => Promise<void>;
+  onResetDefaultEvents: () => Promise<Record<string, EventMeta>>;
   onClose: () => void;
 }
 
 export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
+  gym,
   students,
   records,
   events,
@@ -66,6 +70,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   onClose,
 }) => {
   const eventKeys = Object.keys(events);
+  const studentLimit = gym.plan === 'paid' ? 200 : 50;
+  const eventLimit = gym.plan === 'paid' ? Infinity : 2;
+  const [actionError, setActionError] = useState<string>('');
   const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EXCEL' | 'EVENTS' | 'STUDENTS'>('BATCH');
 
   // Batch entry state
@@ -148,7 +155,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     setCountsMap({});
   };
 
-  const handleSaveBatch = () => {
+  const handleSaveBatch = async () => {
     const entriesToSave: Array<{
       studentId: string;
       studentName: string;
@@ -178,12 +185,17 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       return;
     }
 
-    onBatchSaveRecords(entriesToSave);
-    setSavedSuccessAlert(true);
-    setTimeout(() => {
-      setSavedSuccessAlert(false);
-      onClose();
-    }, 1200);
+    setActionError('');
+    try {
+      await onBatchSaveRecords(entriesToSave);
+      setSavedSuccessAlert(true);
+      setTimeout(() => {
+        setSavedSuccessAlert(false);
+        onClose();
+      }, 1200);
+    } catch (e) {
+      setActionError(e instanceof PlanLimitError ? planLimitMessage(e.code) : '기록 저장 중 오류가 발생했습니다.');
+    }
   };
 
   // Excel File Upload Handler
@@ -211,7 +223,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   };
 
   // Process and apply Excel import to state
-  const handleConfirmExcelImport = () => {
+  const handleConfirmExcelImport = async () => {
     if (parsedExcelRows.length === 0) return;
 
     let newPbCount = 0;
@@ -229,7 +241,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     const currentStudentsMap = new Map<string, Student>();
     students.forEach((s) => currentStudentsMap.set(s.name, s));
 
-    parsedExcelRows.forEach((row) => {
+    setActionError('');
+    let stopMessage = '';
+
+    for (const row of parsedExcelRows) {
       let student = currentStudentsMap.get(row.studentName);
 
       // Auto-create student if not exists
@@ -243,20 +258,24 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         ];
         const randomColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
 
-        const newSt: Student = {
-          id: `s-excel-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-          studentNo: nextNo,
-          name: row.studentName,
-          grade: row.grade || '초등 3학년',
-          gender: 'M',
-          avatarColor: randomColor,
-          joinDate: row.date,
-        };
-
-        onAddStudent(newSt);
-        currentStudentsMap.set(newSt.name, newSt);
-        student = newSt;
-        createdStudentNames.push(newSt.name);
+        try {
+          const newSt = await onAddStudent({
+            studentNo: nextNo,
+            name: row.studentName,
+            grade: row.grade || '초등 3학년',
+            gender: 'M',
+            avatarColor: randomColor,
+            joinDate: row.date,
+          });
+          currentStudentsMap.set(newSt.name, newSt);
+          student = newSt;
+          createdStudentNames.push(newSt.name);
+        } catch (e) {
+          stopMessage =
+            (e instanceof PlanLimitError ? planLimitMessage(e.code) : '수련생 등록 중 오류가 발생했습니다.') +
+            ` (이후 ${row.studentName}부터의 행은 등록되지 않았습니다.)`;
+          break;
+        }
       }
 
       // Check against current personal best
@@ -274,16 +293,27 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         count: row.count,
         date: row.date,
       });
-    });
+    }
 
-    onBatchSaveRecords(entriesToSave);
+    if (entriesToSave.length > 0) {
+      try {
+        await onBatchSaveRecords(entriesToSave);
+      } catch (e) {
+        stopMessage = e instanceof PlanLimitError ? planLimitMessage(e.code) : '기록 저장 중 오류가 발생했습니다.';
+      }
+    }
 
-    let summaryMsg = `🎉 엑셀 기록 총 ${entriesToSave.length}건이 성공적으로 등록되었습니다!`;
-    if (newPbCount > 0) summaryMsg += ` (🏆 신기록 갱신: ${newPbCount}건)`;
-    if (maintainedPbCount > 0) summaryMsg += ` (🔒 기존 최고기록 안전 유지: ${maintainedPbCount}건)`;
-    if (createdStudentNames.length > 0) summaryMsg += ` (👤 신규 수련생 ${createdStudentNames.length}명 자동 생성)`;
+    if (stopMessage) {
+      setActionError(stopMessage);
+    }
 
-    setExcelSuccessSummary(summaryMsg);
+    if (entriesToSave.length > 0) {
+      let summaryMsg = `🎉 엑셀 기록 총 ${entriesToSave.length}건이 성공적으로 등록되었습니다!`;
+      if (newPbCount > 0) summaryMsg += ` (🏆 신기록 갱신: ${newPbCount}건)`;
+      if (maintainedPbCount > 0) summaryMsg += ` (🔒 기존 최고기록 안전 유지: ${maintainedPbCount}건)`;
+      if (createdStudentNames.length > 0) summaryMsg += ` (👤 신규 수련생 ${createdStudentNames.length}명 자동 생성)`;
+      setExcelSuccessSummary(summaryMsg);
+    }
     setParsedExcelRows([]);
     setExcelFileName('');
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -317,7 +347,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     }
   };
 
-  const handleConfirmBatchRosterImport = () => {
+  const handleConfirmBatchRosterImport = async () => {
     if (parsedRosterRows.length === 0) return;
 
     const existingNames = new Set(students.map((s) => s.name.trim()));
@@ -333,37 +363,49 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       'from-rose-500 to-red-500',
     ];
 
-    parsedRosterRows.forEach((row, idx) => {
+    setActionError('');
+    let stopMessage = '';
+
+    for (const row of parsedRosterRows) {
       if (existingNames.has(row.name.trim())) {
         skippedCount++;
-      } else {
-        const nextNo = `2026-${String(students.length + addedCount + 1).padStart(3, '0')}`;
-        const randomColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
+        continue;
+      }
 
-        const newSt: Omit<Student, 'id'> = {
+      const nextNo = `2026-${String(students.length + addedCount + 1).padStart(3, '0')}`;
+      const randomColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
+
+      try {
+        await onAddStudent({
           studentNo: nextNo,
           name: row.name.trim(),
           grade: row.grade || '초등 3학년',
           gender: row.gender || 'M',
           avatarColor: randomColor,
           joinDate: new Date().toISOString().split('T')[0],
-        };
-
-        onAddStudent(newSt);
+        });
         existingNames.add(row.name.trim());
         addedCount++;
+      } catch (e) {
+        stopMessage =
+          (e instanceof PlanLimitError ? planLimitMessage(e.code) : '수련생 등록 중 오류가 발생했습니다.') +
+          ` (${addedCount}명까지만 등록되었습니다.)`;
+        break;
       }
-    });
+    }
 
-    let msg = `🎉 총 ${addedCount}명의 수련생이 명단에 새로 등록되었습니다!`;
-    if (skippedCount > 0) msg += ` (중복된 수련생 ${skippedCount}명 자동 제외)`;
+    if (stopMessage) setActionError(stopMessage);
 
-    setRosterSuccessMsg(msg);
+    if (addedCount > 0) {
+      let msg = `🎉 총 ${addedCount}명의 수련생이 명단에 새로 등록되었습니다!`;
+      if (skippedCount > 0) msg += ` (중복된 수련생 ${skippedCount}명 자동 제외)`;
+      setRosterSuccessMsg(msg);
+    }
     setParsedRosterRows([]);
     setRosterExcelFileName('');
   };
 
-  const handleCreateStudentSubmit = (e: React.FormEvent) => {
+  const handleCreateStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStudentName.trim()) {
       alert('학생 이름을 입력해 주세요.');
@@ -379,18 +421,22 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     ];
     const randomColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
 
-    onAddStudent({
-      studentNo: nextNo,
-      name: newStudentName.trim(),
-      grade: newStudentGrade,
-      gender: newStudentGender,
-      avatarColor: randomColor,
-      joinDate: new Date().toISOString().split('T')[0],
-    });
-
-    setNewStudentName('');
-    setShowAddStudentModal(false);
-    alert('신규 수련생이 등록되었습니다!');
+    setActionError('');
+    try {
+      await onAddStudent({
+        studentNo: nextNo,
+        name: newStudentName.trim(),
+        grade: newStudentGrade,
+        gender: newStudentGender,
+        avatarColor: randomColor,
+        joinDate: new Date().toISOString().split('T')[0],
+      });
+      setNewStudentName('');
+      setShowAddStudentModal(false);
+      alert('신규 수련생이 등록되었습니다!');
+    } catch (err) {
+      setActionError(err instanceof PlanLimitError ? planLimitMessage(err.code) : '수련생 등록 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -463,6 +509,21 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-800 font-extrabold text-sm flex items-center gap-3 animate-bounce">
           <CheckCircle2 className="w-6 h-6 text-emerald-600" />
           <span>기록이 성공적으로 저장되었습니다! 실시간 랭킹보드에 적용됩니다.</span>
+        </div>
+      )}
+
+      {actionError && (
+        <div className="mb-6 bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-800 font-extrabold text-sm flex items-center justify-between gap-3">
+          <span className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <span>{actionError}</span>
+          </span>
+          <button
+            onClick={() => setActionError('')}
+            className="text-rose-700 hover:text-rose-900 text-[11px] font-extrabold underline shrink-0"
+          >
+            확인
+          </button>
         </div>
       )}
 
@@ -924,10 +985,12 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAddEventModal(true)}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                disabled={eventKeys.length >= eventLimit}
+                title={eventKeys.length >= eventLimit ? planLimitMessage('FREE_PLAN_EVENT_LIMIT_REACHED') : undefined}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>➕ 새 측정 종목 추가</span>
+                <span>➕ 새 측정 종목 추가{eventLimit !== Infinity ? ` (${eventKeys.length}/${eventLimit})` : ''}</span>
               </button>
             </div>
           </div>
@@ -1003,7 +1066,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
               <button
                 type="button"
-                onClick={downloadStudentRosterTemplate}
+                onClick={() => downloadStudentRosterTemplate(gym.name)}
                 className="px-3.5 py-2 rounded-xl bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 text-xs font-extrabold transition-all flex items-center gap-1.5 shrink-0 shadow-2xs cursor-pointer"
               >
                 <Download className="w-4 h-4 text-emerald-600" />
@@ -1145,10 +1208,12 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowAddStudentModal(true)}
-                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  disabled={students.length >= studentLimit}
+                  title={students.length >= studentLimit ? planLimitMessage('STUDENT_LIMIT_REACHED') : undefined}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4 text-white" />
-                  <span>개별 수련생 직접 추가</span>
+                  <span>개별 수련생 직접 추가 ({students.length}/{studentLimit})</span>
                 </button>
               </div>
             </div>
@@ -1234,7 +1299,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             </p>
 
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 if (!newEventTitle.trim()) {
                   alert('종목명을 입력해 주세요.');
@@ -1255,11 +1320,18 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   benchmarkPro: Number(newEventBenchmarkPro) || 80,
                 };
 
-                onAddCustomEvent(newMeta);
-                setShowAddEventModal(false);
-                setNewEventTitle('');
-                setNewEventShortTitle('');
-                alert(`'${newMeta.title}' 종목이 새로 추가되었습니다!`);
+                setActionError('');
+                try {
+                  await onAddCustomEvent(newMeta);
+                  setShowAddEventModal(false);
+                  setNewEventTitle('');
+                  setNewEventShortTitle('');
+                  alert(`'${newMeta.title}' 종목이 새로 추가되었습니다!`);
+                } catch (err) {
+                  setActionError(
+                    err instanceof PlanLimitError ? planLimitMessage(err.code) : '종목 추가 중 오류가 발생했습니다.'
+                  );
+                }
               }}
               className="space-y-3.5 text-xs"
             >
@@ -1441,8 +1513,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         variant="danger"
         onConfirm={() => {
           if (eventToDelete) {
-            onDeleteCustomEvent(eventToDelete.key);
+            const key = eventToDelete.key;
             setEventToDelete(null);
+            setActionError('');
+            onDeleteCustomEvent(key).catch(() => setActionError('종목 삭제 중 오류가 발생했습니다.'));
           }
         }}
         onClose={() => setEventToDelete(null)}
@@ -1456,8 +1530,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         confirmText="초기화 실행"
         variant="warning"
         onConfirm={() => {
-          onResetDefaultEvents();
           setShowResetEventsConfirm(false);
+          setActionError('');
+          onResetDefaultEvents().catch(() => setActionError('종목 초기화 중 오류가 발생했습니다.'));
         }}
         onClose={() => setShowResetEventsConfirm(false)}
       />
@@ -1471,8 +1546,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         variant="danger"
         onConfirm={() => {
           if (studentToDelete) {
-            onDeleteStudent(studentToDelete.id);
+            const studentId = studentToDelete.id;
             setStudentToDelete(null);
+            setActionError('');
+            onDeleteStudent(studentId).catch(() => setActionError('수련생 삭제 중 오류가 발생했습니다.'));
           }
         }}
         onClose={() => setStudentToDelete(null)}
