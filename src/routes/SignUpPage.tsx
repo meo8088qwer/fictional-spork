@@ -73,7 +73,7 @@ export default function SignUpPage() {
           </div>
           <h1 className="text-lg font-black text-slate-900">체육관 계정 만들기</h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            무료 플랜(종목 2개 · 학생 50명)으로 바로 시작하세요.
+            무료 플랜(기본 종목 6개 · 학생 50명)으로 바로 시작하세요.
           </p>
         </div>
 

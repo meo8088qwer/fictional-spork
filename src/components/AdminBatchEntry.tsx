@@ -71,7 +71,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 }) => {
   const eventKeys = Object.keys(events);
   const studentLimit = gym.plan === 'paid' ? 200 : 50;
-  const eventLimit = gym.plan === 'paid' ? Infinity : 2;
+  const eventLimit = gym.plan === 'paid' ? Infinity : 6;
   const [actionError, setActionError] = useState<string>('');
   const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EXCEL' | 'EVENTS' | 'STUDENTS'>('BATCH');
 
