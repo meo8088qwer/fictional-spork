@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabaseClient';
 import { Student, JumpRecord, EventMeta, GradeGroup } from '../../types';
+import { mapEventRow } from './events';
 
 export interface PublicBoard {
   gymName: string;
@@ -7,23 +8,6 @@ export interface PublicBoard {
   events: Record<string, EventMeta>;
   students: Student[];
   records: JumpRecord[];
-}
-
-function mapEventRow(row: any): EventMeta {
-  return {
-    key: row.key,
-    timeSeconds: row.time_seconds,
-    title: row.title,
-    shortTitle: row.short_title,
-    technique: row.technique,
-    iconName: row.icon_name ?? undefined,
-    badgeBg: row.badge_bg ?? undefined,
-    badgeText: row.badge_text ?? undefined,
-    benchmarkGood: row.benchmark_good ?? undefined,
-    benchmarkPro: row.benchmark_pro ?? undefined,
-    description: row.description ?? undefined,
-    isCustom: row.is_custom,
-  };
 }
 
 function mapStudentRow(row: any): Student {

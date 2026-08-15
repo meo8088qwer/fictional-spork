@@ -3,7 +3,7 @@ import { EventMeta } from '../../types';
 import { DEFAULT_EVENTS } from '../constants';
 import { throwOnDbError } from './errors';
 
-function mapEventRow(row: any): EventMeta {
+export function mapEventRow(row: any): EventMeta {
   return {
     key: row.key,
     timeSeconds: row.time_seconds,
