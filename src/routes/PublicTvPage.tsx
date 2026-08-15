@@ -18,7 +18,7 @@ export default function PublicTvPage() {
   if (query.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8]">
-        <span className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <span className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }

@@ -168,11 +168,11 @@ export const SpeedTimer: React.FC<SpeedTimerProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
         <div className="flex items-center gap-2.5">
-          <span className="p-2 rounded-xl bg-orange-50 text-orange-600 border border-orange-200/80">
+          <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
             <Timer className="w-5 h-5" />
           </span>
           <div>
-            <h2 className="text-base font-extrabold text-slate-900">
+            <h2 className="text-base font-bold text-slate-900">
               스피드 타이머 & 실시간 카운터
             </h2>
             <p className="text-xs text-slate-500 font-medium">
@@ -185,7 +185,7 @@ export const SpeedTimer: React.FC<SpeedTimerProps> = ({
           onClick={onClose}
           className="text-xs font-bold text-slate-400 hover:text-slate-600"
         >
-          닫기 ✕
+          닫기
         </button>
       </div>
 
@@ -196,7 +196,7 @@ export const SpeedTimer: React.FC<SpeedTimerProps> = ({
           <select
             value={selectedStudentId}
             onChange={(e) => setSelectedStudentId(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-orange-500 shadow-xs"
+            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 shadow-xs"
           >
             {students.map((s) => (
               <option key={s.id} value={s.id}>
@@ -211,7 +211,7 @@ export const SpeedTimer: React.FC<SpeedTimerProps> = ({
           <select
             value={selectedEventKey}
             onChange={(e) => setSelectedEventKey(e.target.value as EventKey)}
-            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-orange-500 shadow-xs"
+            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-slate-400 shadow-xs"
           >
             {eventKeys.map((key) => {
               const meta = events[key];
@@ -226,43 +226,43 @@ export const SpeedTimer: React.FC<SpeedTimerProps> = ({
       </div>
 
       {/* Main Display Box */}
-      <div className="bg-slate-50/80 border-2 border-orange-200 rounded-2xl p-8 text-center relative overflow-hidden mb-6">
+      <div className="bg-slate-900 rounded-2xl p-8 text-center relative overflow-hidden mb-6">
         {/* Countdown Phase Badge */}
         {countdownPhase === 'COUNTDOWN' && (
-          <div className="text-6xl font-black text-amber-500 animate-pulse my-4">
+          <div className="text-6xl font-bold text-white animate-pulse my-4">
             준비... {prepSeconds}
           </div>
         )}
 
         {countdownPhase === 'RUNNING' && (
           <div>
-            <div className="text-xs font-bold text-orange-600 tracking-wider uppercase mb-1">
+            <div className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-1">
               REMAINING TIME
             </div>
-            <div className="text-6xl sm:text-7xl font-black text-orange-600 font-mono tracking-tight my-2">
+            <div className="text-6xl sm:text-7xl font-bold text-white font-mono tracking-tight my-2">
               {timeLeft.toString().padStart(2, '0')}
-              <span className="text-xl text-orange-500 font-bold ml-1">SEC</span>
+              <span className="text-xl text-slate-400 font-bold ml-1">SEC</span>
             </div>
           </div>
         )}
 
         {countdownPhase === 'FINISHED' && (
           <div className="my-2">
-            <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-800 font-black text-xs border border-amber-300">
-              🎉 측정 완료!
+            <span className="px-3.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 font-bold text-xs">
+              측정 완료!
             </span>
-            <div className="text-5xl font-black text-slate-900 mt-3">
-              최종 기록: <span className="text-orange-600 italic">{jumpCount}</span>회
+            <div className="text-5xl font-bold text-white mt-3">
+              최종 기록: <span className="text-white">{jumpCount}</span>회
             </div>
           </div>
         )}
 
         {countdownPhase === 'READY' && (
           <div className="my-4">
-            <div className="text-5xl font-black text-slate-800 font-mono">
+            <div className="text-5xl font-bold text-white font-mono">
               {durationSeconds}.00 SEC
             </div>
-            <p className="text-xs text-slate-500 mt-2 font-medium">
+            <p className="text-xs text-slate-400 mt-2 font-medium">
               [측정 시작] 버튼을 누르면 3초 카운트다운 후 측정이 시작됩니다.
             </p>
           </div>
@@ -276,11 +276,11 @@ export const SpeedTimer: React.FC<SpeedTimerProps> = ({
                 setJumpCount((prev) => prev + 1);
                 playBeep(800, 0.05);
               }}
-              className="w-full py-8 bg-gradient-to-tr from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-98 rounded-2xl shadow-md text-white font-black transition-all flex flex-col items-center justify-center cursor-pointer"
+              className="w-full py-8 bg-white hover:bg-slate-100 active:scale-98 rounded-2xl text-slate-900 font-bold transition-all flex flex-col items-center justify-center cursor-pointer"
             >
               <div className="text-4xl sm:text-5xl">{jumpCount} 회</div>
-              <span className="text-xs text-orange-100 mt-2 font-bold">
-                👆 화면 터치 또는 [SpaceBar] 로 카운트!
+              <span className="text-xs text-slate-500 mt-2 font-bold">
+                화면 터치 또는 [SpaceBar] 로 카운트!
               </span>
             </button>
           </div>
@@ -300,7 +300,7 @@ export const SpeedTimer: React.FC<SpeedTimerProps> = ({
         {countdownPhase === 'READY' && (
           <button
             onClick={handleStartMeasurement}
-            className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm rounded-xl shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2"
           >
             <Play className="w-4 h-4 fill-white" />
             <span>측정 시작 (3초 카운트다운)</span>
@@ -310,7 +310,7 @@ export const SpeedTimer: React.FC<SpeedTimerProps> = ({
         {countdownPhase === 'FINISHED' && (
           <button
             onClick={handleSaveToRecord}
-            className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-sm rounded-xl shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2"
           >
             <Save className="w-4 h-4" />
             <span>{activeStudent?.name} 학생 기록에 저장</span>

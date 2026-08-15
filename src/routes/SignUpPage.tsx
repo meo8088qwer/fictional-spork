@@ -49,13 +49,13 @@ export default function SignUpPage() {
           <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-7 h-7" />
           </div>
-          <h2 className="text-lg font-black text-slate-900 mb-2">가입 확인 이메일을 보냈어요</h2>
+          <h2 className="text-lg font-bold text-slate-900 mb-2">가입 확인 이메일을 보냈어요</h2>
           <p className="text-xs text-slate-500 font-medium leading-relaxed mb-6">
             {email}로 전송된 확인 링크를 클릭하시면 가입이 완료됩니다. 확인 후 로그인해 주세요.
           </p>
           <Link
             to="/login"
-            className="block w-full py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-extrabold text-sm shadow-md shadow-orange-500/20"
+            className="block w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-all"
           >
             로그인하러 가기
           </Link>
@@ -68,10 +68,10 @@ export default function SignUpPage() {
     <div className="min-h-screen bg-[#f4f5f8] flex items-center justify-center p-4">
       <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-8 shadow-lg">
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center mb-4 shadow-md shadow-orange-500/20">
+          <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center mb-4">
             <Trophy className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-lg font-black text-slate-900">체육관 계정 만들기</h1>
+          <h1 className="text-lg font-bold text-slate-900">체육관 계정 만들기</h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
             무료 플랜(기본 종목 6개 · 학생 50명)으로 바로 시작하세요.
           </p>
@@ -85,7 +85,7 @@ export default function SignUpPage() {
               value={gymName}
               onChange={(e) => setGymName(e.target.value)}
               placeholder="체육관 이름 (예: 파워점핑줄넘기)"
-              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white transition-all"
             />
           </div>
 
@@ -97,7 +97,7 @@ export default function SignUpPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="이메일"
               required
-              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white transition-all"
             />
           </div>
 
@@ -109,7 +109,7 @@ export default function SignUpPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="비밀번호 (6자 이상)"
               required
-              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white transition-all"
             />
           </div>
 
@@ -123,7 +123,7 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-60 text-white font-extrabold text-sm shadow-md shadow-orange-500/20 transition-all"
+            className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold text-sm transition-all"
           >
             {isSubmitting ? '가입 처리 중...' : '무료로 시작하기'}
           </button>
@@ -131,7 +131,7 @@ export default function SignUpPage() {
 
         <p className="text-center text-xs text-slate-500 font-medium mt-5">
           이미 계정이 있으신가요?{' '}
-          <Link to="/login" className="text-orange-600 font-bold hover:underline">
+          <Link to="/login" className="text-slate-900 font-bold hover:underline">
             로그인
           </Link>
         </p>

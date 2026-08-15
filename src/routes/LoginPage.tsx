@@ -30,10 +30,10 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#f4f5f8] flex items-center justify-center p-4">
       <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-8 shadow-lg">
         <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center mb-4 shadow-md shadow-orange-500/20">
+          <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center mb-4">
             <Trophy className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-lg font-black text-slate-900">관장님 로그인</h1>
+          <h1 className="text-lg font-bold text-slate-900">관장님 로그인</h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
             줄넘기 실시간 랭킹보드 관리자 화면으로 이동합니다.
           </p>
@@ -49,7 +49,7 @@ export default function LoginPage() {
               placeholder="이메일"
               required
               autoFocus
-              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white transition-all"
             />
           </div>
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="비밀번호"
               required
-              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+              className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white transition-all"
             />
           </div>
 
@@ -75,7 +75,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-60 text-white font-extrabold text-sm shadow-md shadow-orange-500/20 transition-all"
+            className="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold text-sm transition-all"
           >
             {isSubmitting ? '로그인 중...' : '로그인'}
           </button>
@@ -83,7 +83,7 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-slate-500 font-medium mt-5">
           아직 계정이 없으신가요?{' '}
-          <Link to="/signup" className="text-orange-600 font-bold hover:underline">
+          <Link to="/signup" className="text-slate-900 font-bold hover:underline">
             무료로 시작하기
           </Link>
         </p>

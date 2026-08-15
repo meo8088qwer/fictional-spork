@@ -1,7 +1,7 @@
 import React from 'react';
 import { StudentLeaderboardItem, DisplayTab, GradeCategoryFilter, EventMeta } from '../types';
 import { GRADE_CATEGORY_LABELS, getBadgeForCount } from '../data/constants';
-import { Search, Filter, Trophy, Sparkles, ArrowRight } from 'lucide-react';
+import { Search, Filter, Trophy, Sparkles } from 'lucide-react';
 
 interface LeaderboardProps {
   items: StudentLeaderboardItem[];
@@ -49,7 +49,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="수련생 이름 또는 번호 검색..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all font-medium shadow-xs"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all font-medium shadow-xs"
           />
           {searchQuery && (
             <button
@@ -62,15 +62,15 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         </div>
 
         {/* Grade Filter Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs font-bold uppercase tracking-wider">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs font-bold">
           <Filter className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" />
           {gradeFilterOptions.map((opt) => (
             <button
               key={opt}
               onClick={() => setGradeFilter(opt)}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
+              className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
                 gradeFilter === opt
-                  ? 'bg-orange-500 text-white shadow-xs font-bold'
+                  ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
               }`}
             >
@@ -83,16 +83,16 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
       {/* Selected Discipline Info Banner */}
       <div className="px-4 py-3.5 sm:px-6 bg-slate-50/80 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-orange-100 border border-orange-200/80 flex items-center justify-center text-orange-600">
+          <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
             <Trophy className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="font-black text-sm text-slate-900 tracking-wide">
-                {activeTab === 'OVERALL' ? '👑 OVERALL SPEED RANKING' : currentEventMeta?.title}
+              <h4 className="font-bold text-sm text-slate-900 tracking-wide">
+                {activeTab === 'OVERALL' ? 'OVERALL SPEED RANKING' : currentEventMeta?.title}
               </h4>
               {currentEventMeta && (
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white text-orange-600 border border-orange-200/80">
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200">
                   {currentEventMeta.timeSeconds}s
                 </span>
               )}
@@ -108,9 +108,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         {onOpenBatchEntry && (
           <button
             onClick={onOpenBatchEntry}
-            className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 shadow-xs"
+            className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0"
           >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <Sparkles className="w-3.5 h-3.5" />
             <span>기록 일괄등록</span>
           </button>
         )}
@@ -145,35 +145,33 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
               activeTab !== 'OVERALL'
                 ? getBadgeForCount(events[activeTab], item.personalBestCount)
                 : item.rank === 1
-                ? '👑 종합 챔피언'
+                ? '종합 챔피언'
                 : item.rank <= 3
-                ? '⚡ 스피드 마스터'
-                : '⭐ 에이스 수련생';
+                ? '스피드 마스터'
+                : '에이스 수련생';
 
             return (
               <div
                 key={item.student.id}
                 onClick={() => onSelectStudent(item.student.id)}
-                className={`group px-4 sm:px-6 py-4 transition-all cursor-pointer flex flex-col sm:grid sm:grid-cols-[80px_1fr_120px_160px] sm:items-center gap-3 hover:bg-slate-50/90 ${
-                  item.rank === 1 ? 'bg-amber-50/40' : ''
-                }`}
+                className="group px-4 sm:px-6 py-4 transition-all cursor-pointer flex flex-col sm:grid sm:grid-cols-[80px_1fr_120px_160px] sm:items-center gap-3 hover:bg-slate-50/90"
               >
                 {/* Rank Badge */}
                 <div className="flex items-center sm:justify-start">
                   {item.rank === 1 ? (
-                    <span className="w-8 h-8 bg-amber-400 text-slate-950 font-black rounded-full flex items-center justify-center italic text-base shadow-xs">
+                    <span className="w-8 h-8 bg-slate-900 text-white font-bold rounded-full flex items-center justify-center text-base">
                       1
                     </span>
                   ) : item.rank === 2 ? (
-                    <span className="w-8 h-8 bg-slate-200 text-slate-800 font-black rounded-full flex items-center justify-center italic text-base border border-slate-300">
+                    <span className="w-8 h-8 bg-slate-200 text-slate-800 font-bold rounded-full flex items-center justify-center text-base">
                       2
                     </span>
                   ) : item.rank === 3 ? (
-                    <span className="w-8 h-8 bg-amber-600 text-white font-black rounded-full flex items-center justify-center italic text-base">
+                    <span className="w-8 h-8 bg-slate-300 text-slate-800 font-bold rounded-full flex items-center justify-center text-base">
                       3
                     </span>
                   ) : (
-                    <span className="text-slate-400 font-black italic text-base ml-2">
+                    <span className="text-slate-400 font-bold text-base ml-2">
                       {item.rank}
                     </span>
                   )}
@@ -182,34 +180,28 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                 {/* Name & Avatar */}
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform`}
+                    className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold text-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}
                   >
                     {item.student.name.substring(0, 1)}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-base text-slate-900 group-hover:text-orange-600 transition-colors">
+                      <span className="font-bold text-base text-slate-900">
                         {item.student.name}
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-500">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
                         {item.student.studentNo.slice(-3)}
                       </span>
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200/60">
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
                         {badgeTitle}
                       </span>
                     </div>
 
                     {/* Progress Bar Visualizer */}
-                    <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden border border-slate-200/60">
+                    <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
                       <div
-                        className={`h-full transition-all duration-500 rounded-full ${
-                          item.rank === 1
-                            ? 'bg-gradient-to-r from-amber-400 to-amber-500'
-                            : item.rank <= 3
-                            ? 'bg-gradient-to-r from-orange-500 to-amber-500'
-                            : 'bg-gradient-to-r from-orange-400 to-orange-500'
-                        }`}
+                        className="h-full transition-all duration-500 rounded-full bg-slate-900"
                         style={{ width: `${percentage}%` }}
                       ></div>
                     </div>
@@ -217,15 +209,15 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                 </div>
 
                 {/* Grade */}
-                <div className="text-left sm:text-center text-xs font-bold text-slate-600 uppercase">
+                <div className="text-left sm:text-center text-xs font-bold text-slate-600">
                   {item.student.grade}
                 </div>
 
                 {/* Record Count */}
                 <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
-                  <div className="text-2xl sm:text-3xl font-black text-orange-600 italic tracking-tight group-hover:scale-105 transition-transform">
+                  <div className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                     {item.personalBestCount.toLocaleString()}
-                    <span className="text-xs text-slate-500 font-bold not-italic ml-1">
+                    <span className="text-xs text-slate-500 font-semibold ml-1">
                       {activeTab === 'OVERALL' ? '점' : '회'}
                     </span>
                   </div>

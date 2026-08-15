@@ -61,18 +61,16 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       {/* Top Header Bar */}
       <div className="relative z-10 flex items-center justify-between border-b border-slate-200 pb-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-amber-400 p-0.5 shadow-md">
-            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
-              <Flame className="w-7 h-7 text-orange-500 animate-bounce" />
-            </div>
+          <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center">
+            <Flame className="w-7 h-7 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <span className="text-2xl font-black text-slate-900">
+              <span className="text-2xl font-bold text-slate-900">
                 {gymName} TV 랭킹 전광판
               </span>
-              <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 border border-red-200 text-red-600 font-extrabold flex items-center gap-1.5 animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+              <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-600 font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                 LIVE STREAM
               </span>
             </div>
@@ -88,7 +86,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
             onClick={() => setIsAutoPlay(!isAutoPlay)}
             className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs ${
               isAutoPlay
-                ? 'bg-amber-50 border-amber-200 text-amber-800'
+                ? 'bg-slate-900 border-slate-900 text-white'
                 : 'bg-white border-slate-200 text-slate-600'
             }`}
           >
@@ -115,27 +113,27 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       {/* Main Discipline Banner & Rankings */}
       <div className="relative z-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Left: Active Discipline Spotlight (4 cols) */}
-        <div className="lg:col-span-4 bg-white border-2 border-orange-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between">
           <div>
-            <div className="text-xs font-black text-orange-600 tracking-wider uppercase mb-2">
+            <div className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-2">
               CURRENT EVENT
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
               {eventMeta.title}
             </h1>
-            <div className="inline-block mt-3 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-600 font-extrabold text-xs">
+            <div className="inline-block mt-3 px-3 py-1 rounded-full bg-white/10 text-white font-bold text-xs">
               측정 시간: {eventMeta.timeSeconds}초
             </div>
-            <p className="text-xs text-slate-500 mt-4 leading-relaxed font-medium">
+            <p className="text-xs text-slate-400 mt-4 leading-relaxed font-medium">
               {eventMeta.description}
             </p>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-bold">
+          <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-bold">
             <span>종목 {eventKeys.length}개 중 {currentEventIndex + 1}번째</span>
             <button
               onClick={() => setCurrentEventIndex((prev) => (prev + 1) % eventKeys.length)}
-              className="text-orange-600 hover:text-orange-700 flex items-center gap-1 font-bold cursor-pointer"
+              className="text-white hover:text-slate-300 flex items-center gap-1 font-bold cursor-pointer"
             >
               <span>다음 종목</span>
               <ArrowRight className="w-4 h-4" />
@@ -149,29 +147,23 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
             <div
               key={item.student.id}
               className={`p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
-                index === 0
-                  ? 'bg-gradient-to-r from-amber-50 via-white to-white border-2 border-amber-400 shadow-md shadow-amber-500/10 scale-[1.02]'
-                  : index === 1
-                  ? 'bg-white border-slate-200'
-                  : index === 2
-                  ? 'bg-white border-amber-200'
-                  : 'bg-white border-slate-200/80'
+                index === 0 ? 'bg-white border-2 border-slate-900' : 'bg-white border-slate-200/80'
               }`}
             >
               <div className="flex items-center gap-4">
                 {/* Rank Number */}
-                <div className="w-10 h-10 rounded-xl font-black text-lg flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl font-bold text-lg flex items-center justify-center shrink-0">
                   {index === 0 ? (
-                    <span className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-500 text-slate-950 flex items-center justify-center shadow-xs">
+                    <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
                       1
                     </span>
-                  ) : index === 2 ? (
-                    <span className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center">
-                      3
-                    </span>
                   ) : index === 1 ? (
-                    <span className="w-10 h-10 rounded-xl bg-slate-200 text-slate-800 border border-slate-300 flex items-center justify-center">
+                    <span className="w-10 h-10 rounded-xl bg-slate-200 text-slate-800 flex items-center justify-center">
                       2
+                    </span>
+                  ) : index === 2 ? (
+                    <span className="w-10 h-10 rounded-xl bg-slate-300 text-slate-800 flex items-center justify-center">
+                      3
                     </span>
                   ) : (
                     <span className="text-slate-400">{index + 1}</span>
@@ -180,7 +172,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
 
                 {/* Avatar */}
                 <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-black text-base flex items-center justify-center shrink-0 shadow-xs`}
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold text-base flex items-center justify-center shrink-0`}
                 >
                   {item.student.name.substring(0, 1)}
                 </div>
@@ -188,10 +180,10 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
                 {/* Info */}
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg font-black text-slate-900">
+                    <span className="text-lg font-bold text-slate-900">
                       {item.student.name}
                     </span>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 font-bold">
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">
                       {item.student.grade}
                     </span>
                   </div>
@@ -203,7 +195,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
 
               {/* Record Count */}
               <div className="text-right">
-                <span className="text-3xl font-black text-orange-600 tracking-tight italic">
+                <span className="text-3xl font-bold text-slate-900 tracking-tight">
                   {item.personalBestCount}
                 </span>
                 <span className="text-sm text-slate-500 font-bold ml-1">회</span>
@@ -218,8 +210,8 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
         <div className="whitespace-nowrap animate-marquee flex items-center gap-8 text-xs text-slate-700 font-bold">
           {overallChampion && (
             <>
-              <span className="text-orange-600 flex items-center gap-1">
-                <Crown className="w-3.5 h-3.5 text-amber-500" />
+              <span className="text-slate-900 flex items-center gap-1">
+                <Crown className="w-3.5 h-3.5 text-slate-400" />
                 {gymName} 종합 챔피언: {overallChampion.student.name} ({overallChampion.overallScore}점)
               </span>
               <span>•</span>

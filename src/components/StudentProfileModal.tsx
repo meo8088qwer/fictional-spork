@@ -119,8 +119,8 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-extrabold text-slate-900">{student.name}</h2>
-                <span className="text-xs font-bold px-3 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200/80">
+                <h2 className="text-xl font-bold text-slate-900">{student.name}</h2>
+                <span className="text-xs font-bold px-3 py-0.5 rounded-full bg-slate-100 text-slate-600">
                   {student.grade}
                 </span>
               </div>
@@ -141,7 +141,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                     onRequestAdminAuth();
                   }
                 }}
-                className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-extrabold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>수련생 삭제</span>
@@ -151,7 +151,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <button
               type="button"
               onClick={() => onOpenCertificate(student)}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black text-xs shadow-md shadow-orange-500/20 hover:from-orange-600 hover:to-amber-600 transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>기록 인증 상장 발급</span>
@@ -161,8 +161,8 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
         {/* Grid of Personal Bests across 6 Events */}
         <div className="mb-6">
-          <h3 className="text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-            <Trophy className="w-4 h-4 text-amber-500" />
+          <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <Trophy className="w-4 h-4 text-slate-400" />
             종목별 최고 기록 현황
           </h3>
 
@@ -177,15 +177,27 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   onClick={() => setSelectedEventKey(key)}
                   className={`p-3 rounded-2xl border transition-all cursor-pointer ${
                     selectedEventKey === key
-                      ? 'bg-orange-50/80 border-orange-400 shadow-xs'
+                      ? 'bg-slate-900 border-slate-900'
                       : 'bg-slate-50/80 border-slate-200/80 hover:border-slate-300'
                   }`}
                 >
-                  <div className="text-[11px] font-bold text-slate-500 truncate flex items-center gap-1">
+                  <div
+                    className={`text-[11px] font-bold truncate flex items-center gap-1 ${
+                      selectedEventKey === key ? 'text-slate-300' : 'text-slate-500'
+                    }`}
+                  >
                     <span>{meta?.shortTitle || key}</span>
-                    {meta?.isCustom && <span className="text-[9px] text-amber-600 bg-amber-50 px-1 rounded">커스텀</span>}
+                    {meta?.isCustom && (
+                      <span
+                        className={`text-[9px] px-1 rounded ${
+                          selectedEventKey === key ? 'bg-white/15 text-white' : 'text-slate-600 bg-slate-200'
+                        }`}
+                      >
+                        커스텀
+                      </span>
+                    )}
                   </div>
-                  <div className="text-lg font-black text-slate-900 mt-1">
+                  <div className={`text-lg font-bold mt-1 ${selectedEventKey === key ? 'text-white' : 'text-slate-900'}`}>
                     {pb ? `${pb.count}회` : '-'}
                   </div>
                   <div className="text-[10px] text-slate-400 truncate mt-0.5 font-mono">
@@ -201,7 +213,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
         <div className="mb-6 bg-slate-50/80 p-4.5 rounded-2xl border border-slate-200/80">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <TrendingUp className="w-4 h-4 text-orange-500" />
+              <TrendingUp className="w-4 h-4 text-slate-400" />
               [{selectedMeta?.title || '선택 종목'}] 성장 기록 그래프
             </h4>
             <span className="text-[10px] text-slate-400 font-mono font-medium">
@@ -222,14 +234,14 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   <YAxis stroke="#94a3b8" fontSize={10} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                    itemStyle={{ color: '#ea580c', fontSize: '12px', fontWeight: 'bold' }}
+                    itemStyle={{ color: '#0f172a', fontSize: '12px', fontWeight: 'bold' }}
                   />
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke="#f97316"
+                    stroke="#0f172a"
                     strokeWidth={3}
-                    dot={{ fill: '#f59e0b', r: 4 }}
+                    dot={{ fill: '#0f172a', r: 4 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -239,15 +251,15 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
         {/* Monthly Growth Summary */}
         {monthlyBest.length >= 2 && (
-          <div className="mb-6 bg-gradient-to-br from-orange-50 to-amber-50 p-4.5 rounded-2xl border border-orange-200/80">
+          <div className="mb-6 bg-slate-50/80 p-4.5 rounded-2xl border border-slate-200/80">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4 text-orange-500" />
+                <TrendingUp className="w-4 h-4 text-slate-400" />
                 {student.name} 학생의 월별 성장
               </h4>
               {growthPercent && (
                 <span
-                  className={`text-xs font-black px-2.5 py-1 rounded-full ${
+                  className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                     Number(growthPercent) >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
                   }`}
                 >
@@ -259,11 +271,11 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <div className="h-36 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyBest}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#fde8d3" />
-                  <XAxis dataKey="label" stroke="#c2650a" fontSize={11} />
-                  <YAxis stroke="#c2650a" fontSize={10} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} />
+                  <YAxis stroke="#94a3b8" fontSize={10} />
                   <Tooltip formatter={(v: number) => [`${v}회`, '월간 최고기록']} />
-                  <Bar dataKey="best" fill="#f97316" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="best" fill="#0f172a" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -274,8 +286,8 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
         <div className="bg-slate-50/80 p-4.5 rounded-2xl border border-slate-200/80">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-amber-500" />
-              <h4 className="text-xs font-extrabold text-slate-900">
+              <Bot className="w-5 h-5 text-slate-400" />
+              <h4 className="text-xs font-bold text-slate-900">
                 AI 코칭 리포트
               </h4>
             </div>
@@ -283,9 +295,9 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <button
               onClick={handleFetchAiReport}
               disabled={isLoadingAi}
-              className="px-3.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-xs border border-amber-300/80 transition-all flex items-center gap-1.5 shadow-xs"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center gap-1.5"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <Sparkles className="w-3.5 h-3.5" />
               <span>{isLoadingAi ? '분석 중...' : 'AI 코칭 리포트 생성'}</span>
             </button>
           </div>
@@ -297,8 +309,8 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200/80">
-                  <div className="font-extrabold text-emerald-800 mb-1">💪 주 강점</div>
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200/80">
+                  <div className="font-bold text-slate-900 mb-1">주 강점</div>
                   <ul className="list-disc list-inside space-y-0.5 text-slate-700 font-medium">
                     {aiReport.strengths.map((s, idx) => (
                       <li key={idx}>{s}</li>
@@ -306,8 +318,8 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   </ul>
                 </div>
 
-                <div className="bg-blue-50 p-3.5 rounded-xl border border-blue-200/80">
-                  <div className="font-extrabold text-blue-800 mb-1">🎯 원포인트 코칭 팁</div>
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200/80">
+                  <div className="font-bold text-slate-900 mb-1">원포인트 코칭 팁</div>
                   <ul className="list-disc list-inside space-y-0.5 text-slate-700 font-medium">
                     {aiReport.targetTips.map((t, idx) => (
                       <li key={idx}>{t}</li>
@@ -326,8 +338,8 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
         {/* Detailed Measurement Records History Table */}
         <div className="mt-6 bg-slate-50/80 p-4.5 rounded-2xl border border-slate-200/80">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-indigo-500" />
+            <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-slate-400" />
               <span>[{selectedMeta?.title || '선택 종목'}] 상세 기록 이력 관리</span>
             </h4>
             <span className="text-[10px] text-slate-400 font-mono font-medium">
@@ -353,7 +365,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   {studentEventRecords.map((r) => (
                     <tr key={r.id} className="hover:bg-slate-50/80">
                       <td className="p-2 pl-3 font-mono text-slate-600">{r.date}</td>
-                      <td className="p-2 text-right font-black text-orange-600">{r.count}회</td>
+                      <td className="p-2 text-right font-bold text-slate-900">{r.count}회</td>
                       <td className="p-2 pr-3 text-right">
                         {onDeleteRecord && (
                           <button

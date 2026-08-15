@@ -50,11 +50,11 @@ export const GymNameModal: React.FC<GymNameModalProps> = ({
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mb-4 shadow-inner">
+          <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4">
             <Building2 className="w-7 h-7" />
           </div>
 
-          <h3 className="text-lg font-black text-slate-900 mb-1">체육관 이름 변경</h3>
+          <h3 className="text-lg font-bold text-slate-900 mb-1">체육관 이름 변경</h3>
           <p className="text-xs text-slate-500 font-medium leading-relaxed mb-5">
             랭킹보드와 공개 페이지에 표시되는 이름이에요.
           </p>
@@ -69,7 +69,7 @@ export const GymNameModal: React.FC<GymNameModalProps> = ({
               }}
               placeholder="체육관 이름"
               autoFocus
-              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all"
+              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white transition-all"
             />
 
             {error && (
@@ -83,14 +83,14 @@ export const GymNameModal: React.FC<GymNameModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs transition-colors cursor-pointer"
+                className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
               >
                 취소
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-60 text-white font-extrabold text-xs shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+                className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold text-xs transition-all cursor-pointer"
               >
                 {isSaving ? '저장 중...' : '저장'}
               </button>

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Users, ClipboardList, CalendarDays, Trophy } from 'lucide-react';
 import { Student, DisplayTab, TimeFilter, GradeCategoryFilter, EventKey } from '../types';
 import { getLeaderboardData } from '../lib/scoring';
@@ -52,7 +51,7 @@ export default function AdminAppPage() {
             <button
               type="button"
               onClick={() => refreshGym()}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-extrabold text-sm shadow-md shadow-orange-500/20"
+              className="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-sm"
             >
               다시 시도
             </button>
@@ -72,7 +71,7 @@ export default function AdminAppPage() {
   if (!gym || gymLoading || studentsLoading || eventsLoading || recordsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8]">
-        <span className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <span className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -82,14 +81,6 @@ export default function AdminAppPage() {
 
   const thisMonthPrefix = new Date().toISOString().slice(0, 7); // YYYY-MM
   const thisMonthCount = records.filter((r) => r.date.startsWith(thisMonthPrefix)).length;
-
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const iso = d.toISOString().slice(0, 10);
-    return { date: iso, count: records.filter((r) => r.date === iso).length };
-  });
-  const last7DaysTotal = last7Days.reduce((sum, d) => sum + d.count, 0);
 
   const summaryStats = [
     { icon: Users, label: '전체 수련생', value: `${students.length}명` },
@@ -116,7 +107,7 @@ export default function AdminAppPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f5f8] text-slate-900 font-sans antialiased selection:bg-orange-500 selection:text-white">
+    <div className="min-h-screen bg-[#f4f5f8] text-slate-900 font-sans antialiased selection:bg-slate-900 selection:text-white">
       <Header
         activeView={activeView}
         setActiveView={setActiveView}
@@ -179,31 +170,6 @@ export default function AdminAppPage() {
                   </div>
                 </div>
               ))}
-            </div>
-
-            {/* Dark hero trend card */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-6 mb-6 text-white shadow-lg">
-              <p className="text-xs text-slate-400 font-semibold mb-1">최근 7일 측정 활동</p>
-              <p className="text-3xl font-black mb-3">{last7DaysTotal}건</p>
-              <div className="h-20">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={last7Days}>
-                    <defs>
-                      <linearGradient id="heroTrendGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f97316" stopOpacity={0.5} />
-                        <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="count"
-                      stroke="#fb923c"
-                      strokeWidth={2}
-                      fill="url(#heroTrendGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
             </div>
 
             <EventSelector

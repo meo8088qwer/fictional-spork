@@ -310,10 +310,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     }
 
     if (entriesToSave.length > 0) {
-      let summaryMsg = `🎉 엑셀 기록 총 ${entriesToSave.length}건이 성공적으로 등록되었습니다!`;
-      if (newPbCount > 0) summaryMsg += ` (🏆 신기록 갱신: ${newPbCount}건)`;
-      if (maintainedPbCount > 0) summaryMsg += ` (🔒 기존 최고기록 안전 유지: ${maintainedPbCount}건)`;
-      if (createdStudentNames.length > 0) summaryMsg += ` (👤 신규 수련생 ${createdStudentNames.length}명 자동 생성)`;
+      let summaryMsg = `엑셀 기록 총 ${entriesToSave.length}건이 성공적으로 등록되었습니다!`;
+      if (newPbCount > 0) summaryMsg += ` (신기록 갱신: ${newPbCount}건)`;
+      if (maintainedPbCount > 0) summaryMsg += ` (기존 최고기록 안전 유지: ${maintainedPbCount}건)`;
+      if (createdStudentNames.length > 0) summaryMsg += ` (신규 수련생 ${createdStudentNames.length}명 자동 생성)`;
       setExcelSuccessSummary(summaryMsg);
     }
     setParsedExcelRows([]);
@@ -399,7 +399,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     if (stopMessage) setActionError(stopMessage);
 
     if (addedCount > 0) {
-      let msg = `🎉 총 ${addedCount}명의 수련생이 명단에 새로 등록되었습니다!`;
+      let msg = `총 ${addedCount}명의 수련생이 명단에 새로 등록되었습니다!`;
       if (skippedCount > 0) msg += ` (중복된 수련생 ${skippedCount}명 자동 제외)`;
       setRosterSuccessMsg(msg);
     }
@@ -447,10 +447,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/80">
+            <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
               <ClipboardEdit className="w-5 h-5" />
             </span>
-            <h2 className="text-lg font-black text-slate-900">
+            <h2 className="text-lg font-bold text-slate-900">
               관리자 전용 기록 일괄 & 엑셀 등록 대시보드
             </h2>
           </div>
@@ -460,69 +460,69 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         </div>
 
         {/* Sub Navigation */}
-        <div className="flex flex-wrap items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 text-xs uppercase tracking-wider font-bold">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 text-xs font-bold">
           <button
             onClick={() => setActiveSubTab('BATCH')}
             className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
               activeSubTab === 'BATCH'
-                ? 'bg-white text-orange-600 shadow-xs font-black border border-slate-200/80'
+                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <ClipboardEdit className="w-3.5 h-3.5" />
-            <span>📝 직접 일괄 입력</span>
+            <span>직접 일괄 입력</span>
           </button>
           <button
             onClick={() => setActiveSubTab('EXCEL')}
             className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
               activeSubTab === 'EXCEL'
-                ? 'bg-white text-emerald-600 shadow-xs font-black border border-slate-200/80'
+                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>📊 엑셀 대량 등록</span>
+            <span>엑셀 대량 등록</span>
           </button>
           <button
             onClick={() => setActiveSubTab('EVENTS')}
             className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
               activeSubTab === 'EVENTS'
-                ? 'bg-white text-indigo-600 shadow-xs font-black border border-slate-200/80'
+                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <Trophy className="w-3.5 h-3.5 text-indigo-500" />
-            <span>🎯 종목 관리 ({eventKeys.length}개)</span>
+            <Trophy className="w-3.5 h-3.5" />
+            <span>종목 관리 ({eventKeys.length}개)</span>
           </button>
           <button
             onClick={() => setActiveSubTab('STUDENTS')}
             className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
               activeSubTab === 'STUDENTS'
-                ? 'bg-white text-orange-600 shadow-xs font-black border border-slate-200/80'
+                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            <span>👥 수련생 명단 ({students.length}명)</span>
+            <span>수련생 명단 ({students.length}명)</span>
           </button>
         </div>
       </div>
 
       {savedSuccessAlert && (
-        <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-800 font-extrabold text-sm flex items-center gap-3 animate-bounce">
+        <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-800 font-bold text-sm flex items-center gap-3">
           <CheckCircle2 className="w-6 h-6 text-emerald-600" />
           <span>기록이 성공적으로 저장되었습니다! 실시간 랭킹보드에 적용됩니다.</span>
         </div>
       )}
 
       {actionError && (
-        <div className="mb-6 bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-800 font-extrabold text-sm flex items-center justify-between gap-3">
+        <div className="mb-6 bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-800 font-bold text-sm flex items-center justify-between gap-3">
           <span className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
             <span>{actionError}</span>
           </span>
           <button
             onClick={() => setActionError('')}
-            className="text-rose-700 hover:text-rose-900 text-[11px] font-extrabold underline shrink-0"
+            className="text-rose-700 hover:text-rose-900 text-[11px] font-bold underline shrink-0"
           >
             확인
           </button>
@@ -533,11 +533,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       {activeSubTab === 'BATCH' && (
         <div>
           {/* Personal Best Reassurance Banner */}
-          <div className="mb-6 bg-amber-50/90 border border-amber-200/90 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-amber-900 font-medium shadow-2xs">
-            <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="mb-6 bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-slate-600 font-medium">
+            <ShieldCheck className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
             <div>
-              <span className="font-extrabold text-amber-950 block mb-0.5">
-                🛡️ 최고 기록(PB) 안전 보존 시스템 안내
+              <span className="font-bold text-slate-900 block mb-0.5">
+                최고 기록(PB) 안전 보존 시스템 안내
               </span>
               <span>
                 오늘 입력한 측정 기록이 이전 최고기록보다 낮더라도 (예: 기존 최고 70회, 오늘 측정 65회), 수련생의 최고 기록 70회와 랭킹순위는 안전하게 유지되며 오늘 측정된 65회는 수련생의 성장 이력 그래프에만 기록됩니다.
@@ -555,7 +555,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               <select
                 value={selectedEventKey}
                 onChange={(e) => setSelectedEventKey(e.target.value as EventKey)}
-                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 font-semibold focus:outline-none focus:border-orange-500 shadow-xs"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 font-semibold focus:outline-none focus:border-slate-400 shadow-xs"
               >
                 {eventKeys.map((key) => {
                   const meta = events[key];
@@ -579,7 +579,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   type="date"
                   value={measurementDate}
                   onChange={(e) => setMeasurementDate(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 font-semibold focus:outline-none focus:border-orange-500 shadow-xs"
+                  className="w-full pl-10 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 font-semibold focus:outline-none focus:border-slate-400 shadow-xs"
                 />
               </div>
             </div>
@@ -619,9 +619,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               <button
                 type="button"
                 onClick={handleQuickAutoFillPBs}
-                className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold border border-amber-200/80 transition-all flex items-center gap-1 shadow-xs"
+                className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-all flex items-center gap-1"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <Sparkles className="w-3.5 h-3.5" />
                 <span>기존 최고기록 불러오기</span>
               </button>
               <button
@@ -666,7 +666,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                         className={`transition-colors ${isDone ? 'bg-emerald-50/60' : 'hover:bg-slate-50'}`}
                       >
                         <td className="p-3 text-slate-400 font-mono">{student.studentNo}</td>
-                        <td className="p-3 font-extrabold text-slate-900 flex items-center gap-2">
+                        <td className="p-3 font-bold text-slate-900 flex items-center gap-2">
                           <div
                             className={`w-6 h-6 rounded-lg bg-gradient-to-tr ${student.avatarColor} text-white font-bold text-[10px] flex items-center justify-center`}
                           >
@@ -676,7 +676,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                           {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                         </td>
                         <td className="p-3 text-slate-500 font-medium">{student.grade}</td>
-                        <td className="p-3 text-amber-700 font-bold">
+                        <td className="p-3 text-slate-600 font-bold">
                           {pb ? `${pb.count}회 (${pb.date})` : '기록 없음'}
                         </td>
                         <td className="p-3 text-right">
@@ -698,7 +698,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                                 }
                               }
                             }}
-                            className="w-28 text-right px-3 py-1.5 bg-slate-50 border border-slate-200 focus:border-orange-500 rounded-lg text-sm text-orange-600 font-black focus:outline-none shadow-xs"
+                            className="w-28 text-right px-3 py-1.5 bg-slate-50 border border-slate-200 focus:border-slate-400 rounded-lg text-sm text-slate-900 font-bold focus:outline-none shadow-xs"
                           />
                         </td>
                       </tr>
@@ -720,7 +720,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
             <button
               onClick={handleSaveBatch}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm shadow-md shadow-orange-500/20 transition-all flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-all flex items-center gap-2"
             >
               <Save className="w-4 h-4" />
               <span>일괄 기록 저장하기</span>
@@ -735,13 +735,13 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           {/* Step 1: Download Template & Instructions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Template Download Card */}
-            <div className="bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white p-5 rounded-2xl border border-emerald-200/80 shadow-2xs">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
               <div className="flex items-center gap-3 mb-3">
-                <span className="p-2.5 rounded-xl bg-emerald-500 text-white shadow-xs">
+                <span className="p-2.5 rounded-xl bg-slate-100 text-slate-600">
                   <Download className="w-5 h-5" />
                 </span>
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-900">
+                  <h3 className="text-sm font-bold text-slate-900">
                     1. 엑셀 표준 등록 양식 다운로드
                   </h3>
                   <p className="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -752,40 +752,40 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
               <ul className="text-xs text-slate-600 space-y-1.5 mb-4 pl-1 font-medium">
                 <li className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                   <strong>종합 종목별 양식:</strong> 한 줄에 수련생 이름과 6개 종목 기록을 함께 작성
                 </li>
                 <li className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                   <strong>필수 항목:</strong> 수련생이름, 학년, 측정일자, 종목별 측정기록(회)
                 </li>
                 <li className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                  <strong>학년 간편 입력 지원:</strong> <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-bold">유-6</code>, <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-bold">유-7</code>, <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-bold">초-1</code> ~ <code className="bg-amber-100 text-amber-900 px-1 py-0.5 rounded font-bold">초-6</code> 자동 변환
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  <strong>학년 간편 입력 지원:</strong> <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">유-6</code>, <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">유-7</code>, <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">초-1</code> ~ <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">초-6</code> 자동 변환
                 </li>
                 <li className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                   <strong>자동 등록:</strong> 신규 수련생 이름 입력 시 수련생 명단 자동 생성!
                 </li>
               </ul>
 
               <button
                 onClick={() => downloadExcelTemplate(events)}
-                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <FileSpreadsheet className="w-4 h-4" />
-                <span>📥 엑셀 등록 양식 파일 (.xlsx) 다운로드</span>
+                <span>엑셀 등록 양식 파일 (.xlsx) 다운로드</span>
               </button>
             </div>
 
             {/* Personal Best Guarantee Card */}
-            <div className="bg-gradient-to-br from-amber-50 via-orange-50/30 to-white p-5 rounded-2xl border border-amber-200/80 shadow-2xs">
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
               <div className="flex items-center gap-3 mb-3">
-                <span className="p-2.5 rounded-xl bg-amber-500 text-white shadow-xs">
+                <span className="p-2.5 rounded-xl bg-slate-100 text-slate-600">
                   <ShieldCheck className="w-5 h-5" />
                 </span>
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-900">
+                  <h3 className="text-sm font-bold text-slate-900">
                     2. 최고 기록(PB) 보호 및 갱신 원칙
                   </h3>
                   <p className="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -794,15 +794,15 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-2 text-xs text-slate-700 font-medium bg-white/80 p-3 rounded-xl border border-amber-200/60">
+              <div className="space-y-2 text-xs text-slate-700 font-medium bg-slate-50 p-3 rounded-xl border border-slate-200/60">
                 <div className="flex items-start gap-2">
-                  <span className="text-emerald-600 font-bold shrink-0">🏆 [신기록 갱신]</span>
+                  <span className="text-emerald-600 font-bold shrink-0">[신기록 갱신]</span>
                   <span>
                     엑셀의 기록이 기존 최고기록보다 높은 경우 (예: 기존 70회 → 엑셀 75회), <strong>75회로 신기록 갱신</strong>되며 랭킹 상승!
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-amber-700 font-bold shrink-0">🔒 [최고기록 유지]</span>
+                  <span className="text-slate-500 font-bold shrink-0">[최고기록 유지]</span>
                   <span>
                     엑셀의 기록이 기존 최고기록보다 낮거나 같은 경우 (예: 기존 70회 → 엑셀 65회), <strong>기존 70회 기록 유지</strong>! (65회는 측정 이력에 저장)
                   </span>
@@ -813,14 +813,14 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
           {/* Success Summary Banner */}
           {excelSuccessSummary && (
-            <div className="bg-emerald-50 border-2 border-emerald-300 p-4 rounded-2xl text-xs font-bold text-emerald-900 flex items-center justify-between gap-3 shadow-xs">
+            <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-xs font-bold text-emerald-900 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                 <span>{excelSuccessSummary}</span>
               </div>
               <button
                 onClick={() => setExcelSuccessSummary('')}
-                className="text-emerald-700 hover:text-emerald-900 text-[11px] font-extrabold underline shrink-0"
+                className="text-emerald-700 hover:text-emerald-900 text-[11px] font-bold underline shrink-0"
               >
                 확인
               </button>
@@ -828,7 +828,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           )}
 
           {/* Step 2: Upload Zone */}
-          <div className="bg-slate-50/80 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-6 text-center transition-all">
+          <div className="bg-slate-50/80 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-6 text-center transition-all">
             <input
               ref={fileInputRef}
               type="file"
@@ -841,11 +841,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               htmlFor="excel-file-input"
               className="cursor-pointer flex flex-col items-center justify-center gap-2"
             >
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-emerald-600">
+              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-slate-600">
                 <Upload className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-sm font-black text-slate-900 block">
+                <span className="text-sm font-bold text-slate-900 block">
                   작성된 엑셀 파일(.xlsx, .xls, .csv) 선택 또는 드래그앤드롭
                 </span>
                 <span className="text-xs text-slate-500 font-medium">
@@ -855,15 +855,15 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             </label>
 
             {excelFileName && (
-              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
-                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
+                <FileSpreadsheet className="w-4 h-4 text-slate-500" />
                 <span>선택된 파일: {excelFileName}</span>
               </div>
             )}
 
             {isParsingExcel && (
-              <p className="text-xs text-orange-600 font-bold mt-2 animate-pulse">
-                ⏳ 엑셀 파일을 분석하고 수련생 기록 데이터를 검증하는 중입니다...
+              <p className="text-xs text-slate-500 font-bold mt-2 animate-pulse">
+                엑셀 파일을 분석하고 수련생 기록 데이터를 검증하는 중입니다...
               </p>
             )}
 
@@ -880,7 +880,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                 <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>엑셀 데이터 검증 결과 (총 {parsedExcelRows.length}건 감지)</span>
                   </h3>
@@ -891,10 +891,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
                 <button
                   onClick={handleConfirmExcelImport}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
-                  <span>🚀 엑셀 데이터 최종 등록하기 ({parsedExcelRows.length}건)</span>
+                  <span>엑셀 데이터 최종 등록하기 ({parsedExcelRows.length}건)</span>
                 </button>
               </div>
 
@@ -928,8 +928,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                           <td className="p-2.5 font-bold text-slate-900 flex items-center gap-1.5">
                             <span>{row.studentName}</span>
                             {isNewStudent && (
-                              <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-extrabold">
-                                👤 신규
+                              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">
+                                신규
                               </span>
                             )}
                           </td>
@@ -938,7 +938,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                             {eventMeta ? eventMeta.title : row.eventKey}
                           </td>
                           <td className="p-2.5 font-mono text-slate-500 text-[11px]">{row.date}</td>
-                          <td className="p-2.5 text-right font-black text-orange-600 text-sm">
+                          <td className="p-2.5 text-right font-bold text-slate-900 text-sm">
                             {row.count}회
                           </td>
                           <td className="p-2.5 text-right font-bold text-slate-600">
@@ -946,13 +946,13 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                           </td>
                           <td className="p-2.5 text-center">
                             {isNewPB ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-extrabold text-[11px] border border-emerald-300">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]">
                                 <Award className="w-3 h-3 text-emerald-600" />
-                                🏆 신기록 갱신
+                                신기록 갱신
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-[11px] border border-amber-300">
-                                🔒 최고기록 ({previousPb?.count}회) 유지
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-[11px]">
+                                최고기록 ({previousPb?.count}회) 유지
                               </span>
                             )}
                           </td>
@@ -972,8 +972,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/80 p-4 rounded-xl border border-slate-200/80">
             <div>
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-indigo-500" />
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-slate-400" />
                 <span>체육관 맞춤 측정 종목 설정 ({eventKeys.length}개 종목)</span>
               </h3>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -996,10 +996,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 onClick={() => setShowAddEventModal(true)}
                 disabled={eventKeys.length >= eventLimit}
                 title={eventKeys.length >= eventLimit ? planLimitMessage('FREE_PLAN_EVENT_LIMIT_REACHED') : undefined}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>➕ 새 측정 종목 추가{eventLimit !== Infinity ? ` (${eventKeys.length}/${eventLimit})` : ''}</span>
+                <span>새 측정 종목 추가{eventLimit !== Infinity ? ` (${eventKeys.length}/${eventLimit})` : ''}</span>
               </button>
             </div>
           </div>
@@ -1014,11 +1014,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
                         {meta.timeSeconds}초 측정
                       </span>
                       {meta.isCustom ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-900 text-white">
                           직접 추가됨
                         </span>
                       ) : (
@@ -1026,7 +1026,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                       )}
                     </div>
 
-                    <h4 className="text-sm font-extrabold text-slate-900 mb-1">{meta.title}</h4>
+                    <h4 className="text-sm font-bold text-slate-900 mb-1">{meta.title}</h4>
                     <p className="text-xs text-slate-500 font-medium mb-2">{meta.technique}</p>
 
                     <div className="flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 p-2 rounded-xl font-mono">
@@ -1057,14 +1057,14 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       {activeSubTab === 'STUDENTS' && (
         <div className="space-y-6">
           {/* Top Banner & Excel Roster Upload Card */}
-          <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-slate-50 border border-emerald-200/90 rounded-2xl p-4 sm:p-5 shadow-xs">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="p-1.5 rounded-lg bg-emerald-600 text-white font-bold text-xs">
-                    📁 엑셀 명단 일괄 등록
+                  <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs">
+                    엑셀 명단 일괄 등록
                   </span>
-                  <h3 className="text-sm font-extrabold text-slate-900">
+                  <h3 className="text-sm font-bold text-slate-900">
                     전체 수련생 명단(80~100명+) 엑셀 한 번에 올리기
                   </h3>
                 </div>
@@ -1076,15 +1076,15 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               <button
                 type="button"
                 onClick={() => downloadStudentRosterTemplate(gym.name)}
-                className="px-3.5 py-2 rounded-xl bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-700 text-xs font-extrabold transition-all flex items-center gap-1.5 shrink-0 shadow-2xs cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
-                <Download className="w-4 h-4 text-emerald-600" />
-                <span>📥 수련생 명단 엑셀 양식 다운로드</span>
+                <Download className="w-4 h-4" />
+                <span>수련생 명단 엑셀 양식 다운로드</span>
               </button>
             </div>
 
             {/* Roster File Upload Area */}
-            <div className="bg-white border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl p-4 text-center transition-colors">
+            <div className="bg-slate-50/80 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-xl p-4 text-center transition-colors">
               <input
                 ref={rosterFileInputRef}
                 type="file"
@@ -1098,8 +1098,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 htmlFor="roster-excel-input"
                 className="cursor-pointer flex flex-col items-center justify-center gap-1.5"
               >
-                <Upload className="w-7 h-7 text-emerald-600 animate-bounce" />
-                <span className="text-xs font-extrabold text-slate-800">
+                <Upload className="w-7 h-7 text-slate-500" />
+                <span className="text-xs font-bold text-slate-800">
                   수련생 명단 엑셀 파일 선택 또는 드래그앤드롭 (.xlsx / .csv)
                 </span>
                 <span className="text-[11px] text-slate-400 font-medium">
@@ -1109,8 +1109,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             </div>
 
             {isParsingRosterExcel && (
-              <div className="mt-3 text-center text-xs text-emerald-700 font-bold flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></span>
+              <div className="mt-3 text-center text-xs text-slate-500 font-bold flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
                 <span>수련생 명단 엑셀 분석 중...</span>
               </div>
             )}
@@ -1123,7 +1123,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             )}
 
             {rosterSuccessMsg && (
-              <div className="mt-3 p-3 bg-emerald-100 border border-emerald-300 text-emerald-900 rounded-xl text-xs font-extrabold flex items-center gap-2">
+              <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2">
                 <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
                 <span>{rosterSuccessMsg}</span>
               </div>
@@ -1134,10 +1134,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               <div className="mt-4 pt-4 border-t border-emerald-200/80">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-slate-800">
-                      📋 업로드된 명단 미리보기 ({parsedRosterRows.length}명 감지됨)
+                    <span className="text-xs font-bold text-slate-800">
+                      업로드된 명단 미리보기 ({parsedRosterRows.length}명 감지됨)
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                       {parsedRosterRows.filter((r) => !students.some((s) => s.name.trim() === r.name.trim())).length}명 신규 등록 예정
                     </span>
                   </div>
@@ -1153,7 +1153,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     <button
                       type="button"
                       onClick={handleConfirmBatchRosterImport}
-                      className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <UserPlus className="w-4 h-4" />
                       <span>수련생 명단 최종 일괄 등록 실행 ({parsedRosterRows.length}명)</span>
@@ -1176,19 +1176,19 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                       {parsedRosterRows.map((row, idx) => {
                         const isExisting = students.some((s) => s.name.trim() === row.name.trim());
                         return (
-                          <tr key={idx} className={isExisting ? 'bg-amber-50/50' : 'hover:bg-slate-50'}>
+                          <tr key={idx} className={isExisting ? 'bg-slate-50/80' : 'hover:bg-slate-50'}>
                             <td className="p-2.5 text-center text-slate-400 font-mono text-[11px]">{idx + 1}</td>
                             <td className="p-2.5 font-bold text-slate-900">{row.name}</td>
                             <td className="p-2.5 text-slate-600">{row.grade}</td>
                             <td className="p-2.5 text-slate-600">{row.gender === 'M' ? '남학생' : '여학생'}</td>
                             <td className="p-2.5 text-right">
                               {isExisting ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
                                   기존 수련생 (중복제외)
                                 </span>
                               ) : (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                  ✨ 신규 추가
+                                  신규 추가
                                 </span>
                               )}
                             </td>
@@ -1206,9 +1206,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <span>체육관 등록 수련생 목록</span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-black">
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
                     총 {students.length}명
                   </span>
                 </h3>
@@ -1219,9 +1219,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   onClick={() => setShowAddStudentModal(true)}
                   disabled={students.length >= studentLimit}
                   title={students.length >= studentLimit ? planLimitMessage('STUDENT_LIMIT_REACHED') : undefined}
-                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-extrabold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                 >
-                  <UserPlus className="w-4 h-4 text-white" />
+                  <UserPlus className="w-4 h-4" />
                   <span>개별 수련생 직접 추가 ({students.length}/{studentLimit})</span>
                 </button>
               </div>
@@ -1236,7 +1236,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   placeholder="수련생 이름 검색..."
                   value={studentRosterSearch}
                   onChange={(e) => setStudentRosterSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-emerald-500"
+                  className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-slate-400"
                 />
               </div>
 
@@ -1274,7 +1274,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                         {student.name.substring(0, 1)}
                       </div>
                       <div>
-                        <div className="font-extrabold text-slate-900 text-xs">{student.name}</div>
+                        <div className="font-bold text-slate-900 text-xs">{student.name}</div>
                         <div className="text-[10px] text-slate-500 font-medium">
                           {student.grade} • {student.studentNo}
                         </div>
@@ -1300,8 +1300,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       {showAddEventModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs grid place-items-center p-4 overflow-y-auto">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-base font-extrabold text-slate-900 mb-1">
-              🎯 커스텀 줄넘기 종목 추가
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              커스텀 줄넘기 종목 추가
             </h3>
             <p className="text-xs text-slate-500 mb-4">
               우리 체육관만의 특화 종목을 새로 등록하세요.
@@ -1352,7 +1352,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   placeholder="예: 2중 3단계 30초"
                   value={newEventTitle}
                   onChange={(e) => setNewEventTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-indigo-500 font-medium"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
                 />
               </div>
 
@@ -1364,7 +1364,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     placeholder="예: 2중3단계"
                     value={newEventShortTitle}
                     onChange={(e) => setNewEventShortTitle(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-indigo-500 font-medium"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
                   />
                 </div>
 
@@ -1376,7 +1376,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     max="600"
                     value={newEventTimeSeconds}
                     onChange={(e) => setNewEventTimeSeconds(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-indigo-500 font-medium"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
                   />
                 </div>
               </div>
@@ -1388,7 +1388,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   placeholder="예: 이중 뛰기 변형 동작"
                   value={newEventTechnique}
                   onChange={(e) => setNewEventTechnique(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-indigo-500 font-medium"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
                 />
               </div>
 
@@ -1424,7 +1424,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-black hover:bg-indigo-700 shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800"
                 >
                   종목 추가 완료
                 </button>
@@ -1438,7 +1438,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       {showAddStudentModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs grid place-items-center p-4 overflow-y-auto">
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-base font-extrabold text-slate-900 mb-4">
+            <h3 className="text-base font-bold text-slate-900 mb-4">
               신규 수련생 등록
             </h3>
             <form onSubmit={handleCreateStudentSubmit} className="space-y-4 text-xs">
@@ -1450,7 +1450,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   placeholder="예: 김민우"
                   value={newStudentName}
                   onChange={(e) => setNewStudentName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-orange-500 font-medium"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
                 />
               </div>
 
@@ -1503,7 +1503,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-orange-500 text-white font-black hover:bg-orange-600 shadow-xs"
+                  className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800"
                 >
                   등록하기
                 </button>

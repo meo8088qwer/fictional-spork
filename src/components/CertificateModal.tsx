@@ -96,7 +96,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
       pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
       pdf.save(`${student.name}_줄넘기_기록인증상장.pdf`);
 
-      setPdfSuccess('🎉 PDF 파일이 정상적으로 다운로드되었습니다!');
+      setPdfSuccess('PDF 파일이 정상적으로 다운로드되었습니다!');
       setTimeout(() => setPdfSuccess(''), 4000);
     } catch (err) {
       console.error('PDF generation error:', err);
@@ -131,7 +131,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
       link.click();
       document.body.removeChild(link);
 
-      setPdfSuccess('🎉 상장 이미지(PNG)가 성공적으로 저장되었습니다!');
+      setPdfSuccess('상장 이미지(PNG)가 성공적으로 저장되었습니다!');
       setTimeout(() => setPdfSuccess(''), 4000);
     } catch (err) {
       console.error('Image generation error:', err);
@@ -188,11 +188,11 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
         {/* Header Controls (Hidden during print) */}
         <div className="no-print flex flex-wrap items-center justify-between gap-3 mb-4 bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-amber-100 text-amber-700 shrink-0">
-              <Trophy className="w-5 h-5 text-amber-600" />
+            <span className="p-2 rounded-xl bg-slate-100 text-slate-600 shrink-0">
+              <Trophy className="w-5 h-5" />
             </span>
             <div>
-              <h2 className="text-sm sm:text-base font-black text-slate-900">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
                 {student.name} 수련생 A4 공식 상장
               </h2>
               <p className="text-[11px] text-slate-500 font-medium">
@@ -207,7 +207,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               type="button"
               onClick={handleDownloadPdf}
               disabled={isGeneratingPdf}
-              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
             >
               {isGeneratingPdf ? (
                 <>
@@ -217,7 +217,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               ) : (
                 <>
                   <Download className="w-4 h-4" />
-                  <span>📥 PDF 저장</span>
+                  <span>PDF 저장</span>
                 </>
               )}
             </button>
@@ -227,7 +227,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               type="button"
               onClick={handleDownloadImage}
               disabled={isGeneratingImage}
-              className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md shadow-indigo-600/20 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
             >
               {isGeneratingImage ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -243,7 +243,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 type="button"
                 onClick={handleShare}
                 disabled={isSharing}
-                className="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs shadow-md shadow-sky-600/20 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
               >
                 {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
                 <span>학부모에게 공유</span>
@@ -254,10 +254,10 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
             <button
               type="button"
               onClick={handlePrint}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
-              <span>🖨️ 상장 인쇄 (A4)</span>
+              <span>상장 인쇄 (A4)</span>
             </button>
 
             {/* Close Button */}
@@ -272,17 +272,17 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
         </div>
 
         {/* Event Selector bar inside modal (Hidden during print) */}
-        <div className="no-print mb-4 flex items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-amber-200/90 text-xs shadow-2xs">
-          <span className="font-extrabold text-amber-900 flex items-center gap-1.5">
-            <Award className="w-4 h-4 text-amber-600" />
+        <div className="no-print mb-4 flex items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/90 text-xs shadow-2xs">
+          <span className="font-bold text-slate-700 flex items-center gap-1.5">
+            <Award className="w-4 h-4 text-slate-400" />
             상장 발급 기준 종목:
           </span>
           <select
             value={selectedEventKey}
             onChange={(e) => setSelectedEventKey(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 font-extrabold text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
           >
-            <option value="OVERALL">🏆 종합 최고 기록 (가장 높은 기록 자동선택)</option>
+            <option value="OVERALL">종합 최고 기록 (가장 높은 기록 자동선택)</option>
             {eventKeys.map((k) => (
               <option key={k} value={k}>
                 {events[k]?.title || k}
@@ -293,7 +293,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
         {/* Success Alert Banner (Hidden during print) */}
         {pdfSuccess && (
-          <div className="no-print mb-4 bg-emerald-50 border border-emerald-300 p-3 rounded-xl text-xs font-bold text-emerald-900 flex items-center gap-2 shadow-xs animate-fade-in">
+          <div className="no-print mb-4 bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs font-bold text-emerald-900 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{pdfSuccess}</span>
           </div>
