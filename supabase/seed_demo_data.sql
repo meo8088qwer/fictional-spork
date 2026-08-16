@@ -20,7 +20,7 @@ begin
   where owner_id = (select id from auth.users where email = 'test@naver.com');
 
   if v_gym_id is null then
-    raise exception '해당 이메일로 가입된 체육관을 찾을 수 없습니다. 먼저 앱에서 회원가입한 뒤 다시 실행해 주세요. (demo-gym@example.com)';
+    raise exception '해당 이메일로 가입된 체육관을 찾을 수 없습니다. 먼저 앱에서 회원가입한 뒤 다시 실행해 주세요. (test@naver.com)';
   end if;
 
   delete from jump_records where gym_id = v_gym_id;
