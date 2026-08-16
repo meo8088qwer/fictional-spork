@@ -10,10 +10,9 @@ interface StudentProfileModalProps {
   records: JumpRecord[];
   events: Record<string, EventMeta>;
   isAdmin?: boolean;
-  onRequestAdminAuth?: () => void;
   onDeleteStudent?: (studentId: string) => void;
   onDeleteRecord?: (recordId: string) => void;
-  onOpenCertificate: (student: Student) => void;
+  onOpenCertificate?: (student: Student) => void;
   onClose: () => void;
 }
 
@@ -22,7 +21,6 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   records,
   events,
   isAdmin = false,
-  onRequestAdminAuth,
   onDeleteStudent,
   onDeleteRecord,
   onOpenCertificate,
@@ -88,9 +86,11 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   {student.grade}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-1 font-mono font-medium">
-                수련생 번호: {student.studentNo} • 입관일: {student.joinDate}
-              </p>
+              {isAdmin && (
+                <p className="text-xs text-slate-500 mt-1 font-mono font-medium">
+                  수련생 번호: {student.studentNo} • 입관일: {student.joinDate}
+                </p>
+              )}
             </div>
           </div>
 
@@ -98,13 +98,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             {onDeleteStudent && (
               <button
                 type="button"
-                onClick={() => {
-                  if (isAdmin) {
-                    setShowStudentDeleteConfirm(true);
-                  } else if (onRequestAdminAuth) {
-                    onRequestAdminAuth();
-                  }
-                }}
+                onClick={() => setShowStudentDeleteConfirm(true)}
                 className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -112,14 +106,16 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => onOpenCertificate(student)}
-              className="px-4 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              <span>기록 인증 상장 발급</span>
-            </button>
+            {onOpenCertificate && (
+              <button
+                type="button"
+                onClick={() => onOpenCertificate(student)}
+                className="px-4 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>기록 인증 상장 발급</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -253,9 +249,11 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               <Calendar className="w-4 h-4 text-slate-400" />
               <span>[{selectedMeta?.title || '선택 종목'}] 상세 기록 이력 관리</span>
             </h4>
-            <span className="text-[10px] text-slate-400 font-mono font-medium">
-              잘못 입력된 기록은 즉시 삭제할 수 있습니다
-            </span>
+            {onDeleteRecord && (
+              <span className="text-[10px] text-slate-400 font-mono font-medium">
+                잘못 입력된 기록은 즉시 삭제할 수 있습니다
+              </span>
+            )}
           </div>
 
           {studentEventRecords.length === 0 ? (
@@ -269,7 +267,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   <tr className="bg-slate-50 border-b border-slate-200 font-bold text-slate-500">
                     <th className="p-2 pl-3">측정 날짜</th>
                     <th className="p-2 text-right">기록 (횟수)</th>
-                    <th className="p-2 pr-3 text-right">기록 삭제</th>
+                    {onDeleteRecord && <th className="p-2 pr-3 text-right">기록 삭제</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
@@ -277,24 +275,18 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                     <tr key={r.id} className="hover:bg-slate-50/80">
                       <td className="p-2 pl-3 font-mono text-slate-600">{r.date}</td>
                       <td className="p-2 text-right font-bold text-slate-900">{r.count}회</td>
-                      <td className="p-2 pr-3 text-right">
-                        {onDeleteRecord && (
+                      {onDeleteRecord && (
+                        <td className="p-2 pr-3 text-right">
                           <button
                             type="button"
-                            onClick={() => {
-                              if (isAdmin) {
-                                setRecordToDelete(r);
-                              } else if (onRequestAdminAuth) {
-                                onRequestAdminAuth();
-                              }
-                            }}
+                            onClick={() => setRecordToDelete(r)}
                             className="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
                             title="기록 삭제"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
-                        )}
-                      </td>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

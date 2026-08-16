@@ -7,7 +7,8 @@ import { getLeaderboardData } from '../lib/scoring';
 import { EventSelector } from '../components/EventSelector';
 import { Podium } from '../components/Podium';
 import { Leaderboard } from '../components/Leaderboard';
-import { DisplayTab, TimeFilter, GradeCategoryFilter } from '../types';
+import { StudentProfileModal } from '../components/StudentProfileModal';
+import { DisplayTab, TimeFilter, GradeCategoryFilter, Student } from '../types';
 
 export default function PublicBoardPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -16,6 +17,7 @@ export default function PublicBoardPage() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
   const [gradeFilter, setGradeFilter] = useState<GradeCategoryFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   const query = useQuery({
     queryKey: ['publicBoard', slug],
@@ -96,7 +98,14 @@ export default function PublicBoardPage() {
           events={board.events}
         />
 
-        <Podium topThree={topThree} activeTab={activeTab} onSelectStudent={() => {}} />
+        <Podium
+          topThree={topThree}
+          activeTab={activeTab}
+          onSelectStudent={(studentId) => {
+            const s = board.students.find((st) => st.id === studentId);
+            if (s) setSelectedStudent(s);
+          }}
+        />
 
         <Leaderboard
           items={leaderboardItems}
@@ -106,7 +115,10 @@ export default function PublicBoardPage() {
           setGradeFilter={setGradeFilter}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          onSelectStudent={() => {}}
+          onSelectStudent={(studentId) => {
+            const s = board.students.find((st) => st.id === studentId);
+            if (s) setSelectedStudent(s);
+          }}
         />
       </main>
 
@@ -114,6 +126,15 @@ export default function PublicBoardPage() {
         <Trophy className="w-4 h-4 inline mr-1 -mt-0.5" />
         Powered by 줄넘기 실시간 랭킹보드
       </footer>
+
+      {selectedStudent && (
+        <StudentProfileModal
+          student={selectedStudent}
+          records={board.records}
+          events={board.events}
+          onClose={() => setSelectedStudent(null)}
+        />
+      )}
     </div>
   );
 }
