@@ -123,8 +123,22 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
         </div>
       </div>
 
+      {/* Auto-transition progress bar */}
+      <div className="relative z-10 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+        {isAutoPlay && (
+          <div
+            key={`${currentEventIndex}-${autoPlaySeconds}`}
+            className="h-full bg-[#1B5E20] rounded-full"
+            style={{ animation: `tv-progress ${autoPlaySeconds}s linear` }}
+          />
+        )}
+      </div>
+
       {/* Main Discipline Banner & Rankings */}
-      <div className="relative z-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div
+        key={currentEventKey}
+        className="relative z-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-tv-transition"
+      >
         {/* Left: Active Discipline Spotlight (4 cols) */}
         <div className="lg:col-span-4 bg-[#1B5E20] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between">
           <div>
