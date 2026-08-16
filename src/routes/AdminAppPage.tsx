@@ -86,7 +86,7 @@ export default function AdminAppPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#f4f5f8] text-slate-900 font-sans antialiased selection:bg-[#1B5E20] selection:text-white">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#f4f5f8] text-slate-900 font-sans antialiased selection:bg-[#1B5E20] selection:text-white">
       <Header
         activeView={activeView}
         setActiveView={setActiveView}

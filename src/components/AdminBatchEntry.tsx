@@ -648,7 +648,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
               <button
                 type="button"
                 onClick={handleQuickAutoFillPBs}
@@ -668,7 +668,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           </div>
 
           {/* Student Grid Table */}
-          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden mb-6 max-h-96 overflow-y-auto shadow-xs">
+          <div className="bg-white border border-slate-200 rounded-xl mb-6 max-h-96 overflow-auto shadow-xs">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-slate-100/80 sticky top-0 border-b border-slate-200 text-slate-500 font-bold uppercase">
                 <tr>
@@ -1244,7 +1244,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   </div>
                 </div>
 
-                <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-xl bg-white">
+                <div className="max-h-60 overflow-auto border border-slate-200 rounded-xl bg-white">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">

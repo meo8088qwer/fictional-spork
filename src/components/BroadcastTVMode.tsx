@@ -64,14 +64,14 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-[#f4f5f8] text-slate-900 flex flex-col justify-between p-6 sm:p-10 select-none overflow-hidden">
       {/* Top Header Bar */}
-      <div className="relative z-10 flex items-center justify-between border-b border-slate-200 pb-4">
+      <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#1B5E20] flex items-center justify-center">
+          <div className="w-12 h-12 shrink-0 rounded-2xl bg-[#1B5E20] flex items-center justify-center">
             <Flame className="w-7 h-7 text-white" />
           </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold text-slate-900">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-xl sm:text-2xl font-bold text-slate-900">
                 {gymName} TV 랭킹 전광판
               </span>
               <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-600 font-bold flex items-center gap-1.5">
@@ -86,7 +86,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={() => setIsAutoPlay(!isAutoPlay)}
             className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs ${
