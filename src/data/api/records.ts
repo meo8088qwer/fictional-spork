@@ -10,6 +10,7 @@ function mapRecordRow(row: any): JumpRecord {
     eventKey: row.event_key,
     count: row.count,
     date: row.record_date,
+    createdAt: row.created_at,
     isPersonalBest: row.is_personal_best,
     isGymRecord: row.is_gym_record,
     videoUrl: row.video_url ?? undefined,

@@ -67,7 +67,7 @@ export default function PublicBoardPage() {
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3.5 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 shrink-0 bg-slate-900 rounded-xl flex items-center justify-center font-bold text-white text-lg">
+            <div className="w-10 h-10 shrink-0 bg-emerald-600 rounded-xl flex items-center justify-center font-bold text-white text-lg">
               {board.gymName.charAt(0)}
             </div>
             <div>
@@ -89,7 +89,6 @@ export default function PublicBoardPage() {
 
       <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6">
         <EventSelector
-          gymName={board.gymName}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           timeFilter={timeFilter}

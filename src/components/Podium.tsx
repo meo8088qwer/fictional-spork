@@ -9,36 +9,21 @@ interface PodiumProps {
   onSelectStudent: (studentId: string) => void;
 }
 
-export const Podium: React.FC<PodiumProps> = ({
-  topThree,
-  activeTab,
-  onSelectStudent,
-}) => {
+export const Podium: React.FC<PodiumProps> = ({ topThree, activeTab, onSelectStudent }) => {
   if (!topThree || topThree.length === 0) return null;
 
-  const firstPlace = topThree[0];
-  const secondPlace = topThree[1];
-  const thirdPlace = topThree[2];
-
   const handleCelebrate = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-    });
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
   };
 
   const getUnit = () => (activeTab === 'OVERALL' ? '점' : '회');
 
   return (
     <div className="mb-8">
-      {/* Podium Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
           <Trophy className="w-5 h-5 text-slate-400" />
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">
-            TOP 3 HALL OF FAME
-          </h3>
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">TOP 3 HALL OF FAME</h3>
         </div>
         <button
           onClick={handleCelebrate}
@@ -49,154 +34,41 @@ export const Podium: React.FC<PodiumProps> = ({
         </button>
       </div>
 
-      {/* Podium Layout: 2nd Place (Left), 1st Place (Center - Highest), 3rd Place (Right) */}
-      <div className="grid grid-cols-3 gap-3 sm:gap-6 items-end">
-        {/* 2nd Place */}
-        <div className="flex flex-col items-center">
-          {secondPlace ? (
-            <button
-              onClick={() => onSelectStudent(secondPlace.student.id)}
-              className="w-full bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 hover:border-slate-300 transition-all shadow-xs group text-center relative overflow-hidden flex flex-col items-center"
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        {topThree.map((item) => (
+          <button
+            key={item.student.id}
+            onClick={() => onSelectStudent(item.student.id)}
+            className={`p-4 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
+              item.rank === 1
+                ? 'bg-emerald-50 border-emerald-400'
+                : 'bg-white border-slate-200/90 hover:border-slate-300'
+            }`}
+          >
+            <span
+              className={`w-8 h-8 rounded-full font-bold text-sm flex items-center justify-center shrink-0 ${
+                item.rank === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
+              }`}
             >
-              <div className="absolute top-2 left-2 flex items-center gap-1">
-                <span className="w-7 h-7 bg-slate-200 text-slate-800 font-bold rounded-full flex items-center justify-center text-sm">
-                  2
-                </span>
-              </div>
-
-              {/* Avatar Circle */}
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 p-0.5 mb-2 mt-5 group-hover:scale-105 transition-transform">
-                <div
-                  className={`w-full h-full rounded-xl bg-gradient-to-tr ${secondPlace.student.avatarColor} flex items-center justify-center text-white font-bold text-base sm:text-lg`}
-                >
-                  {secondPlace.student.name.substring(0, 1)}
-                </div>
-              </div>
-
-              <span className="text-xs sm:text-sm font-bold text-slate-900 truncate w-full">
-                {secondPlace.student.name}
-              </span>
-              <span className="text-[11px] text-slate-500 font-semibold">
-                {secondPlace.student.grade}
-              </span>
-
-              <div className="mt-3 bg-slate-50 rounded-xl px-3 py-1.5 border border-slate-200/80 w-full text-center">
-                <div className="text-xl sm:text-2xl font-bold text-slate-800">
-                  {secondPlace.personalBestCount.toLocaleString()}
-                  <span className="text-xs text-slate-500 font-semibold ml-1">{getUnit()}</span>
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono truncate">
-                  {secondPlace.recordDate}
-                </div>
-              </div>
-            </button>
-          ) : (
-            <div className="w-full bg-white/60 border border-dashed border-slate-300 rounded-2xl p-6 text-center text-slate-400 text-xs">
-              2위 대기중
-            </div>
-          )}
-          <div className="w-full h-16 sm:h-20 bg-slate-200/90 border-t border-slate-300/80 rounded-t-xl mt-2 flex items-center justify-center font-bold text-2xl text-slate-400/80">
-            2ND
-          </div>
-        </div>
-
-        {/* 1st Place (Taller & Highlighted) */}
-        <div className="flex flex-col items-center">
-          {firstPlace ? (
-            <button
-              onClick={() => onSelectStudent(firstPlace.student.id)}
-              className="w-full bg-white border-2 border-slate-900 rounded-2xl p-3 sm:p-5 transition-all shadow-md group text-center relative overflow-hidden flex flex-col items-center"
+              {item.rank}
+            </span>
+            <div
+              className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold flex items-center justify-center shrink-0`}
             >
-              <div className="absolute top-2 left-2 flex items-center gap-1">
-                <span className="w-8 h-8 bg-slate-900 text-white font-bold rounded-full flex items-center justify-center text-base">
-                  1
-                </span>
-              </div>
-
-              {/* Avatar Box */}
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-slate-900 p-0.5 mb-2 mt-5 group-hover:scale-105 transition-transform">
-                <div
-                  className={`w-full h-full rounded-[14px] bg-gradient-to-tr ${firstPlace.student.avatarColor} flex items-center justify-center text-white font-bold text-lg sm:text-2xl`}
-                >
-                  {firstPlace.student.name.substring(0, 1)}
-                </div>
-              </div>
-
-              <span className="text-sm sm:text-base font-bold text-slate-900 truncate w-full">
-                {firstPlace.student.name}
-              </span>
-              <span className="text-xs text-slate-500 font-semibold">
-                {firstPlace.student.grade}
-              </span>
-
-              <div className="mt-3 bg-slate-900 rounded-xl px-3 py-2 w-full text-center">
-                <div className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                  {firstPlace.personalBestCount.toLocaleString()}
-                  <span className="text-xs text-slate-300 font-semibold ml-1">{getUnit()}</span>
-                </div>
-                <div className="text-[10px] text-slate-400 truncate font-mono">
-                  1위 • {firstPlace.recordDate}
-                </div>
-              </div>
-            </button>
-          ) : (
-            <div className="w-full bg-white/60 border border-dashed border-slate-300 rounded-2xl p-6 text-center text-slate-400 text-xs">
-              1위 대기중
+              {item.student.name.substring(0, 1)}
             </div>
-          )}
-          <div className="w-full h-24 sm:h-28 bg-slate-900 rounded-t-xl mt-2 flex items-center justify-center font-bold text-3xl text-white/90">
-            1ST
-          </div>
-        </div>
-
-        {/* 3rd Place */}
-        <div className="flex flex-col items-center">
-          {thirdPlace ? (
-            <button
-              onClick={() => onSelectStudent(thirdPlace.student.id)}
-              className="w-full bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 hover:border-slate-300 transition-all shadow-xs group text-center relative overflow-hidden flex flex-col items-center"
-            >
-              <div className="absolute top-2 left-2 flex items-center gap-1">
-                <span className="w-7 h-7 bg-slate-300 text-slate-800 font-bold rounded-full flex items-center justify-center text-sm">
-                  3
-                </span>
-              </div>
-
-              {/* Avatar Circle */}
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 p-0.5 mb-2 mt-5 group-hover:scale-105 transition-transform">
-                <div
-                  className={`w-full h-full rounded-xl bg-gradient-to-tr ${thirdPlace.student.avatarColor} flex items-center justify-center text-white font-bold text-base sm:text-lg`}
-                >
-                  {thirdPlace.student.name.substring(0, 1)}
-                </div>
-              </div>
-
-              <span className="text-xs sm:text-sm font-bold text-slate-900 truncate w-full">
-                {thirdPlace.student.name}
-              </span>
-              <span className="text-[11px] text-slate-500 font-semibold">
-                {thirdPlace.student.grade}
-              </span>
-
-              <div className="mt-3 bg-slate-50 rounded-xl px-3 py-1.5 border border-slate-200/80 w-full text-center">
-                <div className="text-xl sm:text-2xl font-bold text-slate-700">
-                  {thirdPlace.personalBestCount.toLocaleString()}
-                  <span className="text-xs text-slate-500 font-semibold ml-1">{getUnit()}</span>
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono truncate">
-                  {thirdPlace.recordDate}
-                </div>
-              </div>
-            </button>
-          ) : (
-            <div className="w-full bg-white/60 border border-dashed border-slate-300 rounded-2xl p-6 text-center text-slate-400 text-xs">
-              3위 대기중
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-sm text-slate-900 truncate">{item.student.name}</div>
+              <div className="text-[11px] text-slate-500 font-semibold">{item.student.grade}</div>
             </div>
-          )}
-          <div className="w-full h-12 sm:h-14 bg-slate-100 border-t border-slate-200 rounded-t-xl mt-2 flex items-center justify-center font-bold text-xl text-slate-400">
-            3RD
-          </div>
-        </div>
+            <div className="text-right shrink-0">
+              <div className="text-xl font-bold text-slate-900">
+                {item.personalBestCount.toLocaleString()}
+                <span className="text-xs text-slate-500 font-semibold ml-0.5">{getUnit()}</span>
+              </div>
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   );

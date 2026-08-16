@@ -101,6 +101,7 @@ export function useRecords() {
   return {
     records: currentRecords,
     isLoading: query.isLoading,
+    refetch: query.refetch,
     batchSaveRecords: batchSaveRecords.mutateAsync,
     deleteRecord: deleteRecord.mutateAsync,
   };

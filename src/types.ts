@@ -55,6 +55,7 @@ export interface JumpRecord {
   eventKey: EventKey;
   count: number;
   date: string; // YYYY-MM-DD
+  createdAt?: string;
   isPersonalBest?: boolean;
   isGymRecord?: boolean;
   videoUrl?: string;

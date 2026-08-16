@@ -3,7 +3,6 @@ import { DisplayTab, TimeFilter, EventMeta } from '../types';
 import { Footprints, Zap, Flame, Clock, Gauge, Trophy, Award, Crown, Sparkles } from 'lucide-react';
 
 interface EventSelectorProps {
-  gymName: string;
   events: Record<string, EventMeta>;
   activeTab: DisplayTab;
   setActiveTab: (tab: DisplayTab) => void;
@@ -12,7 +11,6 @@ interface EventSelectorProps {
 }
 
 export const EventSelector: React.FC<EventSelectorProps> = ({
-  gymName,
   events,
   activeTab,
   setActiveTab,
@@ -51,7 +49,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
         onClick={() => setActiveTab(key)}
         className={`flex items-center justify-between p-3.5 rounded-xl border transition-all text-left cursor-pointer ${
           isSelected
-            ? 'bg-slate-900 text-white border-slate-900'
+            ? 'bg-emerald-600 text-white border-emerald-600'
             : 'bg-slate-50/80 border-slate-200/80 hover:bg-slate-100 text-slate-800'
         }`}
       >
@@ -90,19 +88,13 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm mb-6">
-      {/* Title Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-slate-100 pb-3.5">
-        <div>
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">{gymName}</h2>
-          <p className="text-base font-bold text-slate-900 mt-0.5">종합 랭킹</p>
-        </div>
-
-        {/* Quick Filter */}
-        <div className="flex items-center bg-slate-100/80 p-1 rounded-xl border border-slate-200/80 text-xs font-bold self-start sm:self-auto">
+      {/* Quick Filter */}
+      <div className="flex justify-end mb-4">
+        <div className="flex items-center bg-slate-100/80 p-1 rounded-xl border border-slate-200/80 text-xs font-bold">
           <button
             onClick={() => setTimeFilter('ALL')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
-              timeFilter === 'ALL' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              timeFilter === 'ALL' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             전체 보기
@@ -110,7 +102,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
           <button
             onClick={() => setTimeFilter('30S')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
-              timeFilter === '30S' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              timeFilter === '30S' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             30초 종목
@@ -118,7 +110,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
           <button
             onClick={() => setTimeFilter('10S')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
-              timeFilter === '10S' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              timeFilter === '10S' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             10초 종목
@@ -139,7 +131,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
               onClick={() => setActiveTab('OVERALL')}
               className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left cursor-pointer ${
                 activeTab === 'OVERALL'
-                  ? 'bg-slate-900 text-white border-slate-900'
+                  ? 'bg-emerald-600 text-white border-emerald-600'
                   : 'bg-slate-50/80 border-slate-200/80 hover:bg-slate-100 text-slate-700'
               }`}
             >
@@ -177,7 +169,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
               </div>
               <span
                 className={`text-xs font-bold px-3 py-1.5 rounded-lg ${
-                  activeTab === 'OVERALL' ? 'bg-white text-slate-900' : 'bg-slate-200/80 text-slate-700'
+                  activeTab === 'OVERALL' ? 'bg-white text-emerald-700' : 'bg-slate-200/80 text-slate-700'
                 }`}
               >
                 {activeTab === 'OVERALL' ? '선택됨' : '선택'}
