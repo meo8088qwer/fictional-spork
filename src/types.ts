@@ -76,9 +76,3 @@ export interface StudentLeaderboardItem {
   allRecords: Partial<Record<EventKey, number>>;
   overallScore: number;
 }
-
-export interface AICoachReport {
-  advice: string;
-  strengths: string[];
-  targetTips: string[];
-}

@@ -18,6 +18,12 @@ export const Podium: React.FC<PodiumProps> = ({ topThree, activeTab, onSelectStu
 
   const getUnit = () => (activeTab === 'OVERALL' ? '점' : '회');
 
+  // Podium order: 2nd left, 1st center, 3rd right.
+  const byRank = new Map(topThree.map((item) => [item.rank, item]));
+  const ordered = [byRank.get(2), byRank.get(1), byRank.get(3)].filter(
+    (item): item is StudentLeaderboardItem => !!item
+  );
+
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
@@ -34,41 +40,44 @@ export const Podium: React.FC<PodiumProps> = ({ topThree, activeTab, onSelectStu
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        {topThree.map((item) => (
-          <button
-            key={item.student.id}
-            onClick={() => onSelectStudent(item.student.id)}
-            className={`p-4 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
-              item.rank === 1
-                ? 'bg-[#E8F5E9] border-[#A5D6A7]'
-                : 'bg-white border-slate-200/90 hover:border-slate-300'
-            }`}
-          >
-            <span
-              className={`w-8 h-8 rounded-full font-bold text-sm flex items-center justify-center shrink-0 ${
-                item.rank === 1 ? 'bg-[#1B5E20] text-white' : 'bg-slate-100 text-slate-600'
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 items-end">
+        {ordered.map((item) => {
+          const isFirst = item.rank === 1;
+          return (
+            <button
+              key={item.student.id}
+              onClick={() => onSelectStudent(item.student.id)}
+              className={`rounded-2xl border text-center transition-all flex flex-col items-center cursor-pointer ${
+                isFirst
+                  ? 'p-6 bg-[#E8F5E9] border-2 border-[#1B5E20] shadow-md'
+                  : 'p-4 bg-white border-slate-200/90 hover:border-slate-300'
               }`}
             >
-              {item.rank}
-            </span>
-            <div
-              className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold flex items-center justify-center shrink-0`}
-            >
-              {item.student.name.substring(0, 1)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-bold text-sm text-slate-900 truncate">{item.student.name}</div>
-              <div className="text-[11px] text-slate-500 font-semibold">{item.student.grade}</div>
-            </div>
-            <div className="text-right shrink-0">
-              <div className="text-xl font-bold text-slate-900">
-                {item.personalBestCount.toLocaleString()}
-                <span className="text-xs text-slate-500 font-semibold ml-0.5">{getUnit()}</span>
+              <span
+                className={`rounded-full font-bold flex items-center justify-center shrink-0 mb-2 ${
+                  isFirst ? 'w-9 h-9 text-base bg-[#1B5E20] text-white' : 'w-7 h-7 text-xs bg-slate-100 text-slate-600'
+                }`}
+              >
+                {item.rank}
+              </span>
+              <div
+                className={`rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold flex items-center justify-center shrink-0 mb-2 ${
+                  isFirst ? 'w-16 h-16 text-2xl' : 'w-11 h-11 text-base'
+                }`}
+              >
+                {item.student.name.substring(0, 1)}
               </div>
-            </div>
-          </button>
-        ))}
+              <div className={`font-bold text-slate-900 truncate max-w-full ${isFirst ? 'text-base' : 'text-sm'}`}>
+                {item.student.name}
+              </div>
+              <div className="text-[11px] text-slate-500 font-semibold mb-2">{item.student.grade}</div>
+              <div className={isFirst ? 'text-2xl font-bold text-[#1B5E20]' : 'text-lg font-bold text-slate-900'}>
+                {item.personalBestCount.toLocaleString()}
+                <span className="text-xs font-semibold ml-0.5 text-slate-500">{getUnit()}</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

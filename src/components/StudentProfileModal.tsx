@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Student, JumpRecord, AICoachReport, EventKey, EventMeta } from '../types';
+import { Student, JumpRecord, EventKey, EventMeta } from '../types';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { Trophy, Award, Sparkles, TrendingUp, Calendar, Bot, Printer, X, Trash2 } from 'lucide-react';
+import { Trophy, TrendingUp, Calendar, Printer, X, Trash2 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
-import { supabase } from '../lib/supabaseClient';
 
 interface StudentProfileModalProps {
   student: Student;
@@ -31,8 +30,6 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 }) => {
   const eventKeys = Object.keys(events);
   const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_alternate');
-  const [aiReport, setAiReport] = useState<AICoachReport | null>(null);
-  const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
   const [showStudentDeleteConfirm, setShowStudentDeleteConfirm] = useState<boolean>(false);
   const [recordToDelete, setRecordToDelete] = useState<JumpRecord | null>(null);
 
@@ -64,39 +61,6 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     monthlyBest.length >= 2 && firstMonth.best > 0
       ? (((lastMonth.best - firstMonth.best) / firstMonth.best) * 100).toFixed(1)
       : null;
-
-  // Fetch AI Coach Report
-  const handleFetchAiReport = async () => {
-    setIsLoadingAi(true);
-    try {
-      const pbs: Record<string, number> = {};
-      eventKeys.forEach((key) => {
-        const pb = getStudentPersonalBest(records, student.id, key);
-        if (pb) pbs[key] = pb.count;
-      });
-
-      const { data, error } = await supabase.functions.invoke('ai-coach', {
-        body: {
-          studentName: student.name,
-          grade: student.grade,
-          gender: student.gender,
-          records: pbs,
-          overallStats: { totalRecords: records.filter((r) => r.studentId === student.id).length },
-        },
-      });
-      if (error) throw error;
-      setAiReport(data);
-    } catch (e) {
-      console.error(e);
-      setAiReport({
-        advice: `${student.name} 수련생은 꾸준한 훈련으로 기본기와 리듬감이 빠르게 향상되고 있습니다!`,
-        strengths: ['자세 안정성', '지속적인 집중력'],
-        targetTips: ['단거리 구간에서 더 빠르게 손목 돌리기', '발끝으로 가볍게 뛰기'],
-      });
-    } finally {
-      setIsLoadingAi(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs grid place-items-center p-4 overflow-y-auto">
@@ -282,61 +246,8 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           </div>
         )}
 
-        {/* AI Coach Analysis Section */}
-        <div className="bg-slate-50/80 p-4.5 rounded-2xl border border-slate-200/80">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Bot className="w-5 h-5 text-slate-400" />
-              <h4 className="text-xs font-bold text-slate-900">
-                AI 코칭 리포트
-              </h4>
-            </div>
-
-            <button
-              onClick={handleFetchAiReport}
-              disabled={isLoadingAi}
-              className="px-3.5 py-1.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isLoadingAi ? '분석 중...' : 'AI 코칭 리포트 생성'}</span>
-            </button>
-          </div>
-
-          {aiReport ? (
-            <div className="space-y-3 text-xs text-slate-700">
-              <p className="bg-white p-3.5 rounded-xl border border-slate-200/80 leading-relaxed font-medium text-slate-800 shadow-xs">
-                "{aiReport.advice}"
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200/80">
-                  <div className="font-bold text-slate-900 mb-1">주 강점</div>
-                  <ul className="list-disc list-inside space-y-0.5 text-slate-700 font-medium">
-                    {aiReport.strengths.map((s, idx) => (
-                      <li key={idx}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200/80">
-                  <div className="font-bold text-slate-900 mb-1">원포인트 코칭 팁</div>
-                  <ul className="list-disc list-inside space-y-0.5 text-slate-700 font-medium">
-                    {aiReport.targetTips.map((t, idx) => (
-                      <li key={idx}>{t}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-slate-400 text-center py-4 font-medium">
-              [AI 코칭 리포트 생성] 버튼을 누르면 AI 헤드 코치가 아이의 맞춤형 칭찬과 훈련 팁을 생성합니다.
-            </p>
-          )}
-        </div>
-
         {/* Detailed Measurement Records History Table */}
-        <div className="mt-6 bg-slate-50/80 p-4.5 rounded-2xl border border-slate-200/80">
+        <div className="bg-slate-50/80 p-4.5 rounded-2xl border border-slate-200/80">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <Calendar className="w-4 h-4 text-slate-400" />

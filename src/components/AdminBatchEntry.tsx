@@ -37,6 +37,9 @@ import {
   Gauge,
   Trophy,
   Footprints,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 
@@ -137,6 +140,36 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       return matchesGrade && matchesSearch;
     })
     .sort((a, b) => a.studentNo.localeCompare(b.studentNo));
+
+  // Column sort for the batch entry table -- click a header to sort by it,
+  // click again to flip direction. Unset = keep the default 번호 order above.
+  const [sortKey, setSortKey] = useState<'name' | 'grade' | 'pb' | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleSort = (key: 'name' | 'grade' | 'pb') => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedRows = filteredStudents.map((student) => ({
+    student,
+    pb: getStudentPersonalBest(records, student.id, selectedEventKey),
+  }));
+  if (sortKey) {
+    sortedRows.sort((a, b) => {
+      const cmp =
+        sortKey === 'name'
+          ? a.student.name.localeCompare(b.student.name)
+          : sortKey === 'grade'
+          ? a.student.grade.localeCompare(b.student.grade)
+          : (a.pb?.count ?? -1) - (b.pb?.count ?? -1);
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }
 
   const handleInputChange = (studentId: string, value: string) => {
     setCountsMap((prev) => ({ ...prev, [studentId]: value }));
@@ -640,22 +673,72 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               <thead className="bg-slate-100/80 sticky top-0 border-b border-slate-200 text-slate-500 font-bold uppercase">
                 <tr>
                   <th className="p-3">수련생 번호</th>
-                  <th className="p-3">이름</th>
-                  <th className="p-3">학년/부</th>
-                  <th className="p-3">기존 최고기록</th>
+                  <th className="p-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('name')}
+                      className="flex items-center gap-1 uppercase font-bold cursor-pointer hover:text-slate-800"
+                    >
+                      <span>이름</span>
+                      {sortKey === 'name' ? (
+                        sortDir === 'asc' ? (
+                          <ArrowUp className="w-3 h-3" />
+                        ) : (
+                          <ArrowDown className="w-3 h-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-300" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('grade')}
+                      className="flex items-center gap-1 uppercase font-bold cursor-pointer hover:text-slate-800"
+                    >
+                      <span>학년/부</span>
+                      {sortKey === 'grade' ? (
+                        sortDir === 'asc' ? (
+                          <ArrowUp className="w-3 h-3" />
+                        ) : (
+                          <ArrowDown className="w-3 h-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-300" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleSort('pb')}
+                      className="flex items-center gap-1 uppercase font-bold cursor-pointer hover:text-slate-800"
+                    >
+                      <span>기존 최고기록</span>
+                      {sortKey === 'pb' ? (
+                        sortDir === 'asc' ? (
+                          <ArrowUp className="w-3 h-3" />
+                        ) : (
+                          <ArrowDown className="w-3 h-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="w-3 h-3 text-slate-300" />
+                      )}
+                    </button>
+                  </th>
                   <th className="p-3 text-right">오늘 측정 기록 (회)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredStudents.length === 0 ? (
+                {sortedRows.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-8 text-center text-slate-400">
                       해당 조건의 수련생이 없습니다.
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((student) => {
-                    const pb = getStudentPersonalBest(records, student.id, selectedEventKey);
+                  sortedRows.map(({ student, pb }) => {
                     const currentVal = countsMap[student.id] || '';
 
                     const isDone = currentVal !== '';
