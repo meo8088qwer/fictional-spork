@@ -24,6 +24,11 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [autoPlaySeconds, setAutoPlaySeconds] = useState<number>(5);
 
+  // Row entrance stagger scales with the auto-transition interval, so a
+  // fast 3s cycle feels snappy and a slow 8s cycle feels more deliberate.
+  const rowStaggerStep = autoPlaySeconds * 0.06;
+  const rowAnimDuration = 0.35 + autoPlaySeconds * 0.03;
+
   const currentEventKey: EventKey = eventKeys[currentEventIndex] || eventKeys[0];
   const eventMeta = events[currentEventKey] || events[eventKeys[0]];
 
@@ -176,6 +181,10 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
               className={`p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
                 index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
               }`}
+              style={{
+                animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
+                animationDelay: `${index * rowStaggerStep}s`,
+              }}
             >
               <div className="flex items-center gap-4">
                 {/* Rank Number */}
