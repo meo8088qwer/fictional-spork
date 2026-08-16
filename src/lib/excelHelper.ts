@@ -57,9 +57,11 @@ export function resolveGradeGroup(inputStr: string): GradeGroup {
     return cleaned as GradeGroup;
   }
 
-  // Kindergarten / Preschool ('유-5', '유-6', '유-7', '6세', '7세', '유치', '유치부')
-  if (cleaned.startsWith('유') || cleaned.includes('유치') || /^[5678]세$/.test(cleaned)) {
-    return '유치부';
+  // Kindergarten / Preschool ('유-5', '5세', '유-6', '6세', '유-7', '7세', '유치', '유치부')
+  if (cleaned.includes('5') && (cleaned.startsWith('유') || cleaned.includes('세'))) return '유치부 5세';
+  if (cleaned.includes('7') && (cleaned.startsWith('유') || cleaned.includes('세'))) return '유치부 7세';
+  if (cleaned.startsWith('유') || cleaned.includes('유치') || /^[678]세$/.test(cleaned)) {
+    return '유치부 6세';
   }
 
   // Elementary Grades ('초-1', '초1', '초등1', '1학년')
@@ -70,10 +72,11 @@ export function resolveGradeGroup(inputStr: string): GradeGroup {
   if (cleaned.includes('초-5') || cleaned.includes('초5') || cleaned === '5학년' || cleaned.includes('초등5')) return '초등 5학년';
   if (cleaned.includes('초-6') || cleaned.includes('초6') || cleaned === '6학년' || cleaned.includes('초등6')) return '초등 6학년';
 
-  // Middle/High school ('중-1', '고-2', '중고등부')
-  if (cleaned.includes('중') || cleaned.includes('고')) {
-    return '중고등부';
-  }
+  // Middle/High school ('중-1', '중학생' -> 중학생; '고-2', '고등학생' -> 고등학생)
+  // '중고등부' alone is ambiguous -> defaults to 중학생.
+  if (cleaned.includes('중고')) return '중학생';
+  if (cleaned.includes('고')) return '고등학생';
+  if (cleaned.includes('중')) return '중학생';
 
   // Fallback regex for digit
   const matchDigit = cleaned.match(/([1-6])/);
@@ -171,11 +174,11 @@ export function downloadStudentRosterTemplate(gymName: string) {
     ['강도현', '초등 3학년', '남'],
     ['김지후', '초등 2학년', '여'],
     ['박준우', '초등 4학년', '남'],
-    ['이서아', '유치부', '여'],
+    ['이서아', '유치부 6세', '여'],
     ['최민준', '초등 6학년', '남'],
     ['한소율', '초등 1학년', '여'],
     ['김도윤', '초등 5학년', '남'],
-    ['박하은', '중고등부', '여'],
+    ['박하은', '중학생', '여'],
   ];
 
   const ws = XLSX.utils.aoa_to_sheet(studentRosterData);

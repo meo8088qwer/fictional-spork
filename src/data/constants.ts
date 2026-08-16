@@ -1,4 +1,4 @@
-import { EventKey, EventMeta, GradeGroup, GradeCategoryFilter } from '../types';
+import { EventKey, EventMeta, GradeGroup, GradeCategory, GradeCategoryFilter } from '../types';
 
 export const DEFAULT_EVENTS: Record<string, EventMeta> = {
   '30s_alternate': {
@@ -91,17 +91,20 @@ export const EVENTS = DEFAULT_EVENTS;
 export const EVENT_KEYS = Object.keys(DEFAULT_EVENTS);
 
 export const GRADE_GROUPS: GradeGroup[] = [
-  '유치부',
+  '유치부 5세',
+  '유치부 6세',
+  '유치부 7세',
   '초등 1학년',
   '초등 2학년',
   '초등 3학년',
   '초등 4학년',
   '초등 5학년',
   '초등 6학년',
-  '중고등부',
+  '중학생',
+  '고등학생',
 ];
 
-export const GRADE_CATEGORY_LABELS: Record<GradeCategoryFilter, string> = {
+export const GRADE_CATEGORY_LABELS: Record<GradeCategory, string> = {
   ALL: '전체 학년',
   KINDER: '유치부',
   LOWER_ELEM: '초등 저학년 (1~3학년)',
@@ -109,18 +112,23 @@ export const GRADE_CATEGORY_LABELS: Record<GradeCategoryFilter, string> = {
   SECONDARY: '중·고등부',
 };
 
+// Each broad category's specific grades, for the leaderboard's drill-down chips.
+export const GRADE_SUBCATEGORIES: Record<Exclude<GradeCategory, 'ALL'>, GradeGroup[]> = {
+  KINDER: ['유치부 5세', '유치부 6세', '유치부 7세'],
+  LOWER_ELEM: ['초등 1학년', '초등 2학년', '초등 3학년'],
+  UPPER_ELEM: ['초등 4학년', '초등 5학년', '초등 6학년'],
+  SECONDARY: ['중학생', '고등학생'],
+};
+
 export function matchesGradeCategory(
   grade: GradeGroup,
   filter: GradeCategoryFilter
 ): boolean {
   if (filter === 'ALL') return true;
-  if (filter === 'KINDER') return grade === '유치부';
-  if (filter === 'LOWER_ELEM')
-    return ['초등 1학년', '초등 2학년', '초등 3학년'].includes(grade);
-  if (filter === 'UPPER_ELEM')
-    return ['초등 4학년', '초등 5학년', '초등 6학년'].includes(grade);
-  if (filter === 'SECONDARY') return grade === '중고등부';
-  return true;
+  if (filter === 'KINDER' || filter === 'LOWER_ELEM' || filter === 'UPPER_ELEM' || filter === 'SECONDARY') {
+    return (GRADE_SUBCATEGORIES[filter] as GradeGroup[]).includes(grade);
+  }
+  return grade === filter;
 }
 
 export function getBadgeForCount(eventMeta: EventMeta | undefined | null, count: number): string {

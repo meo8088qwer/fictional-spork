@@ -1,7 +1,9 @@
 import React from 'react';
-import { StudentLeaderboardItem, DisplayTab, GradeCategoryFilter, EventMeta } from '../types';
-import { GRADE_CATEGORY_LABELS, getBadgeForCount } from '../data/constants';
+import { StudentLeaderboardItem, DisplayTab, GradeCategory, GradeCategoryFilter, GradeGroup, EventMeta } from '../types';
+import { GRADE_CATEGORY_LABELS, GRADE_SUBCATEGORIES, getBadgeForCount } from '../data/constants';
 import { Search, Filter, Trophy, Sparkles } from 'lucide-react';
+
+const CATEGORY_OPTIONS: GradeCategory[] = ['ALL', 'KINDER', 'LOWER_ELEM', 'UPPER_ELEM', 'SECONDARY'];
 
 interface LeaderboardProps {
   items: StudentLeaderboardItem[];
@@ -29,13 +31,15 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   const currentEventMeta = activeTab !== 'OVERALL' ? events[activeTab] : null;
   const maxCountInList = items.length > 0 ? items[0].personalBestCount || 1 : 1;
 
-  const gradeFilterOptions: GradeCategoryFilter[] = [
-    'ALL',
-    'KINDER',
-    'LOWER_ELEM',
-    'UPPER_ELEM',
-    'SECONDARY',
-  ];
+  // gradeFilter is either a broad category or a specific grade drilled into
+  // from that category -- figure out which category is active either way.
+  const activeCategory: GradeCategory =
+    (CATEGORY_OPTIONS as GradeCategoryFilter[]).includes(gradeFilter)
+      ? (gradeFilter as GradeCategory)
+      : (Object.entries(GRADE_SUBCATEGORIES).find(([, grades]) =>
+          grades.includes(gradeFilter as GradeGroup)
+        )?.[0] as GradeCategory) ?? 'ALL';
+  const subGrades = activeCategory !== 'ALL' ? GRADE_SUBCATEGORIES[activeCategory] : null;
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
@@ -62,21 +66,41 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         </div>
 
         {/* Grade Filter Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs font-bold">
-          <Filter className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" />
-          {gradeFilterOptions.map((opt) => (
-            <button
-              key={opt}
-              onClick={() => setGradeFilter(opt)}
-              className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
-                gradeFilter === opt
-                  ? 'bg-[#1B5E20] text-white shadow-xs'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {GRADE_CATEGORY_LABELS[opt]}
-            </button>
-          ))}
+        <div className="flex flex-col gap-1.5 items-start md:items-end">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs font-bold">
+            <Filter className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" />
+            {CATEGORY_OPTIONS.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setGradeFilter(opt)}
+                className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
+                  activeCategory === opt
+                    ? 'bg-[#1B5E20] text-white shadow-xs'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                {GRADE_CATEGORY_LABELS[opt]}
+              </button>
+            ))}
+          </div>
+
+          {subGrades && (
+            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-bold">
+              {subGrades.map((grade) => (
+                <button
+                  key={grade}
+                  onClick={() => setGradeFilter(grade)}
+                  className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
+                    gradeFilter === grade
+                      ? 'bg-[#E8F5E9] text-[#1B5E20] border border-[#A5D6A7]'
+                      : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {grade}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

@@ -5,21 +5,23 @@ export type DisplayTab = EventKey | 'OVERALL';
 export type TimeFilter = 'ALL' | '30S' | '10S' | 'CUSTOM';
 
 export type GradeGroup =
-  | '유치부'
+  | '유치부 5세'
+  | '유치부 6세'
+  | '유치부 7세'
   | '초등 1학년'
   | '초등 2학년'
   | '초등 3학년'
   | '초등 4학년'
   | '초등 5학년'
   | '초등 6학년'
-  | '중고등부';
+  | '중학생'
+  | '고등학생';
 
-export type GradeCategoryFilter =
-  | 'ALL'
-  | 'KINDER'
-  | 'LOWER_ELEM'
-  | 'UPPER_ELEM'
-  | 'SECONDARY';
+export type GradeCategory = 'ALL' | 'KINDER' | 'LOWER_ELEM' | 'UPPER_ELEM' | 'SECONDARY';
+
+// A leaderboard filter is either one of the 4 broad categories, or a
+// specific grade drilled into from that category's sub-chips.
+export type GradeCategoryFilter = GradeCategory | GradeGroup;
 
 export interface EventMeta {
   key: string;

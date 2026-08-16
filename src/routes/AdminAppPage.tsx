@@ -29,7 +29,7 @@ export default function AdminAppPage() {
     deleteCustomEvent,
     resetDefaultEvents,
   } = useEvents();
-  const { records, isLoading: recordsLoading, refetch: refetchRecords, batchSaveRecords, deleteRecord } = useRecords();
+  const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord } = useRecords();
 
   const [activeView, setActiveView] = useState<'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE'>('LEADERBOARD');
   const [activeTab, setActiveTab] = useState<DisplayTab>('30s_alternate');
@@ -123,49 +123,46 @@ export default function AdminAppPage() {
         )}
 
         {activeView === 'LEADERBOARD' && (
-          <div className="flex flex-col lg:flex-row gap-6 items-start">
-            <div className="flex-1 min-w-0 w-full">
-              <h1 className="text-xl font-bold text-slate-900 mb-4">랭킹보드</h1>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 mb-4">랭킹보드</h1>
 
-              <EventSelector
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                timeFilter={timeFilter}
-                setTimeFilter={setTimeFilter}
-                events={events}
-              />
+            <div className="flex flex-col lg:flex-row gap-6 items-start">
+              <div className="flex-1 min-w-0 w-full">
+                <EventSelector
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  timeFilter={timeFilter}
+                  setTimeFilter={setTimeFilter}
+                  events={events}
+                />
 
-              <Podium
-                topThree={topThree}
-                activeTab={activeTab}
-                onSelectStudent={(studentId) => {
-                  const s = students.find((st) => st.id === studentId);
-                  if (s) setSelectedStudent(s);
-                }}
-              />
+                <Podium
+                  topThree={topThree}
+                  activeTab={activeTab}
+                  onSelectStudent={(studentId) => {
+                    const s = students.find((st) => st.id === studentId);
+                    if (s) setSelectedStudent(s);
+                  }}
+                />
 
-              <Leaderboard
-                items={leaderboardItems}
-                events={events}
-                activeTab={activeTab}
-                gradeFilter={gradeFilter}
-                setGradeFilter={setGradeFilter}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                onSelectStudent={(studentId) => {
-                  const s = students.find((st) => st.id === studentId);
-                  if (s) setSelectedStudent(s);
-                }}
-                onOpenBatchEntry={() => setActiveView('ADMIN_BATCH')}
-              />
+                <Leaderboard
+                  items={leaderboardItems}
+                  events={events}
+                  activeTab={activeTab}
+                  gradeFilter={gradeFilter}
+                  setGradeFilter={setGradeFilter}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  onSelectStudent={(studentId) => {
+                    const s = students.find((st) => st.id === studentId);
+                    if (s) setSelectedStudent(s);
+                  }}
+                  onOpenBatchEntry={() => setActiveView('ADMIN_BATCH')}
+                />
+              </div>
+
+              <RightRail students={students} records={records} />
             </div>
-
-            <RightRail
-              students={students}
-              records={records}
-              events={events}
-              onRefresh={() => refetchRecords()}
-            />
           </div>
         )}
       </main>

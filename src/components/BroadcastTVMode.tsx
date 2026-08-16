@@ -22,6 +22,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   const [currentEventIndex, setCurrentEventIndex] = useState<number>(0);
   const [isAutoPlay, setIsAutoPlay] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [autoPlaySeconds, setAutoPlaySeconds] = useState<number>(5);
 
   const currentEventKey: EventKey = eventKeys[currentEventIndex] || eventKeys[0];
   const eventMeta = events[currentEventKey] || events[eventKeys[0]];
@@ -37,14 +38,13 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
     })
     .filter((entry): entry is { key: string; meta: EventMeta; student: Student; count: number } => entry !== null);
 
-  // Auto slide every 8 seconds
   useEffect(() => {
     if (!isAutoPlay || eventKeys.length === 0) return;
     const timer = setInterval(() => {
       setCurrentEventIndex((prev) => (prev + 1) % eventKeys.length);
-    }, 8000);
+    }, autoPlaySeconds * 1000);
     return () => clearInterval(timer);
-  }, [isAutoPlay, eventKeys.length]);
+  }, [isAutoPlay, autoPlaySeconds, eventKeys.length]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -91,8 +91,21 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
             }`}
           >
             {isAutoPlay ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            <span>{isAutoPlay ? '자동 전환 중 (8초)' : '자동 전환 정지'}</span>
+            <span>{isAutoPlay ? `자동 전환 중 (${autoPlaySeconds}초)` : '자동 전환 정지'}</span>
           </button>
+
+          <select
+            value={autoPlaySeconds}
+            onChange={(e) => setAutoPlaySeconds(Number(e.target.value))}
+            title="전환 간격"
+            className="px-2 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer"
+          >
+            {[3, 4, 5, 6, 7, 8].map((sec) => (
+              <option key={sec} value={sec}>
+                {sec}초
+              </option>
+            ))}
+          </select>
 
           <button
             onClick={toggleFullscreen}
