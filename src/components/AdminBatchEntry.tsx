@@ -853,7 +853,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               </ul>
 
               <button
-                onClick={() => downloadExcelTemplate(events)}
+                onClick={() => downloadExcelTemplate(events, students, records)}
                 className="w-full py-2.5 px-4 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <FileSpreadsheet className="w-4 h-4" />
@@ -1158,7 +1158,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
               <button
                 type="button"
-                onClick={() => downloadStudentRosterTemplate(gym.name)}
+                onClick={() => downloadStudentRosterTemplate(gym.name, students)}
                 className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
                 <Download className="w-4 h-4" />

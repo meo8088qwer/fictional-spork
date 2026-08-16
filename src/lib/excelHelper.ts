@@ -1,6 +1,9 @@
 import * as XLSX from 'xlsx';
 import { EventKey, EventMeta, GradeGroup, Student, JumpRecord } from '../types';
 import { DEFAULT_EVENTS, GRADE_GROUPS } from '../data/constants';
+import { getStudentPersonalBest } from './scoring';
+
+const GENDER_LABEL: Record<'M' | 'F', string> = { M: '남', F: '여' };
 
 // Helper to normalize event title to EventKey dynamically
 export function resolveEventKey(
@@ -111,22 +114,50 @@ export interface ExcelImportResult {
   }>;
 }
 
-// Generate and Download Excel Template File
-export function downloadExcelTemplate(eventsMap: Record<string, EventMeta>) {
+// Generate and Download Excel Template File. When the gym already has
+// students, each row is that student's current personal best per event
+// (not their full measurement history -- keeps the file small regardless
+// of how many past records exist) instead of the generic example rows.
+export function downloadExcelTemplate(
+  eventsMap: Record<string, EventMeta>,
+  students: Student[] = [],
+  records: JumpRecord[] = []
+) {
   const wb = XLSX.utils.book_new();
   const todayStr = new Date().toISOString().split('T')[0];
 
   const activeEventMetas = Object.values(eventsMap);
   const eventTitles = activeEventMetas.map((m) => m.title);
+  const eventKeys = activeEventMetas.map((m) => m.key);
 
   // Sheet 1: Multi-Event Sheet (Recommended)
   const headerRow = ['수련생이름', '학년', '측정일자', ...eventTitles];
-  const sample1 = ['강도현', '초-3', todayStr, ...activeEventMetas.map((m) => m.benchmarkGood || 100)];
-  const sample2 = ['김지후', '초-2', todayStr, ...activeEventMetas.map((m) => Math.round((m.benchmarkGood || 100) * 0.9))];
-  const sample3 = ['박준우', '초-4', todayStr, ...activeEventMetas.map((m) => Math.round((m.benchmarkGood || 100) * 1.1))];
-  const sample4 = ['이서아', '유-6', todayStr, ...activeEventMetas.map((m) => Math.round((m.benchmarkGood || 100) * 0.8))];
 
-  const multiEventData = [headerRow, sample1, sample2, sample3, sample4];
+  const multiEventData =
+    students.length > 0
+      ? [
+          headerRow,
+          ...students.map((student) => {
+            const pbs = eventKeys.map((key) => getStudentPersonalBest(records, student.id, key));
+            const lastDate = pbs.reduce<string | null>(
+              (latest, pb) => (pb && (!latest || pb.date > latest) ? pb.date : latest),
+              null
+            );
+            return [
+              student.name,
+              student.grade,
+              lastDate || todayStr,
+              ...pbs.map((pb) => pb?.count ?? ''),
+            ];
+          }),
+        ]
+      : [
+          headerRow,
+          ['강도현', '초-3', todayStr, ...activeEventMetas.map((m) => m.benchmarkGood || 100)],
+          ['김지후', '초-2', todayStr, ...activeEventMetas.map((m) => Math.round((m.benchmarkGood || 100) * 0.9))],
+          ['박준우', '초-4', todayStr, ...activeEventMetas.map((m) => Math.round((m.benchmarkGood || 100) * 1.1))],
+          ['이서아', '유-6', todayStr, ...activeEventMetas.map((m) => Math.round((m.benchmarkGood || 100) * 0.8))],
+        ];
 
   const wsMulti = XLSX.utils.aoa_to_sheet(multiEventData);
   // Column Widths
@@ -164,22 +195,30 @@ export function downloadExcelTemplate(eventsMap: Record<string, EventMeta>) {
   XLSX.writeFile(wb, `줄넘기체육관_기록입력양식_${todayStr}.xlsx`);
 }
 
-// Generate and Download Student Roster Template
-export function downloadStudentRosterTemplate(gymName: string) {
+// Generate and Download Student Roster Template. Downloads the gym's
+// actual roster when it has students, falling back to example rows for
+// a brand new gym with nothing to export yet.
+export function downloadStudentRosterTemplate(gymName: string, students: Student[] = []) {
   const wb = XLSX.utils.book_new();
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const studentRosterData = [
-    ['수련생이름', '학년', '성별'],
-    ['강도현', '초등 3학년', '남'],
-    ['김지후', '초등 2학년', '여'],
-    ['박준우', '초등 4학년', '남'],
-    ['이서아', '유치부 6세', '여'],
-    ['최민준', '초등 6학년', '남'],
-    ['한소율', '초등 1학년', '여'],
-    ['김도윤', '초등 5학년', '남'],
-    ['박하은', '중학생', '여'],
-  ];
+  const studentRosterData =
+    students.length > 0
+      ? [
+          ['수련생이름', '학년', '성별'],
+          ...students.map((s) => [s.name, s.grade, GENDER_LABEL[s.gender]]),
+        ]
+      : [
+          ['수련생이름', '학년', '성별'],
+          ['강도현', '초등 3학년', '남'],
+          ['김지후', '초등 2학년', '여'],
+          ['박준우', '초등 4학년', '남'],
+          ['이서아', '유치부 6세', '여'],
+          ['최민준', '초등 6학년', '남'],
+          ['한소율', '초등 1학년', '여'],
+          ['김도윤', '초등 5학년', '남'],
+          ['박하은', '중학생', '여'],
+        ];
 
   const ws = XLSX.utils.aoa_to_sheet(studentRosterData);
   ws['!cols'] = [{ wch: 16 }, { wch: 16 }, { wch: 12 }];
