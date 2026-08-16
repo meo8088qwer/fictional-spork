@@ -7,17 +7,19 @@ import LoginPage from './routes/LoginPage';
 import AdminAppPage from './routes/AdminAppPage';
 import PublicBoardPage from './routes/PublicBoardPage';
 import PublicTvPage from './routes/PublicTvPage';
+import LandingPage from './routes/LandingPage';
 
-function RootRedirect() {
+function RootRoute() {
   const { session, loading } = useAuth();
   if (loading) return null;
-  return <Navigate to={session ? '/admin' : '/login'} replace />;
+  if (session) return <Navigate to="/admin" replace />;
+  return <LandingPage />;
 }
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<RootRedirect />} />
+      <Route path="/" element={<RootRoute />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/g/:slug" element={<PublicBoardPage />} />
