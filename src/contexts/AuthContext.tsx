@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
-import { ensureGymForUser, updateGymName as apiUpdateGymName, Gym } from '../data/api/gyms';
+import {
+  ensureGymForUser,
+  updateGymName as apiUpdateGymName,
+  updateGymSlug as apiUpdateGymSlug,
+  Gym,
+} from '../data/api/gyms';
 
 // Signup asks for the gym name before email confirmation exists -- if
 // confirmation is required, the user leaves the tab (opens their email
@@ -26,6 +31,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   refreshGym: () => Promise<void>;
   updateGymName: (name: string) => Promise<void>;
+  updateGymSlug: (slug: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -117,6 +123,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [gym]
   );
 
+  const updateGymSlug = useCallback(
+    async (slug: string) => {
+      if (!gym) throw new Error('체육관 정보가 없습니다.');
+      const updated = await apiUpdateGymSlug(gym.id, slug);
+      setGym(updated);
+    },
+    [gym]
+  );
+
   const value: AuthContextValue = {
     session,
     user: session?.user ?? null,
@@ -129,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     refreshGym,
     updateGymName,
+    updateGymSlug,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -97,3 +97,27 @@ export async function updateGymName(gymId: string, name: string): Promise<Gym> {
   if (error) throw error;
   return mapGymRow(data);
 }
+
+const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+export async function updateGymSlug(gymId: string, slug: string): Promise<Gym> {
+  const trimmed = slug.trim();
+  if (trimmed.length < 3) throw new Error('주소는 최소 3자 이상이어야 해요.');
+  if (!SLUG_PATTERN.test(trimmed)) {
+    throw new Error('영문 소문자, 숫자, 하이픈(-)만 사용할 수 있어요.');
+  }
+
+  const { data, error } = await supabase
+    .from('gyms')
+    .update({ slug: trimmed })
+    .eq('id', gymId)
+    .select('*')
+    .single();
+  if (error) {
+    if (error.code === '23505') {
+      throw new Error('이미 사용 중인 주소예요. 다른 주소를 입력해 주세요.');
+    }
+    throw error;
+  }
+  return mapGymRow(data);
+}

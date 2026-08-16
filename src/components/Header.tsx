@@ -29,7 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   studentCount,
   totalRecordCount,
 }) => {
-  const { user, gym, signOut, updateGymName } = useAuth();
+  const { user, gym, signOut, updateGymName, updateGymSlug } = useAuth();
   const [showRenameModal, setShowRenameModal] = useState(false);
 
   return (
@@ -53,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={() => setShowRenameModal(true)}
-            title="체육관 이름 변경"
+            title="체육관 설정"
             className="p-1.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0 cursor-pointer"
           >
             <Pencil className="w-3.5 h-3.5" />
@@ -111,7 +111,9 @@ export const Header: React.FC<HeaderProps> = ({
         <GymNameModal
           isOpen={showRenameModal}
           currentName={gym.name}
-          onSave={updateGymName}
+          currentSlug={gym.slug}
+          onSaveName={updateGymName}
+          onSaveSlug={updateGymSlug}
           onClose={() => setShowRenameModal(false)}
         />
       )}
