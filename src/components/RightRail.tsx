@@ -68,7 +68,7 @@ export const RightRail: React.FC<RightRailProps> = ({ students, records, events,
                   <div className="text-slate-400 truncate">{events[r.eventKey]?.shortTitle ?? r.eventKey}</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="font-bold text-emerald-600">{r.count}회</div>
+                  <div className="font-bold text-[#1B5E20]">{r.count}회</div>
                   <div className="text-slate-400">{timeAgo(r.createdAt)}</div>
                 </div>
               </div>
@@ -94,7 +94,7 @@ export const RightRail: React.FC<RightRailProps> = ({ students, records, events,
                   </span>
                   <span className="font-bold text-slate-800 truncate">{studentName(r.studentId)}</span>
                 </div>
-                <span className="font-bold text-emerald-600 shrink-0">{r.count}회</span>
+                <span className="font-bold text-[#1B5E20] shrink-0">{r.count}회</span>
               </div>
             ))}
           </div>

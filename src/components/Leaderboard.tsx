@@ -49,7 +49,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="수련생 이름 또는 번호 검색..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-medium shadow-xs"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#66BB6A] focus:ring-1 focus:ring-[#66BB6A] transition-all font-medium shadow-xs"
           />
           {searchQuery && (
             <button
@@ -70,7 +70,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
               onClick={() => setGradeFilter(opt)}
               className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
                 gradeFilter === opt
-                  ? 'bg-emerald-600 text-white shadow-xs'
+                  ? 'bg-[#1B5E20] text-white shadow-xs'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
               }`}
             >
@@ -108,7 +108,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         {onOpenBatchEntry && (
           <button
             onClick={onOpenBatchEntry}
-            className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0"
+            className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white text-xs font-bold transition-all flex items-center gap-1.5 shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>기록 일괄등록</span>
@@ -159,7 +159,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                 {/* Rank Badge */}
                 <div className="flex items-center sm:justify-start">
                   {item.rank === 1 ? (
-                    <span className="w-8 h-8 bg-emerald-600 text-white font-bold rounded-full flex items-center justify-center text-base">
+                    <span className="w-8 h-8 bg-[#1B5E20] text-white font-bold rounded-full flex items-center justify-center text-base">
                       1
                     </span>
                   ) : item.rank === 2 ? (
@@ -201,7 +201,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                     {/* Progress Bar Visualizer */}
                     <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
                       <div
-                        className="h-full transition-all duration-500 rounded-full bg-emerald-600"
+                        className="h-full transition-all duration-500 rounded-full bg-[#1B5E20]"
                         style={{ width: `${percentage}%` }}
                       ></div>
                     </div>

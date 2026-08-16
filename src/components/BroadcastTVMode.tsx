@@ -61,7 +61,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       {/* Top Header Bar */}
       <div className="relative z-10 flex items-center justify-between border-b border-slate-200 pb-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-[#1B5E20] flex items-center justify-center">
             <Flame className="w-7 h-7 text-white" />
           </div>
           <div>
@@ -86,7 +86,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
             onClick={() => setIsAutoPlay(!isAutoPlay)}
             className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs ${
               isAutoPlay
-                ? 'bg-slate-900 border-slate-900 text-white'
+                ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
                 : 'bg-white border-slate-200 text-slate-600'
             }`}
           >
@@ -113,7 +113,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       {/* Main Discipline Banner & Rankings */}
       <div className="relative z-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Left: Active Discipline Spotlight (4 cols) */}
-        <div className="lg:col-span-4 bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-[#1B5E20] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between">
           <div>
             <div className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-2">
               CURRENT EVENT
@@ -147,14 +147,14 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
             <div
               key={item.student.id}
               className={`p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
-                index === 0 ? 'bg-white border-2 border-slate-900' : 'bg-white border-slate-200/80'
+                index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
               }`}
             >
               <div className="flex items-center gap-4">
                 {/* Rank Number */}
                 <div className="w-10 h-10 rounded-xl font-bold text-lg flex items-center justify-center shrink-0">
                   {index === 0 ? (
-                    <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+                    <span className="w-10 h-10 rounded-xl bg-[#1B5E20] text-white flex items-center justify-center">
                       1
                     </span>
                   ) : index === 1 ? (

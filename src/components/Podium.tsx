@@ -41,13 +41,13 @@ export const Podium: React.FC<PodiumProps> = ({ topThree, activeTab, onSelectStu
             onClick={() => onSelectStudent(item.student.id)}
             className={`p-4 rounded-2xl border text-left transition-all flex items-center gap-3 cursor-pointer ${
               item.rank === 1
-                ? 'bg-emerald-50 border-emerald-400'
+                ? 'bg-[#E8F5E9] border-[#A5D6A7]'
                 : 'bg-white border-slate-200/90 hover:border-slate-300'
             }`}
           >
             <span
               className={`w-8 h-8 rounded-full font-bold text-sm flex items-center justify-center shrink-0 ${
-                item.rank === 1 ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
+                item.rank === 1 ? 'bg-[#1B5E20] text-white' : 'bg-slate-100 text-slate-600'
               }`}
             >
               {item.rank}

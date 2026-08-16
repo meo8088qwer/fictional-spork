@@ -50,7 +50,7 @@ export const GymNameModal: React.FC<GymNameModalProps> = ({
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-[#E8F5E9] text-[#1B5E20] flex items-center justify-center mb-4">
             <Building2 className="w-7 h-7" />
           </div>
 
@@ -69,7 +69,7 @@ export const GymNameModal: React.FC<GymNameModalProps> = ({
               }}
               placeholder="체육관 이름"
               autoFocus
-              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:bg-white transition-all"
+              className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#66BB6A] focus:bg-white transition-all"
             />
 
             {error && (
@@ -90,7 +90,7 @@ export const GymNameModal: React.FC<GymNameModalProps> = ({
               <button
                 type="submit"
                 disabled={isSaving}
-                className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold text-xs transition-all cursor-pointer"
+                className="flex-1 py-3 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-60 text-white font-bold text-xs transition-all cursor-pointer"
               >
                 {isSaving ? '저장 중...' : '저장'}
               </button>

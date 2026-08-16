@@ -50,7 +50,7 @@ export default function AdminAppPage() {
             <button
               type="button"
               onClick={() => refreshGym()}
-              className="w-full py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-sm"
+              className="w-full py-3 rounded-2xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-sm shadow-sm"
             >
               다시 시도
             </button>
@@ -70,7 +70,7 @@ export default function AdminAppPage() {
   if (!gym || gymLoading || studentsLoading || eventsLoading || recordsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8]">
-        <span className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
+        <span className="w-8 h-8 border-4 border-[#1B5E20] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -86,7 +86,7 @@ export default function AdminAppPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#f4f5f8] text-slate-900 font-sans antialiased selection:bg-emerald-600 selection:text-white">
+    <div className="min-h-screen flex bg-[#f4f5f8] text-slate-900 font-sans antialiased selection:bg-[#1B5E20] selection:text-white">
       <Header
         activeView={activeView}
         setActiveView={setActiveView}

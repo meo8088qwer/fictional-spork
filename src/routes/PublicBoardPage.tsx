@@ -33,7 +33,7 @@ export default function PublicBoardPage() {
   if (query.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8]">
-        <span className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
+        <span className="w-8 h-8 border-4 border-[#1B5E20] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -67,7 +67,7 @@ export default function PublicBoardPage() {
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3.5 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 shrink-0 bg-emerald-600 rounded-xl flex items-center justify-center font-bold text-white text-lg">
+            <div className="w-10 h-10 shrink-0 bg-[#1B5E20] rounded-xl flex items-center justify-center font-bold text-white text-lg">
               {board.gymName.charAt(0)}
             </div>
             <div>

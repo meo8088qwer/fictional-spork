@@ -555,7 +555,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               <select
                 value={selectedEventKey}
                 onChange={(e) => setSelectedEventKey(e.target.value as EventKey)}
-                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 font-semibold focus:outline-none focus:border-slate-400 shadow-xs"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 font-semibold focus:outline-none focus:border-[#66BB6A] shadow-xs"
               >
                 {eventKeys.map((key) => {
                   const meta = events[key];
@@ -579,7 +579,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   type="date"
                   value={measurementDate}
                   onChange={(e) => setMeasurementDate(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 font-semibold focus:outline-none focus:border-slate-400 shadow-xs"
+                  className="w-full pl-10 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 font-semibold focus:outline-none focus:border-[#66BB6A] shadow-xs"
                 />
               </div>
             </div>
@@ -698,7 +698,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                                 }
                               }
                             }}
-                            className="w-28 text-right px-3 py-1.5 bg-slate-50 border border-slate-200 focus:border-slate-400 rounded-lg text-sm text-slate-900 font-bold focus:outline-none shadow-xs"
+                            className="w-28 text-right px-3 py-1.5 bg-slate-50 border border-slate-200 focus:border-[#66BB6A] rounded-lg text-sm text-slate-900 font-bold focus:outline-none shadow-xs"
                           />
                         </td>
                       </tr>
@@ -720,7 +720,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
             <button
               onClick={handleSaveBatch}
-              className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition-all flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-sm transition-all flex items-center gap-2"
             >
               <Save className="w-4 h-4" />
               <span>일괄 기록 저장하기</span>
@@ -771,7 +771,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
               <button
                 onClick={() => downloadExcelTemplate(events)}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <FileSpreadsheet className="w-4 h-4" />
                 <span>엑셀 등록 양식 파일 (.xlsx) 다운로드</span>
@@ -891,7 +891,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
                 <button
                   onClick={handleConfirmExcelImport}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
                   <span>엑셀 데이터 최종 등록하기 ({parsedExcelRows.length}건)</span>
@@ -996,7 +996,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 onClick={() => setShowAddEventModal(true)}
                 disabled={eventKeys.length >= eventLimit}
                 title={eventKeys.length >= eventLimit ? planLimitMessage('FREE_PLAN_EVENT_LIMIT_REACHED') : undefined}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
                 <span>새 측정 종목 추가{eventLimit !== Infinity ? ` (${eventKeys.length}/${eventLimit})` : ''}</span>
@@ -1018,7 +1018,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                         {meta.timeSeconds}초 측정
                       </span>
                       {meta.isCustom ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-900 text-white">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1B5E20] text-white">
                           직접 추가됨
                         </span>
                       ) : (
@@ -1153,7 +1153,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     <button
                       type="button"
                       onClick={handleConfirmBatchRosterImport}
-                      className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="px-4 py-1.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <UserPlus className="w-4 h-4" />
                       <span>수련생 명단 최종 일괄 등록 실행 ({parsedRosterRows.length}명)</span>
@@ -1219,7 +1219,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   onClick={() => setShowAddStudentModal(true)}
                   disabled={students.length >= studentLimit}
                   title={students.length >= studentLimit ? planLimitMessage('STUDENT_LIMIT_REACHED') : undefined}
-                  className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>개별 수련생 직접 추가 ({students.length}/{studentLimit})</span>
@@ -1236,7 +1236,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   placeholder="수련생 이름 검색..."
                   value={studentRosterSearch}
                   onChange={(e) => setStudentRosterSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-slate-400"
+                  className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#66BB6A]"
                 />
               </div>
 
@@ -1352,7 +1352,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   placeholder="예: 2중 3단계 30초"
                   value={newEventTitle}
                   onChange={(e) => setNewEventTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"
                 />
               </div>
 
@@ -1364,7 +1364,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     placeholder="예: 2중3단계"
                     value={newEventShortTitle}
                     onChange={(e) => setNewEventShortTitle(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"
                   />
                 </div>
 
@@ -1376,7 +1376,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     max="600"
                     value={newEventTimeSeconds}
                     onChange={(e) => setNewEventTimeSeconds(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"
                   />
                 </div>
               </div>
@@ -1388,7 +1388,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   placeholder="예: 이중 뛰기 변형 동작"
                   value={newEventTechnique}
                   onChange={(e) => setNewEventTechnique(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"
                 />
               </div>
 
@@ -1424,7 +1424,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800"
+                  className="px-4 py-2 rounded-xl bg-[#1B5E20] text-white font-bold hover:bg-[#1B5E20]/90"
                 >
                   종목 추가 완료
                 </button>
@@ -1450,7 +1450,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   placeholder="예: 김민우"
                   value={newStudentName}
                   onChange={(e) => setNewStudentName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-slate-400 font-medium"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"
                 />
               </div>
 
@@ -1503,7 +1503,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800"
+                  className="px-4 py-2 rounded-xl bg-[#1B5E20] text-white font-bold hover:bg-[#1B5E20]/90"
                 >
                   등록하기
                 </button>

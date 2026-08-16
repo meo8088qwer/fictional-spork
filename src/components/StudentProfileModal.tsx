@@ -151,7 +151,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <button
               type="button"
               onClick={() => onOpenCertificate(student)}
-              className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>기록 인증 상장 발급</span>
@@ -177,7 +177,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   onClick={() => setSelectedEventKey(key)}
                   className={`p-3 rounded-2xl border transition-all cursor-pointer ${
                     selectedEventKey === key
-                      ? 'bg-slate-900 border-slate-900'
+                      ? 'bg-[#1B5E20] border-[#1B5E20]'
                       : 'bg-slate-50/80 border-slate-200/80 hover:border-slate-300'
                   }`}
                 >
@@ -234,14 +234,14 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   <YAxis stroke="#94a3b8" fontSize={10} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                    itemStyle={{ color: '#0f172a', fontSize: '12px', fontWeight: 'bold' }}
+                    itemStyle={{ color: '#1B5E20', fontSize: '12px', fontWeight: 'bold' }}
                   />
                   <Line
                     type="monotone"
                     dataKey="count"
-                    stroke="#0f172a"
+                    stroke="#1B5E20"
                     strokeWidth={3}
-                    dot={{ fill: '#0f172a', r: 4 }}
+                    dot={{ fill: '#1B5E20', r: 4 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -275,7 +275,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} />
                   <YAxis stroke="#94a3b8" fontSize={10} />
                   <Tooltip formatter={(v: number) => [`${v}회`, '월간 최고기록']} />
-                  <Bar dataKey="best" fill="#0f172a" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="best" fill="#1B5E20" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -295,7 +295,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <button
               onClick={handleFetchAiReport}
               disabled={isLoadingAi}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>{isLoadingAi ? '분석 중...' : 'AI 코칭 리포트 생성'}</span>

@@ -49,7 +49,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
         onClick={() => setActiveTab(key)}
         className={`flex items-center justify-between p-3.5 rounded-xl border transition-all text-left cursor-pointer ${
           isSelected
-            ? 'bg-emerald-600 text-white border-emerald-600'
+            ? 'bg-[#1B5E20] text-white border-[#1B5E20]'
             : 'bg-slate-50/80 border-slate-200/80 hover:bg-slate-100 text-slate-800'
         }`}
       >
@@ -94,7 +94,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
           <button
             onClick={() => setTimeFilter('ALL')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
-              timeFilter === 'ALL' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              timeFilter === 'ALL' ? 'bg-[#1B5E20] text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             전체 보기
@@ -102,7 +102,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
           <button
             onClick={() => setTimeFilter('30S')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
-              timeFilter === '30S' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              timeFilter === '30S' ? 'bg-[#1B5E20] text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             30초 종목
@@ -110,7 +110,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
           <button
             onClick={() => setTimeFilter('10S')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
-              timeFilter === '10S' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              timeFilter === '10S' ? 'bg-[#1B5E20] text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             10초 종목
@@ -131,7 +131,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
               onClick={() => setActiveTab('OVERALL')}
               className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left cursor-pointer ${
                 activeTab === 'OVERALL'
-                  ? 'bg-emerald-600 text-white border-emerald-600'
+                  ? 'bg-[#1B5E20] text-white border-[#1B5E20]'
                   : 'bg-slate-50/80 border-slate-200/80 hover:bg-slate-100 text-slate-700'
               }`}
             >
@@ -169,7 +169,7 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
               </div>
               <span
                 className={`text-xs font-bold px-3 py-1.5 rounded-lg ${
-                  activeTab === 'OVERALL' ? 'bg-white text-emerald-700' : 'bg-slate-200/80 text-slate-700'
+                  activeTab === 'OVERALL' ? 'bg-white text-[#1B5E20]' : 'bg-slate-200/80 text-slate-700'
                 }`}
               >
                 {activeTab === 'OVERALL' ? '선택됨' : '선택'}
