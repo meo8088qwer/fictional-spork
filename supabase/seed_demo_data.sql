@@ -6,7 +6,7 @@
 --      with the email below (or edit it to match). This creates the auth
 --      user + gym + 6 default events.
 --   2. Run this whole script once in the Supabase SQL Editor.
---   3. Log in with that email to see 12 students with 3 months of varied
+--   3. Log in with that email to see 30 students with 3 months of varied
 --      records per event -- ranks, counts, and growth charts all populated.
 --
 -- Safe to re-run: it wipes and regenerates only this gym's students/records.
@@ -26,13 +26,20 @@ begin
   delete from jump_records where gym_id = v_gym_id;
   delete from students where gym_id = v_gym_id;
 
-  -- 12 students across every grade band and both genders
+  -- 30 students spread across every grade band and both genders --
+  -- at least 5 per event once records are generated below.
   with names(n, name, grade, gender) as (
     values
-      (1,'강도현','초등 3학년','M'), (2,'이서준','초등 4학년','M'), (3,'박민준','초등 2학년','M'),
-      (4,'최지우','초등 5학년','F'), (5,'김하은','초등 3학년','F'), (6,'정우진','초등 6학년','M'),
-      (7,'한소율','유치부','F'),     (8,'오민서','초등 1학년','F'), (9,'장하윤','중고등부','F'),
-      (10,'윤지호','초등 4학년','M'),(11,'임서연','초등 2학년','F'),(12,'조은우','중고등부','M')
+      (1,'강도현','초등 3학년','M'),  (2,'이서준','초등 4학년','M'),  (3,'박민준','초등 2학년','M'),
+      (4,'최지우','초등 5학년','F'),  (5,'김하은','초등 3학년','F'),  (6,'정우진','초등 6학년','M'),
+      (7,'한소율','유치부','F'),      (8,'오민서','초등 1학년','F'),  (9,'장하윤','중고등부','F'),
+      (10,'윤지호','초등 4학년','M'), (11,'임서연','초등 2학년','F'), (12,'조은우','중고등부','M'),
+      (13,'신예준','유치부','M'),     (14,'배지안','초등 1학년','F'), (15,'권도윤','초등 5학년','M'),
+      (16,'황서윤','초등 6학년','F'), (17,'안현우','중고등부','M'),   (18,'송지호','초등 3학년','M'),
+      (19,'유나은','초등 2학년','F'), (20,'홍시우','유치부','M'),     (21,'문채원','초등 4학년','F'),
+      (22,'양준서','초등 1학년','M'), (23,'서아윤','초등 6학년','F'), (24,'노태윤','중고등부','M'),
+      (25,'백수아','초등 5학년','F'), (26,'남건우','초등 2학년','M'), (27,'심유진','유치부','F'),
+      (28,'표시윤','초등 3학년','F'), (29,'구민재','중고등부','M'),   (30,'육하린','초등 4학년','F')
   )
   insert into students (gym_id, student_no, name, grade, gender, avatar_color, join_date)
   select
@@ -41,7 +48,7 @@ begin
     name, grade, gender,
     (array['from-orange-500 to-amber-500','from-blue-500 to-cyan-500','from-emerald-500 to-teal-500',
            'from-purple-500 to-pink-500','from-indigo-500 to-purple-500','from-rose-500 to-red-500'])[1 + (n % 6)],
-    current_date - ((13 - n) * 15)
+    current_date - ((31 - n) * 6)
   from names;
 
   -- 3 months x 6 events per student, each (student, event) pair growing
