@@ -26,7 +26,7 @@ export const DEFAULT_EVENTS: Record<string, EventMeta> = {
     badgeText: '고난도 스피드',
     benchmarkGood: 75,
     benchmarkPro: 90,
-    description: '1회 점프에 줄을 2번 회전시키는 이중뛰기(씽씽이)의 30초 한계 도전 종목입니다.',
+    description: '1회 점프에 줄을 2번 회전시키는 이중뛰기(쌩쌩이)의 30초 한계 도전 종목입니다.',
     isCustom: false,
   },
   '30s_basic': {
