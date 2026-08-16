@@ -161,7 +161,11 @@ export default function AdminAppPage() {
                 />
               </div>
 
-              <RightRail students={students} records={records} />
+              <RightRail
+                students={students}
+                records={records}
+                onOpenBatchEntry={() => setActiveView('ADMIN_BATCH')}
+              />
             </div>
           </div>
         )}
