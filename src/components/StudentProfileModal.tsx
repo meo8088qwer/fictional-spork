@@ -92,19 +92,22 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   const chartBlurredWidthPct =
     chartData.length > 0 ? Math.round((blurredRecordCount / chartData.length) * 100) : 0;
 
-  // Monthly best over the fixed 3-month window -- e.g. 6월 112개 / 7월 127개
-  // / 8월 142개 -- with the headline % change from the first month shown to
-  // the latest. Shown to every plan.
-  const monthlyWindowStart = new Date();
-  monthlyWindowStart.setMonth(monthlyWindowStart.getMonth() - MONTHLY_CHART_MONTHS);
+  // Best count per calendar month the student actually has a record in --
+  // e.g. 6월 112개 / 7월 127개 / 8월 142개. Built once from the full
+  // history; "recent" below just takes the last 3 *months with data*
+  // (skipping any month with none), not a rolling 90-day window -- a date
+  // window would silently swallow a month if a record landed a few days
+  // outside it, or shrink to 1 point if a month in between has no data.
   const monthlyBestMap = new Map<string, number>();
   for (const r of allStudentEventRecords) {
-    if (new Date(r.date) < monthlyWindowStart) continue;
     const month = r.date.slice(0, 7); // YYYY-MM
     monthlyBestMap.set(month, Math.max(monthlyBestMap.get(month) ?? 0, r.count));
   }
-  const monthlyBest = [...monthlyBestMap.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
+  const allMonths = [...monthlyBestMap.entries()].sort(([a], [b]) => a.localeCompare(b));
+
+  // Shown to every plan, regardless of the record-history plan gate above.
+  const monthlyBest = allMonths
+    .slice(-MONTHLY_CHART_MONTHS)
     .map(([month, best]) => ({ label: `${Number(month.slice(5, 7))}월`, best }));
   const firstMonth = monthlyBest[0];
   const lastMonth = monthlyBest[monthlyBest.length - 1];
@@ -113,20 +116,11 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
       ? (((lastMonth.best - firstMonth.best) / firstMonth.best) * 100).toFixed(1)
       : null;
 
-  // Overall (lifetime) growth -- same method as above but across the
-  // student's entire history, not just the 3-month snapshot. Basic+ only.
-  const overallMonthlyBestMap = new Map<string, number>();
-  for (const r of allStudentEventRecords) {
-    const month = r.date.slice(0, 7);
-    overallMonthlyBestMap.set(month, Math.max(overallMonthlyBestMap.get(month) ?? 0, r.count));
-  }
-  const overallMonths = [...overallMonthlyBestMap.entries()].sort(([a], [b]) => a.localeCompare(b));
+  // Overall (lifetime) growth -- first month with data vs. the latest,
+  // across the student's entire history. Basic+ only.
   const overallGrowthPercent =
-    overallMonths.length >= 2 && overallMonths[0][1] > 0
-      ? (
-          ((overallMonths[overallMonths.length - 1][1] - overallMonths[0][1]) / overallMonths[0][1]) *
-          100
-        ).toFixed(1)
+    allMonths.length >= 2 && allMonths[0][1] > 0
+      ? (((allMonths[allMonths.length - 1][1] - allMonths[0][1]) / allMonths[0][1]) * 100).toFixed(1)
       : null;
 
   return (
@@ -314,8 +308,8 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           </div>
         </div>
 
-        {/* Monthly Growth Summary */}
-        {monthlyBest.length >= 2 && (
+        {/* Monthly Growth Summary -- shown whenever there's any data, for every plan */}
+        {monthlyBest.length >= 1 && (
           <div className="mb-6 bg-slate-50/80 p-4.5 rounded-2xl border border-slate-200/80">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
