@@ -32,6 +32,7 @@ interface AuthContextValue {
   refreshGym: () => Promise<void>;
   updateGymName: (name: string) => Promise<void>;
   updateGymSlug: (slug: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -132,6 +133,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [gym]
   );
 
+  const updatePassword = useCallback(async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  }, []);
+
   const value: AuthContextValue = {
     session,
     user: session?.user ?? null,
@@ -145,6 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshGym,
     updateGymName,
     updateGymSlug,
+    updatePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

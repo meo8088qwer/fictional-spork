@@ -8,6 +8,7 @@ import { Leaderboard } from '../components/Leaderboard';
 import { RightRail } from '../components/RightRail';
 import { AdminBatchEntry } from '../components/AdminBatchEntry';
 import { PricingPage } from '../components/PricingPage';
+import { MyPage } from '../components/MyPage';
 import { BroadcastTVMode } from '../components/BroadcastTVMode';
 import { StudentProfileModal } from '../components/StudentProfileModal';
 import { CertificateModal } from '../components/CertificateModal';
@@ -15,7 +16,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useStudents, useEvents, useRecords } from '../hooks/useGymData';
 
 export default function AdminAppPage() {
-  const { gym, gymLoading, gymError, refreshGym, signOut } = useAuth();
+  const { gym, user, gymLoading, gymError, refreshGym, signOut, updateGymName, updateGymSlug, updatePassword } =
+    useAuth();
   const gymName = gym?.name || '내 체육관';
 
   useEffect(() => {
@@ -32,9 +34,9 @@ export default function AdminAppPage() {
   } = useEvents();
   const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord } = useRecords();
 
-  const [activeView, setActiveView] = useState<'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'PRICING'>(
-    'LEADERBOARD'
-  );
+  const [activeView, setActiveView] = useState<
+    'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'PRICING' | 'MYPAGE'
+  >('LEADERBOARD');
   const [activeTab, setActiveTab] = useState<DisplayTab>('30s_alternate');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
   const [gradeFilter, setGradeFilter] = useState<GradeCategoryFilter>('ALL');
@@ -130,6 +132,16 @@ export default function AdminAppPage() {
         )}
 
         {activeView === 'PRICING' && <PricingPage gym={gym} />}
+
+        {activeView === 'MYPAGE' && (
+          <MyPage
+            email={user?.email}
+            gym={gym}
+            onSaveName={updateGymName}
+            onSaveSlug={updateGymSlug}
+            onSavePassword={updatePassword}
+          />
+        )}
 
         {activeView === 'LEADERBOARD' && (
           <div>

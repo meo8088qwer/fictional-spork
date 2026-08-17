@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Tv, ClipboardEdit, LogOut, Share2, Pencil, Menu, X, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { GymNameModal } from './GymNameModal';
 
-type AdminView = 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'PRICING';
+type AdminView = 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'PRICING' | 'MYPAGE';
 
 interface HeaderProps {
   activeView: AdminView;
@@ -31,8 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
   studentCount,
   totalRecordCount,
 }) => {
-  const { user, gym, signOut, updateGymName, updateGymSlug } = useAuth();
-  const [showRenameModal, setShowRenameModal] = useState(false);
+  const { user, gym, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const goTo = (view: AdminView) => {
@@ -92,8 +90,8 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setShowRenameModal(true)}
-              title="체육관 설정"
+              onClick={() => goTo('MYPAGE')}
+              title="마이페이지"
               className="p-1.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors shrink-0 cursor-pointer"
             >
               <Pencil className="w-3.5 h-3.5" />
@@ -165,17 +163,6 @@ export const Header: React.FC<HeaderProps> = ({
             <span>로그아웃</span>
           </button>
         </div>
-
-        {gym && (
-          <GymNameModal
-            isOpen={showRenameModal}
-            currentName={gym.name}
-            currentSlug={gym.slug}
-            onSaveName={updateGymName}
-            onSaveSlug={updateGymSlug}
-            onClose={() => setShowRenameModal(false)}
-          />
-        )}
       </aside>
     </>
   );
