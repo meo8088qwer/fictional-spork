@@ -2,6 +2,7 @@ import * as XLSX from 'xlsx';
 import { EventKey, EventMeta, GradeGroup, Student, JumpRecord } from '../types';
 import { DEFAULT_EVENTS, GRADE_GROUPS } from '../data/constants';
 import { getStudentPersonalBest } from './scoring';
+import { todayLocalDate } from './dateHelper';
 
 const GENDER_LABEL: Record<'M' | 'F', string> = { M: '남', F: '여' };
 
@@ -124,7 +125,7 @@ export function downloadExcelTemplate(
   records: JumpRecord[] = []
 ) {
   const wb = XLSX.utils.book_new();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = todayLocalDate();
 
   const activeEventMetas = Object.values(eventsMap);
   const eventTitles = activeEventMetas.map((m) => m.title);
@@ -200,7 +201,7 @@ export function downloadExcelTemplate(
 // a brand new gym with nothing to export yet.
 export function downloadStudentRosterTemplate(gymName: string, students: Student[] = []) {
   const wb = XLSX.utils.book_new();
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = todayLocalDate();
 
   const studentRosterData =
     students.length > 0
@@ -321,7 +322,7 @@ export async function parseExcelFile(
         });
 
         const parsedRecords: ExcelParsedRecord[] = [];
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = todayLocalDate();
 
         jsonRows.forEach((row) => {
           // Normalize Keys in row

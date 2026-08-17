@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
 import { GRADE_GROUPS } from '../data/constants';
 import { getStudentPersonalBest } from '../lib/scoring';
+import { todayLocalDate } from '../lib/dateHelper';
 import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
 import { Gym } from '../data/api/gyms';
 import {
@@ -58,7 +59,7 @@ interface AdminBatchEntryProps {
   onAddCustomEvent: (eventMeta: EventMeta) => Promise<EventMeta>;
   onDeleteCustomEvent: (eventKey: string) => Promise<void>;
   onResetDefaultEvents: () => Promise<Record<string, EventMeta>>;
-  onClose: () => void;
+  onClose: (lastEventKey?: EventKey) => void;
   onNavigateToPricing: () => void;
 }
 
@@ -85,9 +86,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
   // Batch entry state
   const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_alternate');
-  const [measurementDate, setMeasurementDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [measurementDate, setMeasurementDate] = useState<string>(todayLocalDate());
   const [gradeFilter, setGradeFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -231,7 +230,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       setSavedSuccessAlert(true);
       setTimeout(() => {
         setSavedSuccessAlert(false);
-        onClose();
+        // Land back on the leaderboard already showing the event just
+        // saved -- otherwise it defaults to the first event, and a save to
+        // any other event looks like it silently did nothing.
+        onClose(selectedEventKey);
       }, 1200);
     } catch (e) {
       setActionError(e instanceof PlanLimitError ? planLimitMessage(e.code) : '기록 저장 중 오류가 발생했습니다.');
@@ -422,7 +424,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           grade: row.grade || '초등 3학년',
           gender: row.gender || 'M',
           avatarColor: randomColor,
-          joinDate: new Date().toISOString().split('T')[0],
+          joinDate: todayLocalDate(),
         });
         existingNames.add(row.name.trim());
         addedCount++;
@@ -469,7 +471,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         grade: newStudentGrade,
         gender: newStudentGender,
         avatarColor: randomColor,
-        joinDate: new Date().toISOString().split('T')[0],
+        joinDate: todayLocalDate(),
       });
       setNewStudentName('');
       setShowAddStudentModal(false);
@@ -817,7 +819,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           {/* Action Buttons */}
           <div className="flex items-center justify-between">
             <button
-              onClick={onClose}
+              onClick={() => onClose(selectedEventKey)}
               className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-all border border-slate-200/80"
             >
               닫기 / 랭킹보드로 돌아가기

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta } from '../types';
 import { getStudentPersonalBest } from '../lib/scoring';
+import { todayLocalDate } from '../lib/dateHelper';
 import { Trophy, Printer, Download, X, CheckCircle2, Award, Loader2, Image as ImageIcon, Share2 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import { jsPDF } from 'jspdf';
@@ -32,7 +33,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   // Find overall best record or selected event record
   let bestEventName = '30초 번갈아뛰기';
   let bestCount = 0;
-  let bestDate = new Date().toISOString().split('T')[0];
+  let bestDate = todayLocalDate();
 
   if (selectedEventKey === 'OVERALL') {
     eventKeys.forEach((key) => {
@@ -67,7 +68,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
     return `${today.getFullYear()}년 ${String(today.getMonth() + 1).padStart(2, '0')}월 ${String(today.getDate()).padStart(2, '0')}일`;
   };
 
-  const todayKorean = formatDateKorean(new Date().toISOString().split('T')[0]);
+  const todayKorean = formatDateKorean(todayLocalDate());
 
   // Generate and download high resolution PDF
   const handleDownloadPdf = async () => {
