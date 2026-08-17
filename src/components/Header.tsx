@@ -113,6 +113,18 @@ export const Header: React.FC<HeaderProps> = ({
               <span>{label}</span>
             </button>
           ))}
+          {gym && (
+            <Link
+              to={`/g/${gym.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              title="학부모님 공개 랭킹보드 링크 (로그인 불필요)"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>공개 링크</span>
+            </Link>
+          )}
         </nav>
 
         <div className="p-3 border-t border-slate-100 space-y-1.5">
@@ -128,18 +140,6 @@ export const Header: React.FC<HeaderProps> = ({
             <Sparkles className="w-3.5 h-3.5" />
             <span>요금제</span>
           </button>
-          {gym && (
-            <Link
-              to={`/g/${gym.slug}`}
-              target="_blank"
-              rel="noreferrer"
-              title="학부모님 공개 랭킹보드 링크 (로그인 불필요)"
-              className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>공개 링크</span>
-            </Link>
-          )}
           <button
             type="button"
             onClick={() => goTo('MYPAGE')}
