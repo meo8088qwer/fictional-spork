@@ -20,6 +20,7 @@ import shotLeaderboard from '../assets/showcase/shot-leaderboard.webp';
 import shotTv from '../assets/showcase/shot-tv.webp';
 import shotEntry from '../assets/showcase/shot-entry.webp';
 import shotProfileStats from '../assets/showcase/shot-profile-stats.webp';
+import shotProfileGrowth from '../assets/showcase/shot-profile-growth.webp';
 
 const PROBLEMS = [
   { no: '01', title: '기록 입력', body: '기록을 측정하고 따로 메모' },
@@ -165,10 +166,16 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3.5">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link to="/about">
+          <Link
+            to="/about"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
             <BrandMark />
           </Link>
-          <nav className="hidden sm:flex items-center gap-6 text-xs font-bold text-slate-500">
+          <nav className="hidden sm:flex flex-1 items-center justify-center gap-10 text-base font-bold text-slate-600">
             <a href="#features" className="hover:text-slate-900 transition-colors">기능</a>
             <a href="#pricing" className="hover:text-slate-900 transition-colors">요금제</a>
             <a href="#faq" className="hover:text-slate-900 transition-colors">FAQ</a>
@@ -184,7 +191,7 @@ export default function LandingPage() {
               to="/signup"
               className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white text-sm font-bold transition-all"
             >
-              50명까지 무료로 시작하기
+              무료로 시작하기
             </Link>
           </div>
         </div>
@@ -193,11 +200,11 @@ export default function LandingPage() {
       <main>
         {/* 01. HERO */}
         <section className="max-w-5xl mx-auto px-4 lg:px-8 grid lg:grid-cols-2 gap-10 items-center py-16 sm:py-24">
-          <div>
+          <div className="text-center">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold tracking-wider mb-5">
               JUMP ROPE RECORD &amp; RANKING PLATFORM
             </span>
-            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-tight mb-4">
+            <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 tracking-tight leading-tight mb-4">
               기록하고, 성장하고,
               <br />
               <span className="text-[#1B5E20]">경쟁하다.</span>
@@ -208,14 +215,16 @@ export default function LandingPage() {
               줄넘기 기록 &amp; 랭킹 플랫폼, <strong className="text-slate-900">ROPERANK</strong>
             </p>
             <p className="text-xs sm:text-sm text-slate-400 font-medium leading-relaxed mb-8">
-              기록은 자동으로 쌓이고, 성장은 데이터로 보이며, 아이들은 다음 기록에 도전합니다.
+              기록은 자동으로 쌓이고, 성장은 데이터로 보이며,
+              <br />
+              아이들은 다음 기록에 도전합니다.
             </p>
-            <div className="flex items-center gap-2.5 mb-6">
+            <div className="flex items-center justify-center gap-2.5 mb-6">
               <Link
                 to="/signup"
                 className="inline-flex items-center gap-1.5 px-6 py-3.5 rounded-2xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-sm shadow-sm transition-all"
               >
-                50명까지 무료로 시작하기
+                무료로 시작하기
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <a
@@ -246,7 +255,9 @@ export default function LandingPage() {
                 관장님, 기록 관리 아직 이렇게 하고 계신가요?
               </h2>
               <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                오늘 측정한 기록을 적고, 학생별 기록을 다시 입력하고, 순위를 정리하고, 지난 기록과 비교하고…
+                오늘 측정한 기록을 적고, 학생별 기록을 다시 입력하고,
+                <br />
+                순위를 정리하고, 지난 기록과 비교하고…
                 <br />
                 기록이 쌓일수록 관리해야 할 일도 함께 늘어납니다.
               </p>
@@ -376,11 +387,18 @@ export default function LandingPage() {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 items-start mb-16">
-            <img
-              src={shotProfileStats}
-              alt="ROPERANK 학생 기록 카드 — 종목별 최고 기록 현황"
-              className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 order-2 lg:order-1"
-            />
+            <div className="space-y-4 order-2 lg:order-1">
+              <img
+                src={shotProfileStats}
+                alt="ROPERANK 학생 기록 카드 — 종목별 최고 기록 현황"
+                className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60"
+              />
+              <img
+                src={shotProfileGrowth}
+                alt="ROPERANK 성장 그래프 — 월별 기록 변화와 성장률"
+                className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60"
+              />
+            </div>
             <div className="order-1 lg:order-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[11px] font-bold mb-4">
                 <TrendingUp className="w-3.5 h-3.5" />
@@ -595,7 +613,7 @@ export default function LandingPage() {
               to="/signup"
               className="inline-flex items-center gap-1.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-white/90 text-[#1B5E20] font-bold text-sm shadow-sm transition-all"
             >
-              50명까지 무료로 시작하기
+              무료로 시작하기
               <ArrowRight className="w-4 h-4" />
             </Link>
             <p className="text-[11px] text-white/60 font-bold mt-4">카드 등록 없이 시작할 수 있습니다.</p>
@@ -679,7 +697,7 @@ export default function LandingPage() {
             to="/signup"
             className="inline-flex items-center gap-1.5 px-6 py-3.5 rounded-2xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-sm shadow-sm transition-all"
           >
-            50명까지 무료로 시작하기
+            무료로 시작하기
             <ArrowRight className="w-4 h-4" />
           </Link>
           <p className="text-[11px] text-slate-400 font-bold mt-4">카드 등록 없이 시작할 수 있습니다.</p>
