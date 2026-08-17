@@ -20,10 +20,13 @@ interface StudentProfileModalProps {
   onClose: () => void;
 }
 
-// Free plans see only the recent window in full detail; older points are
-// still shown (as a "there's more" tease) but blurred, not hidden. Paid
-// plans default to a wider window and can reveal everything via "더보기".
+// Free plans see the last 3 months in full detail; the next 3 (out to 6
+// months total) are shown as a blurred upsell tease, and anything older
+// than that isn't rendered at all. Paid plans get all 6 months sharp with
+// zero blur -- older data isn't teased, it's just not there until "더보기"
+// reveals it (nothing to sell them, they're already paying).
 const FREE_SHARP_MONTHS = 3;
+const FREE_VISIBLE_MONTHS = 6;
 const PAID_DEFAULT_MONTHS = 6;
 // The monthly bar chart is intentionally always a fixed 3-month window,
 // independent of plan -- it's a snapshot, not the full-history view.
@@ -50,23 +53,27 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
   const isFreePlan = gymPlan === 'free';
 
-  // null cutoff = nothing is blurred (paid plan clicked "더보기").
-  const sharpCutoff = (() => {
-    if (isFreePlan) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - FREE_SHARP_MONTHS);
-      return d;
-    }
-    if (!showFullHistory) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - PAID_DEFAULT_MONTHS);
-      return d;
-    }
-    return null;
-  })();
+  const monthsAgo = (n: number) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - n);
+    return d;
+  };
+
+  // What's rendered at all (chart/table). Older than this isn't drawn,
+  // blurred or otherwise -- it simply isn't there until unlocked.
+  const visibleCutoff = isFreePlan
+    ? monthsAgo(FREE_VISIBLE_MONTHS)
+    : showFullHistory
+    ? null
+    : monthsAgo(PAID_DEFAULT_MONTHS);
+
+  // Of what IS rendered, free additionally blurs anything past its 3-month
+  // sharp window as an upsell tease. Paid plans never blur -- their older
+  // data is handled entirely by the visible-cutoff above.
+  const sharpCutoff = isFreePlan ? monthsAgo(FREE_SHARP_MONTHS) : null;
   const isRecordBlurred = (dateStr: string) => sharpCutoff !== null && new Date(dateStr) < sharpCutoff;
 
-  // Free plan: blurred content is an upsell. Paid plan: it's just collapsed.
+  // Free plan: blurred content is an upsell. Paid plan: "더보기" just reveals more.
   const handleBlurredClick = () => {
     if (isFreePlan) {
       setShowUpgradePopup(true);
@@ -77,15 +84,23 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
   const selectedMeta = events[selectedEventKey] || events[eventKeys[0]];
 
-  // All of this student's records for the selected event, oldest first --
-  // always the full set. What's blurred vs sharp is a display concern,
-  // handled per-section below.
+  // All of this student's records for the selected event, oldest first.
   const allStudentEventRecords = records
     .filter((r) => r.studentId === student.id && r.eventKey === selectedEventKey)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const blurredRecordCount = allStudentEventRecords.filter((r) => isRecordBlurred(r.date)).length;
 
-  const chartData = allStudentEventRecords.map((r) => ({
+  // What the chart/table actually draw -- excludes anything past the
+  // visible cutoff outright.
+  const visibleRecords = visibleCutoff
+    ? allStudentEventRecords.filter((r) => new Date(r.date) >= visibleCutoff)
+    : allStudentEventRecords;
+  const hasMoreBeyondVisible = visibleRecords.length < allStudentEventRecords.length;
+  const blurredRecordCount = visibleRecords.filter((r) => isRecordBlurred(r.date)).length;
+  // Free: the blur itself is the "there's more" signal. Paid: nothing ever
+  // blurs, so the collapsed-history notice is what's beyond the cutoff.
+  const showMoreNotice = isFreePlan ? blurredRecordCount > 0 : hasMoreBeyondVisible;
+
+  const chartData = visibleRecords.map((r) => ({
     date: r.date.substring(5), // MM-DD
     count: r.count,
   }));
@@ -243,7 +258,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
         </div>
 
         {/* Limited-history notice -- covers the chart, monthly growth, and table below */}
-        {blurredRecordCount > 0 && (
+        {showMoreNotice && (
           <button
             type="button"
             onClick={handleBlurredClick}
@@ -252,7 +267,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             <Lock className="w-4 h-4 shrink-0 text-slate-400" />
             <span className="flex-1">
               {isFreePlan
-                ? `무료 플랜은 최근 ${FREE_SHARP_MONTHS}개월 기록만 선명하게 볼 수 있어요. 이전 기록은 흐리게 표시돼요 — 베이직 플랜으로 업그레이드하면 전체 기록을 볼 수 있습니다.`
+                ? `무료 플랜은 최근 ${FREE_SHARP_MONTHS}개월 기록만 선명하게 볼 수 있어요. ${FREE_SHARP_MONTHS}~${FREE_VISIBLE_MONTHS}개월 전 기록은 흐리게 표시돼요 — 베이직 플랜으로 업그레이드하면 전체 기록을 볼 수 있습니다.`
                 : `최근 ${PAID_DEFAULT_MONTHS}개월 기록만 표시 중이에요. 더보기를 누르면 전체 기록을 볼 수 있어요.`}
             </span>
             {!isFreePlan && <span className="shrink-0 text-[#1B5E20] underline">더보기</span>}
@@ -380,7 +395,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             )}
           </div>
 
-          {allStudentEventRecords.length === 0 ? (
+          {visibleRecords.length === 0 ? (
             <div className="py-4 text-center text-xs text-slate-400 font-medium">
               측정된 기록 이력이 없습니다.
             </div>
@@ -395,7 +410,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                  {allStudentEventRecords.map((r) => {
+                  {visibleRecords.map((r) => {
                     const blurred = isRecordBlurred(r.date);
                     return (
                       <tr
