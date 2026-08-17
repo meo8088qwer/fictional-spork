@@ -132,6 +132,7 @@ export default function PublicBoardPage() {
           student={selectedStudent}
           records={board.records}
           events={board.events}
+          initialEventKey={activeTab !== 'OVERALL' ? activeTab : undefined}
           onClose={() => setSelectedStudent(null)}
         />
       )}

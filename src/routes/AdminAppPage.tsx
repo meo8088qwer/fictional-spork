@@ -187,6 +187,7 @@ export default function AdminAppPage() {
           events={events}
           isAdmin
           gymPlan={gym.plan}
+          initialEventKey={activeTab !== 'OVERALL' ? activeTab : undefined}
           onUpgradeRequired={() => {
             setSelectedStudent(null);
             setActiveView('PRICING');

@@ -13,6 +13,7 @@ interface StudentProfileModalProps {
   events: Record<string, EventMeta>;
   isAdmin?: boolean;
   gymPlan?: Gym['plan'];
+  initialEventKey?: EventKey;
   onDeleteStudent?: (studentId: string) => void;
   onDeleteRecord?: (recordId: string) => void;
   onOpenCertificate?: (student: Student) => void;
@@ -34,6 +35,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   events,
   isAdmin = false,
   gymPlan,
+  initialEventKey,
   onDeleteStudent,
   onDeleteRecord,
   onOpenCertificate,
@@ -41,7 +43,9 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   onClose,
 }) => {
   const eventKeys = Object.keys(events);
-  const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_alternate');
+  const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(
+    initialEventKey || eventKeys[0] || '30s_alternate'
+  );
   const [showStudentDeleteConfirm, setShowStudentDeleteConfirm] = useState<boolean>(false);
   const [recordToDelete, setRecordToDelete] = useState<JumpRecord | null>(null);
   const [showUpgradePopup, setShowUpgradePopup] = useState<boolean>(false);
