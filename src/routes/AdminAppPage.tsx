@@ -7,6 +7,7 @@ import { Podium } from '../components/Podium';
 import { Leaderboard } from '../components/Leaderboard';
 import { RightRail } from '../components/RightRail';
 import { AdminBatchEntry } from '../components/AdminBatchEntry';
+import { PricingPage } from '../components/PricingPage';
 import { BroadcastTVMode } from '../components/BroadcastTVMode';
 import { StudentProfileModal } from '../components/StudentProfileModal';
 import { CertificateModal } from '../components/CertificateModal';
@@ -31,7 +32,9 @@ export default function AdminAppPage() {
   } = useEvents();
   const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord } = useRecords();
 
-  const [activeView, setActiveView] = useState<'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE'>('LEADERBOARD');
+  const [activeView, setActiveView] = useState<'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'PRICING'>(
+    'LEADERBOARD'
+  );
   const [activeTab, setActiveTab] = useState<DisplayTab>('30s_alternate');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
   const [gradeFilter, setGradeFilter] = useState<GradeCategoryFilter>('ALL');
@@ -119,8 +122,11 @@ export default function AdminAppPage() {
             onDeleteCustomEvent={deleteCustomEvent}
             onResetDefaultEvents={resetDefaultEvents}
             onClose={() => setActiveView('LEADERBOARD')}
+            onNavigateToPricing={() => setActiveView('PRICING')}
           />
         )}
+
+        {activeView === 'PRICING' && <PricingPage gym={gym} />}
 
         {activeView === 'LEADERBOARD' && (
           <div>

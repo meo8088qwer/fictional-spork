@@ -21,7 +21,7 @@ export function throwOnDbError(error: { message?: string } | null): void {
 
 export function planLimitMessage(code: PlanLimitCode): string {
   if (code === 'FREE_PLAN_EVENT_LIMIT_REACHED') {
-    return '무료 플랜은 기본 제공 종목 6개까지만 이용할 수 있습니다. 종목을 추가하려면 유료 플랜으로 업그레이드해 주세요.';
+    return '무료 플랜은 기본 제공 종목 6개까지만 이용할 수 있습니다. 종목을 추가하려면 베이직 플랜으로 업그레이드해 주세요.';
   }
-  return '학생 등록 인원 한도에 도달했습니다. 더 많은 학생을 등록하려면 유료 플랜으로 업그레이드해 주세요.';
+  return '등록 가능한 학생 수 한도에 도달했습니다. 더 많은 학생을 등록하려면 플랜을 업그레이드해 주세요.';
 }

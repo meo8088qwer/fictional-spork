@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Tv, ClipboardEdit, LogOut, Share2, Pencil, Menu, X } from 'lucide-react';
+import { Trophy, Tv, ClipboardEdit, LogOut, Share2, Pencil, Menu, X, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { GymNameModal } from './GymNameModal';
 
+type AdminView = 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'PRICING';
+
 interface HeaderProps {
-  activeView: 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE';
-  setActiveView: (view: 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE') => void;
+  activeView: AdminView;
+  setActiveView: (view: AdminView) => void;
   gymName: string;
   studentCount: number;
   totalRecordCount: number;
 }
 
 const NAV_ITEMS: Array<{
-  view: 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE';
+  view: AdminView;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
@@ -33,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const goTo = (view: 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE') => {
+  const goTo = (view: AdminView) => {
     setActiveView(view);
     setMobileMenuOpen(false);
   };
@@ -124,6 +126,18 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         <div className="p-3 border-t border-slate-100 space-y-1.5">
+          <button
+            type="button"
+            onClick={() => goTo('PRICING')}
+            className={`w-full px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeView === 'PRICING'
+                ? 'bg-[#1B5E20] text-white'
+                : 'bg-[#E8F5E9] text-[#1B5E20] hover:bg-[#A5D6A7]/40'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>요금제</span>
+          </button>
           {gym && (
             <Link
               to={`/g/${gym.slug}`}

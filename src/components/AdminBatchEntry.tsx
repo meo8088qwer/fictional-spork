@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
 import { GRADE_GROUPS } from '../data/constants';
 import { getStudentPersonalBest } from '../lib/scoring';
-import { PlanLimitError, planLimitMessage } from '../data/api/errors';
+import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
 import { Gym } from '../data/api/gyms';
 import {
   downloadExcelTemplate,
@@ -42,6 +42,7 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
+import { UpgradeModal } from './UpgradeModal';
 
 interface AdminBatchEntryProps {
   gym: Gym;
@@ -57,6 +58,7 @@ interface AdminBatchEntryProps {
   onDeleteCustomEvent: (eventKey: string) => Promise<void>;
   onResetDefaultEvents: () => Promise<Record<string, EventMeta>>;
   onClose: () => void;
+  onNavigateToPricing: () => void;
 }
 
 export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
@@ -71,11 +73,13 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   onDeleteCustomEvent,
   onResetDefaultEvents,
   onClose,
+  onNavigateToPricing,
 }) => {
   const eventKeys = Object.keys(events);
-  const studentLimit = gym.plan === 'paid' ? 200 : 50;
-  const eventLimit = gym.plan === 'paid' ? Infinity : 6;
+  const studentLimit = gym.plan === 'pro' ? 500 : gym.plan === 'basic' ? 150 : 50;
+  const eventLimit = gym.plan === 'free' ? 6 : Infinity;
   const [actionError, setActionError] = useState<string>('');
+  const [planLimitPopup, setPlanLimitPopup] = useState<PlanLimitCode | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EXCEL' | 'EVENTS' | 'STUDENTS'>('BATCH');
 
   // Batch entry state
@@ -470,7 +474,12 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       setShowAddStudentModal(false);
       alert('신규 수련생이 등록되었습니다!');
     } catch (err) {
-      setActionError(err instanceof PlanLimitError ? planLimitMessage(err.code) : '수련생 등록 중 오류가 발생했습니다.');
+      if (err instanceof PlanLimitError) {
+        setShowAddStudentModal(false);
+        setPlanLimitPopup(err.code);
+      } else {
+        setActionError('수련생 등록 중 오류가 발생했습니다.');
+      }
     }
   };
 
@@ -1076,10 +1085,14 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
               <button
                 type="button"
-                onClick={() => setShowAddEventModal(true)}
-                disabled={eventKeys.length >= eventLimit}
-                title={eventKeys.length >= eventLimit ? planLimitMessage('FREE_PLAN_EVENT_LIMIT_REACHED') : undefined}
-                className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                onClick={() => {
+                  if (eventKeys.length >= eventLimit) {
+                    setPlanLimitPopup('FREE_PLAN_EVENT_LIMIT_REACHED');
+                  } else {
+                    setShowAddEventModal(true);
+                  }
+                }}
+                className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
                 <span>새 측정 종목 추가{eventLimit !== Infinity ? ` (${eventKeys.length}/${eventLimit})` : ''}</span>
@@ -1299,10 +1312,14 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowAddStudentModal(true)}
-                  disabled={students.length >= studentLimit}
-                  title={students.length >= studentLimit ? planLimitMessage('STUDENT_LIMIT_REACHED') : undefined}
-                  className="px-3.5 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  onClick={() => {
+                    if (students.length >= studentLimit) {
+                      setPlanLimitPopup('STUDENT_LIMIT_REACHED');
+                    } else {
+                      setShowAddStudentModal(true);
+                    }
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   <span>개별 수련생 직접 추가 ({students.length}/{studentLimit})</span>
@@ -1420,9 +1437,12 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   setNewEventShortTitle('');
                   alert(`'${newMeta.title}' 종목이 새로 추가되었습니다!`);
                 } catch (err) {
-                  setActionError(
-                    err instanceof PlanLimitError ? planLimitMessage(err.code) : '종목 추가 중 오류가 발생했습니다.'
-                  );
+                  if (err instanceof PlanLimitError) {
+                    setShowAddEventModal(false);
+                    setPlanLimitPopup(err.code);
+                  } else {
+                    setActionError('종목 추가 중 오류가 발생했습니다.');
+                  }
                 }
               }}
               className="space-y-3.5 text-xs"
@@ -1645,6 +1665,16 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           }
         }}
         onClose={() => setStudentToDelete(null)}
+      />
+
+      {/* Plan Limit Upgrade Prompt */}
+      <UpgradeModal
+        code={planLimitPopup}
+        onUpgrade={() => {
+          setPlanLimitPopup(null);
+          onNavigateToPricing();
+        }}
+        onClose={() => setPlanLimitPopup(null)}
       />
     </div>
   );

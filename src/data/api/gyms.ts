@@ -6,7 +6,7 @@ export interface Gym {
   ownerId: string;
   slug: string;
   name: string;
-  plan: 'free' | 'paid';
+  plan: 'free' | 'basic' | 'pro';
 }
 
 function mapGymRow(row: any): Gym {
