@@ -18,14 +18,29 @@ function mapRecordRow(row: any): JumpRecord {
   };
 }
 
+// PostgREST caps a single response at 1000 rows by default -- a gym with
+// more history than that (many students x many events x many months) would
+// silently lose everything past the cap, ordered oldest-first, so newly
+// saved records would never appear no matter how fresh the fetch. Page
+// through with .range() until a partial page confirms there's no more.
+const PAGE_SIZE = 1000;
+
 export async function listRecords(gymId: string): Promise<JumpRecord[]> {
-  const { data, error } = await supabase
-    .from('jump_records')
-    .select('*, students(name)')
-    .eq('gym_id', gymId)
-    .order('created_at', { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map(mapRecordRow);
+  const allRows: any[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from('jump_records')
+      .select('*, students(name)')
+      .eq('gym_id', gymId)
+      .order('created_at', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    allRows.push(...(data ?? []));
+    if (!data || data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return allRows.map(mapRecordRow);
 }
 
 export interface BatchRecordEntry {
