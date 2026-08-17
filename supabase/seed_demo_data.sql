@@ -111,4 +111,7 @@ end;
 $$;
 
 select seed_demo_gym('test@naver.com', 'free', 50, 6);
-select seed_demo_gym('tset2@naver.com', 'basic', 50, 6);
+-- 9 months (not 6) so 3 months sit past the Basic plan's 6-month sharp
+-- window -- otherwise there's nothing older to blur, and "더보기" never
+-- has anything to reveal.
+select seed_demo_gym('tset2@naver.com', 'basic', 50, 9);
