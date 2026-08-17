@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta } from '../types';
+import { Gym } from '../data/api/gyms';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { Trophy, TrendingUp, Calendar, Printer, X, Trash2 } from 'lucide-react';
+import { Trophy, TrendingUp, Calendar, Printer, X, Trash2, Lock } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 
 interface StudentProfileModalProps {
@@ -10,20 +11,26 @@ interface StudentProfileModalProps {
   records: JumpRecord[];
   events: Record<string, EventMeta>;
   isAdmin?: boolean;
+  gymPlan?: Gym['plan'];
   onDeleteStudent?: (studentId: string) => void;
   onDeleteRecord?: (recordId: string) => void;
   onOpenCertificate?: (student: Student) => void;
+  onUpgradeRequired?: () => void;
   onClose: () => void;
 }
+
+const RECORD_HISTORY_LIMIT_MONTHS = 3;
 
 export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   student,
   records,
   events,
   isAdmin = false,
+  gymPlan,
   onDeleteStudent,
   onDeleteRecord,
   onOpenCertificate,
+  onUpgradeRequired,
   onClose,
 }) => {
   const eventKeys = Object.keys(events);
@@ -31,12 +38,21 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   const [showStudentDeleteConfirm, setShowStudentDeleteConfirm] = useState<boolean>(false);
   const [recordToDelete, setRecordToDelete] = useState<JumpRecord | null>(null);
 
+  const isFreePlan = gymPlan === 'free';
+  const historyStart = new Date();
+  historyStart.setMonth(historyStart.getMonth() - RECORD_HISTORY_LIMIT_MONTHS);
+
   const selectedMeta = events[selectedEventKey] || events[eventKeys[0]];
 
-  // Student's records for selected event sorted by date
-  const studentEventRecords = records
+  // Student's records for selected event sorted by date. Free-plan gyms
+  // only get to see/manage the recent window -- BASIC unlocks full history.
+  const allStudentEventRecords = records
     .filter((r) => r.studentId === student.id && r.eventKey === selectedEventKey)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const studentEventRecords = isFreePlan
+    ? allStudentEventRecords.filter((r) => new Date(r.date) >= historyStart)
+    : allStudentEventRecords;
+  const hiddenOlderRecordCount = allStudentEventRecords.length - studentEventRecords.length;
 
   const chartData = studentEventRecords.map((r) => ({
     date: r.date.substring(5), // MM-DD
@@ -109,10 +125,20 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             {onOpenCertificate && (
               <button
                 type="button"
-                onClick={() => onOpenCertificate(student)}
-                className="px-4 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+                onClick={() => {
+                  if (isFreePlan) {
+                    onUpgradeRequired?.();
+                  } else {
+                    onOpenCertificate(student);
+                  }
+                }}
+                className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                  isFreePlan
+                    ? 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    : 'bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white'
+                }`}
               >
-                <Printer className="w-4 h-4" />
+                {isFreePlan ? <Lock className="w-3.5 h-3.5" /> : <Printer className="w-4 h-4" />}
                 <span>기록 인증 상장 발급</span>
               </button>
             )}
@@ -255,6 +281,20 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               </span>
             )}
           </div>
+
+          {hiddenOlderRecordCount > 0 && (
+            <button
+              type="button"
+              onClick={() => onUpgradeRequired?.()}
+              className="w-full mb-3 flex items-center gap-2 text-[11px] font-bold text-slate-500 bg-white border border-slate-200 rounded-xl px-3 py-2 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <Lock className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                무료 플랜은 최근 {RECORD_HISTORY_LIMIT_MONTHS}개월 기록만 볼 수 있어요. {hiddenOlderRecordCount}건의
+                이전 기록은 베이직 플랜으로 업그레이드하면 볼 수 있습니다.
+              </span>
+            </button>
+          )}
 
           {studentEventRecords.length === 0 ? (
             <div className="py-4 text-center text-xs text-slate-400 font-medium">

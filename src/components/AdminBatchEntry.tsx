@@ -40,6 +40,7 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  Lock,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
@@ -515,7 +516,13 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             <span>직접 일괄 입력</span>
           </button>
           <button
-            onClick={() => setActiveSubTab('EXCEL')}
+            onClick={() => {
+              if (gym.plan === 'free') {
+                setPlanLimitPopup('BASIC_FEATURE_LOCKED');
+              } else {
+                setActiveSubTab('EXCEL');
+              }
+            }}
             className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
               activeSubTab === 'EXCEL'
                 ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
@@ -524,6 +531,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>엑셀 대량 등록</span>
+            {gym.plan === 'free' && <Lock className="w-3 h-3 text-slate-400" />}
           </button>
           <button
             onClick={() => setActiveSubTab('EVENTS')}

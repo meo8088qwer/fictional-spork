@@ -183,6 +183,11 @@ export default function AdminAppPage() {
           records={records}
           events={events}
           isAdmin
+          gymPlan={gym.plan}
+          onUpgradeRequired={() => {
+            setSelectedStudent(null);
+            setActiveView('PRICING');
+          }}
           onDeleteStudent={handleDeleteStudent}
           onDeleteRecord={deleteRecord}
           onOpenCertificate={(st) => {
