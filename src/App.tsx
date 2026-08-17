@@ -4,6 +4,7 @@ import { useAuth } from './contexts/AuthContext';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import SignUpPage from './routes/SignUpPage';
 import LoginPage from './routes/LoginPage';
+import LandingPage from './routes/LandingPage';
 import AdminAppPage from './routes/AdminAppPage';
 import PublicBoardPage from './routes/PublicBoardPage';
 import PublicTvPage from './routes/PublicTvPage';
@@ -18,6 +19,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />
+      <Route path="/about" element={<LandingPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/g/:slug" element={<PublicBoardPage />} />
