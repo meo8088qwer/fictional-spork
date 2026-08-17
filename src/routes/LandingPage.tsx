@@ -1,66 +1,58 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Trophy,
-  Tv,
   ClipboardEdit,
-  Share2,
+  Trophy,
   TrendingUp,
+  Tv,
   Award,
   Check,
   ArrowRight,
+  ArrowDown,
   Plus,
   Minus,
-  FileSpreadsheet,
-  MonitorPlay,
+  Crown,
 } from 'lucide-react';
+import logoMark from '../assets/logo-mark.webp';
+import logoFull from '../assets/logo-full.webp';
+import shotPodium from '../assets/showcase/shot-podium.webp';
+import shotLeaderboard from '../assets/showcase/shot-leaderboard.webp';
+import shotTv from '../assets/showcase/shot-tv.webp';
+import shotEntry from '../assets/showcase/shot-entry.webp';
+import shotProfileStats from '../assets/showcase/shot-profile-stats.webp';
 
-const MOCK_ROWS = [
-  { rank: 1, name: '김서연', count: 214 },
-  { rank: 2, name: '이도윤', count: 198 },
-  { rank: 3, name: '박하은', count: 187 },
+const PROBLEMS = [
+  { no: '01', title: '기록 입력', body: '기록을 측정하고 따로 메모' },
+  { no: '02', title: '데이터 관리', body: '학생별 기록을 계속 업데이트' },
+  { no: '03', title: '순위 계산', body: '누가 몇 등인지 다시 확인' },
+  { no: '04', title: '성장 확인', body: '지난 기록과 비교하려면 또 찾아보기' },
 ];
 
-const SHOWCASE_CARDS = [
-  {
-    icon: ClipboardEdit,
-    title: '화면에서 바로 입력',
-    description: '학생을 고르고 개수만 입력하면 끝. 최고기록은 자동으로 계산돼요.',
-  },
-  {
-    icon: FileSpreadsheet,
-    title: '엑셀로 한 번에 등록',
-    description: '수업이 끝난 뒤 엑셀 파일 하나로 반 전체 기록을 대량 등록할 수 있어요.',
-  },
-  {
-    icon: TrendingUp,
-    title: '개인 최고기록 자동 갱신',
-    description: '새 기록이 이전 최고기록을 넘으면 자동으로 표시해 줘요.',
-  },
+const FEATURES = [
+  { icon: ClipboardEdit, title: '학생 기록 관리', body: '학생별 줄넘기 기록을 간편하게 저장하고 관리하세요.' },
+  { icon: Trophy, title: '자동 랭킹', body: '기록을 입력하면 순위가 자동으로 정리됩니다.' },
+  { icon: TrendingUp, title: '성장 데이터', body: '과거 기록과 비교해 아이의 성장을 한눈에 확인하세요.' },
+  { icon: Tv, title: 'TV 랭킹보드', body: '체육관 TV에 랭킹을 띄워 아이들의 도전 욕구를 만들어보세요.' },
+  { icon: Award, title: '기록 갱신', body: '기록을 깨는 순간이 다음 도전의 목표가 됩니다.' },
 ];
 
-const GRID_FEATURES = [
+const OBJECTIONS = [
   {
-    icon: Trophy,
-    title: '실시간 랭킹보드',
-    description: '종목별·종합 랭킹이 기록 입력과 동시에 자동으로 갱신돼요.',
+    q: '"우리 체육관은 학생이 50명도 안 되는데요."',
+    a: '그래서 준비했습니다. 학생 50명까지 무료로 사용할 수 있습니다. 직접 사용해보고 우리 체육관에 필요한 서비스인지 판단해보세요.',
   },
   {
-    icon: TrendingUp,
-    title: '성장 그래프',
-    description: '학생별 월별 성장 추이를 그래프로 보여줘서 동기부여가 돼요.',
+    q: '"사용하기 어렵지 않나요?"',
+    a: '복잡한 프로그램이 아닙니다. 학생 등록 → 기록 입력 → 랭킹 확인, 기본적인 사용 흐름은 간단합니다.',
   },
   {
-    icon: Award,
-    title: '기록 인증 상장',
-    description: '최고 기록을 A4 상장으로 바로 인쇄하거나 학부모에게 공유할 수 있어요.',
+    q: '"아이들이 정말 좋아할까요?"',
+    a: 'ROPERANK는 단순히 기록을 저장하는 서비스가 아닙니다. 자신의 기록을 확인하고 친구와 비교하고 새로운 기록에 도전할 수 있도록 만드는 서비스입니다.',
   },
-];
-
-const STEPS = [
-  { step: '01', title: '무료로 가입', description: '카드 등록 없이 이메일만으로 30초면 시작할 수 있어요.' },
-  { step: '02', title: '학생·종목 등록', description: '학생 명단을 올리고, 우리 체육관에서 쓰는 종목을 설정해요.' },
-  { step: '03', title: '공개 링크 공유', description: '학부모에게 링크 하나만 보내면 로그인 없이 순위를 확인할 수 있어요.' },
+  {
+    q: '"월 4,900원이 꼭 필요한가요?"',
+    a: '꼭 필요한 체육관만 사용하시면 됩니다. 처음부터 결제할 필요 없이 50명까지 무료로 사용해보세요. 필요성을 느꼈을 때 BASIC으로 전환하시면 됩니다.',
+  },
 ];
 
 const TIERS = [
@@ -68,7 +60,7 @@ const TIERS = [
     key: 'free',
     name: 'FREE',
     price: '0원',
-    limit: '학생 50명',
+    limit: '학생 최대 50명',
     features: ['랭킹보드', '기록관리 (최근 3개월)', '성장그래프', '공개 링크', 'TV 전광판'],
     highlight: false,
   },
@@ -76,7 +68,7 @@ const TIERS = [
     key: 'basic',
     name: 'BASIC',
     price: '월 4,900원',
-    limit: '학생 150명',
+    limit: '학생 최대 150명',
     features: ['추가 종목 등록', '기록관리 (전체 이력)', '엑셀 대량 등록', '기록 인증 상장 발급', '광고 없음'],
     highlight: true,
   },
@@ -84,7 +76,7 @@ const TIERS = [
     key: 'pro',
     name: 'PRO',
     price: '월 9,900원',
-    limit: '학생 500명',
+    limit: '학생 최대 500명',
     features: ['체육관 계정 2개', '체육관 로고 사용', '고급 통계 (업데이트 예정)'],
     highlight: false,
     comingSoon: true,
@@ -93,61 +85,34 @@ const TIERS = [
 
 const FAQS = [
   {
-    q: '결제 없이 바로 써볼 수 있나요?',
-    a: '네. FREE 플랜은 카드 등록 없이 이메일만으로 바로 시작할 수 있고, 학생 50명까지 무료로 이용할 수 있어요.',
+    q: 'ROPERANK는 어떤 서비스인가요?',
+    a: '줄넘기 체육관의 학생 기록을 관리하고 랭킹과 성장 데이터를 확인할 수 있는 줄넘기 전용 기록 플랫폼입니다.',
   },
   {
-    q: '학부모는 어떻게 순위를 확인하나요?',
-    a: '체육관마다 발급되는 공개 링크(roperank.com/g/체육관주소)를 학부모에게 공유하면, 로그인 없이 바로 우리 아이 순위와 기록을 확인할 수 있어요.',
+    q: '무료로 사용할 수 있나요?',
+    a: '네. 학생 50명까지 무료로 사용할 수 있습니다.',
   },
   {
-    q: 'TV 전광판은 어떤 화면인가요?',
-    a: '체육관 모니터나 TV에 띄워두면 종목별 순위가 자동으로 전환되며 보여지는 전체화면 모드예요. 별도 프로그램 설치 없이 브라우저에서 바로 켤 수 있어요.',
+    q: '50명이 넘으면 어떻게 되나요?',
+    a: 'BASIC 요금제로 업그레이드하면 학생을 150명까지, PRO는 500명까지 등록할 수 있습니다.',
   },
   {
-    q: '기존에 쓰던 기록을 옮길 수 있나요?',
-    a: '엑셀 대량 등록 기능으로 기존 기록을 한 번에 옮길 수 있어요. 파일 형식이 다르면 마이페이지의 문의로 알려주시면 도와드려요.',
+    q: '모바일에서도 사용할 수 있나요?',
+    a: '네. 모바일 환경에서도 사용할 수 있도록 설계되어 있습니다.',
   },
   {
-    q: '플랜은 언제든 변경할 수 있나요?',
-    a: '네. 마이페이지의 요금제 메뉴에서 언제든 플랜을 확인하고 변경 문의를 남길 수 있어요.',
+    q: 'TV에서도 볼 수 있나요?',
+    a: '네. 체육관 TV에 랭킹보드를 표시할 수 있도록 지원합니다. 별도 설치 없이 브라우저에서 바로 켤 수 있어요.',
+  },
+  {
+    q: '엑셀을 사용하고 있는데 바꿔야 하나요?',
+    a: '꼭 바꿔야 하는 것은 아닙니다. 기존 방식보다 기록 관리와 랭킹 관리가 편해지는지 무료로 직접 사용해보신 후 결정하시면 됩니다.',
+  },
+  {
+    q: '언제든 해지할 수 있나요?',
+    a: '네. 별도의 장기 약정 없이 이용할 수 있도록 운영합니다.',
   },
 ];
-
-function LeaderboardMock() {
-  return (
-    <div className="rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 p-5 w-full max-w-sm">
-      <div className="flex items-center gap-1.5 mb-4">
-        <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-        <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-        <span className="w-2.5 h-2.5 rounded-full bg-slate-200" />
-      </div>
-      <p className="text-[11px] font-bold text-slate-400 mb-3">2단 옆뛰기 · 종합 랭킹</p>
-      <div className="space-y-2">
-        {MOCK_ROWS.map((row) => (
-          <div
-            key={row.rank}
-            className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50"
-          >
-            <div className="flex items-center gap-2.5">
-              <span
-                className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold ${
-                  row.rank === 1
-                    ? 'bg-[#1B5E20] text-white'
-                    : 'bg-[#E8F5E9] text-[#1B5E20]'
-                }`}
-              >
-                {row.rank}
-              </span>
-              <span className="text-xs font-bold text-slate-800">{row.name}</span>
-            </div>
-            <span className="text-xs font-bold text-slate-500">{row.count}개</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
@@ -170,9 +135,20 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+function BrandMark({ light = false }: { light?: boolean }) {
+  return (
+    <span className="flex items-center gap-2">
+      <img src={logoMark} alt="" className="h-7 w-auto" />
+      <span className={`font-bold text-lg tracking-tight ${light ? 'text-white' : 'text-slate-900'}`}>
+        ROPE<span className="text-[#2E9E4F]">RANK</span>
+      </span>
+    </span>
+  );
+}
+
 export default function LandingPage() {
   useEffect(() => {
-    document.title = '로프랭크 | 줄넘기 체육관 실시간 랭킹보드';
+    document.title = 'ROPERANK | 줄넘기 기록 & 랭킹 플랫폼';
     const meta = document.querySelector('meta[name="description"]') ?? (() => {
       const el = document.createElement('meta');
       el.setAttribute('name', 'description');
@@ -181,20 +157,17 @@ export default function LandingPage() {
     })();
     meta.setAttribute(
       'content',
-      '줄넘기 체육관을 위한 실시간 랭킹보드 서비스. 기록 관리, TV 전광판, 학부모 공개 링크까지 한 번에.'
+      '아이의 줄넘기 성장을 데이터로 보여주는 줄넘기 기록 & 랭킹 플랫폼, ROPERANK. 학생 50명까지 무료.'
     );
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#f4f5f8] text-slate-900 font-sans antialiased">
+    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3.5">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 shrink-0 bg-[#1B5E20] rounded-xl flex items-center justify-center font-bold text-white text-base">
-              로
-            </div>
-            <span className="font-bold text-base text-slate-900">로프랭크</span>
-          </div>
+          <Link to="/about">
+            <BrandMark />
+          </Link>
           <nav className="hidden sm:flex items-center gap-6 text-xs font-bold text-slate-500">
             <a href="#features" className="hover:text-slate-900 transition-colors">기능</a>
             <a href="#pricing" className="hover:text-slate-900 transition-colors">요금제</a>
@@ -211,206 +184,432 @@ export default function LandingPage() {
               to="/signup"
               className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white text-sm font-bold transition-all"
             >
-              무료로 시작하기
+              50명까지 무료로 시작하기
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 lg:px-8">
-        {/* Hero */}
-        <section className="grid lg:grid-cols-2 gap-10 items-center py-16 sm:py-24">
+      <main>
+        {/* 01. HERO */}
+        <section className="max-w-5xl mx-auto px-4 lg:px-8 grid lg:grid-cols-2 gap-10 items-center py-16 sm:py-24">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[11px] font-bold mb-5">
-              줄넘기 체육관을 위한 랭킹 서비스
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold tracking-wider mb-5">
+              JUMP ROPE RECORD &amp; RANKING PLATFORM
             </span>
             <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-tight mb-4">
-              줄넘기 기록을,
+              기록하고, 성장하고,
               <br />
-              <span className="italic text-[#1B5E20]">가장 쉽게</span> 보여주는 방법
+              <span className="text-[#1B5E20]">경쟁하다.</span>
             </h1>
-            <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed mb-8 max-w-md">
-              기록 입력부터 랭킹, TV 전광판, 학부모 공개까지 — 줄넘기 체육관 운영에 필요한 걸 한 곳에서.
+            <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed mb-2">
+              아이의 줄넘기 성장을 데이터로 보여주는
+              <br className="hidden sm:block" />
+              줄넘기 기록 &amp; 랭킹 플랫폼, <strong className="text-slate-900">ROPERANK</strong>
             </p>
-            <div className="flex items-center gap-2.5">
+            <p className="text-xs sm:text-sm text-slate-400 font-medium leading-relaxed mb-8">
+              기록은 자동으로 쌓이고, 성장은 데이터로 보이며, 아이들은 다음 기록에 도전합니다.
+            </p>
+            <div className="flex items-center gap-2.5 mb-6">
               <Link
                 to="/signup"
                 className="inline-flex items-center gap-1.5 px-6 py-3.5 rounded-2xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-sm shadow-sm transition-all"
               >
-                무료로 시작하기
+                50명까지 무료로 시작하기
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <a
-                href="#features"
+                href="#product"
                 className="inline-flex items-center px-6 py-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm transition-all"
               >
-                기능 둘러보기
+                서비스 둘러보기
               </a>
             </div>
+            <p className="text-[11px] text-slate-400 font-bold">
+              학생 50명까지 무료 · 카드 등록 없이 시작 · 언제든 업그레이드 가능
+            </p>
           </div>
           <div className="flex justify-center lg:justify-end">
-            <LeaderboardMock />
+            <img
+              src={shotPodium}
+              alt="ROPERANK 실시간 랭킹보드 화면 — 학생별 순위와 기록이 자동으로 정리된다"
+              className="w-full max-w-md rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60"
+            />
           </div>
         </section>
 
-        {/* Dark showcase: TV mode */}
-        <section className="py-4 sm:py-6">
-          <div className="rounded-3xl bg-slate-900 text-white p-8 sm:p-12 grid lg:grid-cols-2 gap-8 items-center overflow-hidden">
-            <div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-[11px] font-bold mb-5">
-                <MonitorPlay className="w-3.5 h-3.5" />
-                TV 전광판 모드
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight mb-4">
-                체육관 모니터에 띄워두기만 하면
-                <br />
-                <span className="italic text-[#A5D6A7]">알아서 순위가 돌아가요</span>
+        {/* 02. PROBLEM */}
+        <section className="bg-slate-50 border-y border-slate-200/70">
+          <div className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
+            <div className="text-center max-w-lg mx-auto mb-10">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-3">
+                관장님, 기록 관리 아직 이렇게 하고 계신가요?
               </h2>
-              <p className="text-sm text-slate-300 font-medium leading-relaxed max-w-md">
-                별도 프로그램 설치 없이 브라우저에서 바로 전체화면으로 켤 수 있고, 종목별 순위가
-                자동으로 전환되면서 보여져요.
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                오늘 측정한 기록을 적고, 학생별 기록을 다시 입력하고, 순위를 정리하고, 지난 기록과 비교하고…
+                <br />
+                기록이 쌓일수록 관리해야 할 일도 함께 늘어납니다.
               </p>
             </div>
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[11px] font-bold text-white/50">종합 랭킹</span>
-                <Tv className="w-4 h-4 text-white/40" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+              {PROBLEMS.map((p) => (
+                <div key={p.no} className="bg-white border border-slate-200/90 rounded-2xl p-5">
+                  <span className="text-2xl font-bold text-slate-200">{p.no}</span>
+                  <h3 className="text-sm font-bold text-slate-900 mt-1 mb-1">{p.title}</h3>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">{p.body}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-sm font-bold text-slate-700 max-w-md mx-auto">
+              아이들의 기록은 쌓이고 있는데, 관장님의 관리 시간도 함께 쌓이고 있습니다.
+            </p>
+          </div>
+        </section>
+
+        {/* 03. OBJECTION -- excel */}
+        <section className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
+          <div className="text-center max-w-lg mx-auto mb-10">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-4">
+              "엑셀로 하면 되는 거 아닌가요?"
+            </h2>
+            <p className="text-sm text-slate-500 font-medium leading-relaxed">
+              맞습니다. 학생 수가 적고 기록 관리가 단순하다면 엑셀로도 충분할 수 있습니다.
+              <br />
+              ROPERANK는 엑셀을 무조건 대체하려고 만든 서비스가 아닙니다.
+              <br />
+              학생이 많아지고, 기록이 쌓이고, 순위와 성장 데이터를 계속 관리해야 할 때 발생하는
+              <br className="hidden sm:block" />
+              관장님의 시간을 줄이기 위해 만들어졌습니다.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-6 max-w-xl mx-auto mb-10">
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-center">
+              <p className="text-[11px] font-bold text-slate-400 tracking-wider mb-4">기존</p>
+              <div className="space-y-2 text-xs font-bold text-slate-500">
+                {['기록', '엑셀 입력', '정렬', '순위 확인', '기록 비교', '화면 제작'].map((step, i, arr) => (
+                  <React.Fragment key={step}>
+                    <div className="bg-white border border-slate-200 rounded-lg py-2">{step}</div>
+                    {i < arr.length - 1 && <ArrowDown className="w-3 h-3 text-slate-300 mx-auto" />}
+                  </React.Fragment>
+                ))}
               </div>
-              <div className="space-y-2">
-                {MOCK_ROWS.map((row) => (
-                  <div
-                    key={row.rank}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold ${
-                          row.rank === 1 ? 'bg-[#66BB6A] text-slate-900' : 'bg-white/10 text-white'
-                        }`}
-                      >
-                        {row.rank}
-                      </span>
-                      <span className="text-xs font-bold text-white">{row.name}</span>
-                    </div>
-                    <span className="text-xs font-bold text-white/60">{row.count}개</span>
-                  </div>
+            </div>
+            <div className="bg-[#E8F5E9]/50 border-2 border-[#1B5E20] rounded-2xl p-5 text-center">
+              <p className="text-[11px] font-bold text-[#1B5E20] tracking-wider mb-4">ROPERANK</p>
+              <div className="space-y-2 text-xs font-bold text-slate-700">
+                {['기록 입력', '자동 정리', '끝'].map((step, i, arr) => (
+                  <React.Fragment key={step}>
+                    <div className="bg-white border border-[#A5D6A7] rounded-lg py-2">{step}</div>
+                    {i < arr.length - 1 && <ArrowDown className="w-3 h-3 text-[#66BB6A] mx-auto" />}
+                  </React.Fragment>
                 ))}
               </div>
             </div>
           </div>
+
+          <p className="text-center text-sm font-bold text-slate-900 max-w-md mx-auto">
+            기록 관리가 목적이 아니라, 아이들에게 더 집중할 수 있는 시간을 만드는 것.
+          </p>
         </section>
 
-        {/* Feature showcase: record entry */}
-        <section id="features" className="py-16 sm:py-20 scroll-mt-20">
-          <div className="text-center max-w-lg mx-auto mb-10">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-3">
-              1분이면 <span className="italic text-[#1B5E20]">기록 입력</span> 끝
-            </h2>
-            <p className="text-sm text-slate-500 font-medium leading-relaxed">
-              화면에서 바로 입력하거나, 엑셀로 반 전체를 한 번에 등록할 수 있어요.
+        {/* 04. SOLUTION */}
+        <section className="bg-slate-900 text-white">
+          <div className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
+            <div className="text-center max-w-lg mx-auto mb-10">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-3">
+                그래서 만들었습니다.
+                <br />
+                줄넘기 기록을 위한 플랫폼, ROPERANK
+              </h2>
+              <p className="text-sm text-slate-400 font-medium leading-relaxed">
+                ROPERANK는 아이들의 줄넘기 기록을 체계적으로 관리하고, 랭킹과 성장 데이터를 통해
+                동기를 만들어주는 줄넘기 전용 기록 플랫폼입니다.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+              {[
+                { title: '기록', body: '아이들의 기록을 한곳에서 관리합니다.' },
+                { title: '성장', body: '과거 기록과 비교해 얼마나 성장했는지 확인합니다.' },
+                { title: '경쟁', body: '랭킹을 통해 다음 기록에 도전하게 만듭니다.' },
+              ].map((v) => (
+                <div key={v.title} className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
+                  <h3 className="text-base font-bold text-[#A5D6A7] mb-2">{v.title}</h3>
+                  <p className="text-xs text-slate-300 font-medium leading-relaxed">{v.body}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-sm font-bold tracking-wide text-white/70">
+              기록 → 데이터 → 성장 → 도전
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {SHOWCASE_CARDS.map((f) => (
-              <div key={f.title} className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
-                <div className="w-10 h-10 rounded-xl bg-[#E8F5E9] text-[#1B5E20] flex items-center justify-center mb-3">
-                  <f.icon className="w-5 h-5" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 mb-1">{f.title}</h3>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed">{f.description}</p>
-              </div>
-            ))}
-          </div>
         </section>
 
-        {/* Split section: public link */}
-        <section className="py-8 sm:py-12">
-          <div className="rounded-3xl bg-white border border-slate-200/90 p-8 sm:p-12 grid lg:grid-cols-2 gap-8 items-center">
-            <div className="order-2 lg:order-1 flex justify-center">
-              <div className="rounded-[2rem] border-[6px] border-slate-900 w-56 overflow-hidden shadow-lg">
-                <div className="bg-slate-900 h-4 flex items-center justify-center">
-                  <span className="w-10 h-1 rounded-full bg-white/30" />
-                </div>
-                <div className="bg-white p-3">
-                  <p className="text-[10px] font-bold text-slate-400 mb-2">우리 체육관 랭킹</p>
-                  <div className="space-y-1.5">
-                    {MOCK_ROWS.map((row) => (
-                      <div
-                        key={row.rank}
-                        className="flex items-center justify-between px-2 py-1.5 rounded-lg bg-slate-50"
-                      >
-                        <span className="text-[10px] font-bold text-slate-700">
-                          {row.rank}. {row.name}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-400">{row.count}개</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="order-1 lg:order-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[11px] font-bold mb-5">
-                <Share2 className="w-3.5 h-3.5" />
-                학부모 공개 링크
+        {/* 05. PRODUCT -- real product screenshots */}
+        <section id="product" className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20 scroll-mt-16">
+          <div className="text-center max-w-lg mx-auto mb-14">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-3">
+              복잡한 기록 관리는 줄이고, 필요한 데이터만 한눈에.
+            </h2>
+            <p className="text-sm text-slate-500 font-medium leading-relaxed">
+              실제 ROPERANK 화면입니다. 만든 이미지가 아니라, 지금 체육관에서 쓰는 그대로예요.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8 items-start mb-16">
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[11px] font-bold mb-4">
+                <Trophy className="w-3.5 h-3.5" />
+                실시간 랭킹보드
               </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight mb-4">
-                로그인 없이도
-                <br />
-                <span className="italic text-[#1B5E20]">바로 확인</span>할 수 있어요
-              </h2>
-              <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-md">
-                체육관마다 발급되는 링크 하나만 공유하면, 학부모가 앱 설치나 회원가입 없이도
-                우리 아이 순위와 기록을 바로 볼 수 있어요.
+              <h3 className="text-xl font-bold text-slate-900 mb-3">기록을 입력하면, 순위는 자동으로.</h3>
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                종목별·종합 랭킹이 기록 입력과 동시에 자동으로 갱신돼요. 학년별 필터와 검색으로
+                원하는 학생을 바로 찾을 수 있어요.
+              </p>
+            </div>
+            <img
+              src={shotLeaderboard}
+              alt="ROPERANK 랭킹보드 화면 — TOP 3 시상대와 종목별 순위 리스트"
+              className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60"
+            />
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8 items-start mb-16">
+            <img
+              src={shotProfileStats}
+              alt="ROPERANK 학생 기록 카드 — 종목별 최고 기록 현황"
+              className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 order-2 lg:order-1"
+            />
+            <div className="order-1 lg:order-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[11px] font-bold mb-4">
+                <TrendingUp className="w-3.5 h-3.5" />
+                학생 기록 &amp; 성장
+              </span>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">과거 기록과 비교해, 성장을 확인하세요.</h3>
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                종목별 최고기록이 카드로 정리되고, 측정할 때마다 성장 그래프가 자동으로 업데이트돼요.
               </p>
             </div>
           </div>
+
+          <div className="grid lg:grid-cols-2 gap-8 items-start">
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[11px] font-bold mb-4">
+                <ClipboardEdit className="w-3.5 h-3.5" />
+                기록 입력
+              </span>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">종목 고르고, 개수만 입력하세요.</h3>
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                기존 최고기록이 함께 보여서 비교가 쉽고, 오늘 기록이 이전보다 낮아도 최고기록과
+                랭킹은 안전하게 보존돼요. 엑셀 대량 등록도 지원해요.
+              </p>
+            </div>
+            <img
+              src={shotEntry}
+              alt="ROPERANK 기록 일괄 입력 화면 — 종목 선택, 측정일자, 학생별 기존 최고기록"
+              className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60"
+            />
+          </div>
         </section>
 
-        {/* Feature grid */}
-        <section className="py-8 sm:py-12">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {GRID_FEATURES.map((f) => (
+        {/* TV showcase, dark full-bleed */}
+        <section className="bg-slate-900">
+          <div className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20 text-center">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-[11px] font-bold mb-5">
+              <Tv className="w-3.5 h-3.5" />
+              TV 랭킹보드
+            </span>
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-3">
+              체육관 TV에 랭킹을 띄워, 아이들의 도전 욕구를 만들어보세요.
+            </h2>
+            <p className="text-sm text-slate-400 font-medium leading-relaxed mb-8 max-w-md mx-auto">
+              별도 프로그램 설치 없이 브라우저에서 바로 전체화면으로 켤 수 있고, 종목별 순위가
+              자동으로 전환되며 보여져요.
+            </p>
+            <img
+              src={shotTv}
+              alt="ROPERANK TV 랭킹 전광판 화면 — 종목별 순위가 자동으로 전환되며 표시된다"
+              className="w-full rounded-2xl border border-white/10 shadow-2xl"
+            />
+          </div>
+        </section>
+
+        {/* 06. FEATURES */}
+        <section id="features" className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20 scroll-mt-16">
+          <div className="text-center max-w-lg mx-auto mb-10">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-3">
+              줄넘기 체육관에 필요한 기능만 담았습니다.
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {FEATURES.map((f) => (
               <div key={f.title} className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
                 <div className="w-10 h-10 rounded-xl bg-[#E8F5E9] text-[#1B5E20] flex items-center justify-center mb-3">
                   <f.icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 mb-1">{f.title}</h3>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed">{f.description}</p>
+                <p className="text-xs text-slate-500 font-medium leading-relaxed">{f.body}</p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* How it works */}
-        <section className="py-16 sm:py-20">
-          <div className="text-center max-w-lg mx-auto mb-10">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-3">
-              시작하는 방법
+        {/* 07. CHILD */}
+        <section className="bg-slate-900 text-white">
+          <div className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20 grid lg:grid-cols-2 gap-10 items-center">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight leading-tight mb-4">
+                아이들은 기록을 관리하지 않습니다.
+                <br />
+                <span className="text-[#A5D6A7]">기록을 깨고 싶어 합니다.</span>
+              </h2>
+              <p className="text-sm text-slate-400 font-medium leading-relaxed mb-6">
+                "내가 몇 등이지?" "친구는 몇 개 하지?" "다음에는 몇 개까지 할 수 있을까?"
+                <br />
+                기록이 보이면 아이들은 자연스럽게 다음 목표를 만들기 시작합니다.
+              </p>
+              <a
+                href="#pricing"
+                className="inline-flex items-center gap-1.5 text-sm font-bold text-[#A5D6A7] hover:text-white transition-colors"
+              >
+                내 기록에 도전하기
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+            <div className="flex justify-center lg:justify-end">
+              <div className="w-64 rounded-3xl bg-white/5 border border-white/10 p-5">
+                <p className="text-[10px] font-bold text-white/40 tracking-wider mb-1">MY RECORD</p>
+                <p className="text-sm font-bold mb-3">김민준</p>
+                <p className="text-4xl font-bold mb-1">
+                  158<span className="text-base font-bold text-white/50 ml-1">회</span>
+                </p>
+                <p className="text-xs font-bold text-[#A5D6A7] flex items-center gap-1 mb-4">
+                  <Crown className="w-3.5 h-3.5" />
+                  체육관 1위
+                </p>
+                <div className="border-t border-white/10 pt-4 flex items-center justify-between">
+                  <span className="text-[11px] text-white/40 font-bold">지난 기록 143회</span>
+                  <span className="text-xs font-bold text-[#A5D6A7]">+15회</span>
+                </div>
+                <p className="text-[11px] font-bold text-amber-400 mt-2">NEW RECORD</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 08. GROWTH */}
+        <section className="bg-slate-50 border-y border-slate-200/70">
+          <div className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-4">
+              "우리 아이, 얼마나 늘었을까?"
             </h2>
-            <p className="text-sm text-slate-500 font-medium leading-relaxed">
-              가입부터 학부모 공유까지, 3단계면 충분해요.
+            <p className="text-sm text-slate-500 font-medium leading-relaxed max-w-lg mx-auto mb-8">
+              학부모님에게 중요한 것은 단순히 오늘 몇 개를 했는지가 아닙니다.
+              <br />
+              지난달보다 얼마나 성장했는지입니다.
+            </p>
+            <p className="text-base font-bold text-slate-900 max-w-md mx-auto">
+              잘하고 있다는 말보다, 숫자로 보여주는 성장이 더 오래 기억됩니다.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {STEPS.map((s) => (
-              <div key={s.step} className="text-center sm:text-left">
-                <span className="text-2xl font-bold text-[#A5D6A7]">{s.step}</span>
-                <h3 className="text-sm font-bold text-slate-900 mt-2 mb-1">{s.title}</h3>
-                <p className="text-xs text-slate-500 font-medium leading-relaxed">{s.description}</p>
+        </section>
+
+        {/* 09. GYM OWNER */}
+        <section className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
+          <div className="text-center max-w-lg mx-auto mb-10">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-3">
+              관장님은 기록 관리보다 아이들에게 집중하세요.
+            </h2>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-6 max-w-xl mx-auto mb-10">
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-center">
+              <p className="text-[11px] font-bold text-slate-400 tracking-wider mb-4">BEFORE</p>
+              <div className="space-y-2 text-xs font-bold text-slate-500">
+                {['기록 측정', '메모', '엑셀 입력', '순위 계산', '과거 기록 검색', 'TV 화면 제작'].map(
+                  (step, i, arr) => (
+                    <React.Fragment key={step}>
+                      <div className="bg-white border border-slate-200 rounded-lg py-2">{step}</div>
+                      {i < arr.length - 1 && <ArrowDown className="w-3 h-3 text-slate-300 mx-auto" />}
+                    </React.Fragment>
+                  )
+                )}
               </div>
-            ))}
+            </div>
+            <div className="bg-[#E8F5E9]/50 border-2 border-[#1B5E20] rounded-2xl p-5 text-center">
+              <p className="text-[11px] font-bold text-[#1B5E20] tracking-wider mb-4">AFTER</p>
+              <div className="space-y-2 text-xs font-bold text-slate-700">
+                {['기록 입력', 'ROPERANK가 정리', '랭킹 · 성장 데이터 · 기록 확인'].map((step, i, arr) => (
+                  <React.Fragment key={step}>
+                    <div className="bg-white border border-[#A5D6A7] rounded-lg py-2">{step}</div>
+                    {i < arr.length - 1 && <ArrowDown className="w-3 h-3 text-[#66BB6A] mx-auto" />}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p className="text-center text-sm font-bold text-slate-900 max-w-md mx-auto">
+            관장님의 시간을 줄이고, 아이들과 함께하는 시간을 늘립니다.
+          </p>
+        </section>
+
+        {/* 10. OBJECTION 2 */}
+        <section className="bg-slate-50 border-y border-slate-200/70">
+          <div className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight text-center mb-10">
+              그래도 이런 생각이 드실 수 있습니다.
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-4 max-w-3xl mx-auto">
+              {OBJECTIONS.map((o) => (
+                <div key={o.q} className="bg-white border border-slate-200/90 rounded-2xl p-5">
+                  <p className="text-sm font-bold text-slate-900 mb-2">{o.q}</p>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">{o.a}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* Pricing */}
-        <section id="pricing" className="py-16 sm:py-20 scroll-mt-20">
+        {/* 11. FREE TRIAL */}
+        <section className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
+          <div className="rounded-3xl bg-[#1B5E20] text-white p-10 sm:p-14 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-3">
+              일단, 무료로 사용해보세요.
+            </h2>
+            <p className="text-sm text-white/80 font-medium leading-relaxed mb-8 max-w-md mx-auto">
+              학생 50명까지 무료. 직접 사용해보고 ROPERANK의 가치를 경험해보세요.
+            </p>
+            <div className="flex items-center justify-center gap-8 sm:gap-14 mb-9">
+              {[
+                { n: '50명', l: '무료 학생 등록' },
+                { n: '0원', l: '무료로 시작' },
+                { n: '1분', l: '간단한 가입' },
+              ].map((s) => (
+                <div key={s.n}>
+                  <p className="text-2xl sm:text-3xl font-bold">{s.n}</p>
+                  <p className="text-[11px] font-bold text-white/70 mt-1">{s.l}</p>
+                </div>
+              ))}
+            </div>
+            <Link
+              to="/signup"
+              className="inline-flex items-center gap-1.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-white/90 text-[#1B5E20] font-bold text-sm shadow-sm transition-all"
+            >
+              50명까지 무료로 시작하기
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <p className="text-[11px] text-white/60 font-bold mt-4">카드 등록 없이 시작할 수 있습니다.</p>
+          </div>
+        </section>
+
+        {/* 12. PRICING */}
+        <section id="pricing" className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20 scroll-mt-16">
           <div className="text-center max-w-lg mx-auto mb-10">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-3">
-              무료로 시작해서, <span className="italic text-[#1B5E20]">필요한 만큼</span> 키워요
+              간단하고 투명하게.
             </h2>
             <p className="text-sm text-slate-500 font-medium leading-relaxed">
-              카드 등록 없이 바로 시작할 수 있어요.
+              학생 50명까지는 계속 무료로 사용할 수 있습니다.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto items-stretch">
@@ -449,50 +648,52 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          <p className="text-center text-xs text-slate-400 font-medium mt-6 flex items-center justify-center gap-1.5">
-            <Check className="w-3.5 h-3.5 text-[#1B5E20]" />
-            무료 플랜은 신용카드 등록 없이 바로 시작할 수 있어요
-          </p>
         </section>
 
-        {/* FAQ */}
-        <section id="faq" className="py-16 sm:py-20 scroll-mt-20 max-w-2xl mx-auto">
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight text-center mb-8">
-            자주 묻는 질문
-          </h2>
-          <div>
-            {FAQS.map((item) => (
-              <FaqItem key={item.q} q={item.q} a={item.a} />
-            ))}
-          </div>
-        </section>
-
-        {/* CTA banner */}
-        <section className="py-8 sm:py-12">
-          <div className="rounded-3xl bg-[#1B5E20] text-white p-10 sm:p-14 text-center">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-3">
-              지금 바로 무료로 시작해보세요
+        {/* 14. FAQ */}
+        <section id="faq" className="bg-slate-50 border-y border-slate-200/70 scroll-mt-16">
+          <div className="max-w-2xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight text-center mb-8">
+              FAQ
             </h2>
-            <p className="text-sm text-white/80 font-medium mb-7 max-w-md mx-auto">
-              카드 등록 없이 이메일만으로 30초면 우리 체육관 랭킹보드를 만들 수 있어요.
-            </p>
-            <Link
-              to="/signup"
-              className="inline-flex items-center gap-1.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-white/90 text-[#1B5E20] font-bold text-sm shadow-sm transition-all"
-            >
-              무료로 시작하기
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div>
+              {FAQS.map((item) => (
+                <FaqItem key={item.q} q={item.q} a={item.a} />
+              ))}
+            </div>
           </div>
         </section>
 
-        <footer className="py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 font-medium border-t border-slate-200/80">
-          <span>로프랭크 · 줄넘기 실시간 랭킹보드</span>
-          <div className="flex items-center gap-5">
-            <a href="#features" className="hover:text-slate-600 transition-colors">기능</a>
-            <a href="#pricing" className="hover:text-slate-600 transition-colors">요금제</a>
-            <Link to="/login" className="hover:text-slate-600 transition-colors">로그인</Link>
-            <Link to="/signup" className="hover:text-slate-600 transition-colors">회원가입</Link>
+        {/* 15. FINAL CTA */}
+        <section className="max-w-5xl mx-auto px-4 lg:px-8 py-20 sm:py-28 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight mb-5">
+            기록이 보이면,
+            <br />
+            <span className="text-[#1B5E20]">성장이 보입니다.</span>
+          </h2>
+          <p className="text-sm text-slate-500 font-medium leading-relaxed mb-10 max-w-md mx-auto">
+            아이의 줄넘기 기록을 관리하고 성장과 도전을 데이터로 만들어보세요.
+          </p>
+          <img src={logoFull} alt="ROPERANK — 기록하고, 성장하고, 경쟁하다." className="h-24 w-auto mx-auto mb-10" />
+          <Link
+            to="/signup"
+            className="inline-flex items-center gap-1.5 px-6 py-3.5 rounded-2xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-sm shadow-sm transition-all"
+          >
+            50명까지 무료로 시작하기
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <p className="text-[11px] text-slate-400 font-bold mt-4">카드 등록 없이 시작할 수 있습니다.</p>
+        </section>
+
+        <footer className="border-t border-slate-200/80">
+          <div className="max-w-5xl mx-auto px-4 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <BrandMark />
+            <div className="flex items-center gap-5 text-xs text-slate-400 font-medium">
+              <a href="#features" className="hover:text-slate-600 transition-colors">기능</a>
+              <a href="#pricing" className="hover:text-slate-600 transition-colors">요금제</a>
+              <Link to="/login" className="hover:text-slate-600 transition-colors">로그인</Link>
+              <Link to="/signup" className="hover:text-slate-600 transition-colors">회원가입</Link>
+            </div>
           </div>
         </footer>
       </main>
