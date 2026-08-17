@@ -20,14 +20,10 @@ interface StudentProfileModalProps {
   onClose: () => void;
 }
 
-// Free plans see the last 3 months in full detail; the next 3 (out to 6
-// months total) are shown as a blurred upsell tease, and anything older
-// than that isn't rendered at all. Paid plans get all 6 months sharp with
-// zero blur -- older data isn't teased, it's just not there until "더보기"
-// reveals it (nothing to sell them, they're already paying).
-const FREE_SHARP_MONTHS = 3;
-const FREE_VISIBLE_MONTHS = 6;
-const PAID_DEFAULT_MONTHS = 6;
+// Fixed history windows -- free sees the last 3 months, basic/pro the last
+// 6. No blur, no "더보기": older than the window simply isn't shown.
+const FREE_VISIBLE_MONTHS = 3;
+const PAID_VISIBLE_MONTHS = 6;
 // The monthly bar chart is intentionally always a fixed 3-month window,
 // independent of plan -- it's a snapshot, not the full-history view.
 const MONTHLY_CHART_MONTHS = 3;
@@ -48,39 +44,15 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_alternate');
   const [showStudentDeleteConfirm, setShowStudentDeleteConfirm] = useState<boolean>(false);
   const [recordToDelete, setRecordToDelete] = useState<JumpRecord | null>(null);
-  const [showFullHistory, setShowFullHistory] = useState<boolean>(false);
   const [showUpgradePopup, setShowUpgradePopup] = useState<boolean>(false);
 
   const isFreePlan = gymPlan === 'free';
 
-  const monthsAgo = (n: number) => {
+  const visibleCutoff = (() => {
     const d = new Date();
-    d.setMonth(d.getMonth() - n);
+    d.setMonth(d.getMonth() - (isFreePlan ? FREE_VISIBLE_MONTHS : PAID_VISIBLE_MONTHS));
     return d;
-  };
-
-  // What's rendered at all (chart/table). Older than this isn't drawn,
-  // blurred or otherwise -- it simply isn't there until unlocked.
-  const visibleCutoff = isFreePlan
-    ? monthsAgo(FREE_VISIBLE_MONTHS)
-    : showFullHistory
-    ? null
-    : monthsAgo(PAID_DEFAULT_MONTHS);
-
-  // Of what IS rendered, free additionally blurs anything past its 3-month
-  // sharp window as an upsell tease. Paid plans never blur -- their older
-  // data is handled entirely by the visible-cutoff above.
-  const sharpCutoff = isFreePlan ? monthsAgo(FREE_SHARP_MONTHS) : null;
-  const isRecordBlurred = (dateStr: string) => sharpCutoff !== null && new Date(dateStr) < sharpCutoff;
-
-  // Free plan: blurred content is an upsell. Paid plan: "더보기" just reveals more.
-  const handleBlurredClick = () => {
-    if (isFreePlan) {
-      setShowUpgradePopup(true);
-    } else {
-      setShowFullHistory(true);
-    }
-  };
+  })();
 
   const selectedMeta = events[selectedEventKey] || events[eventKeys[0]];
 
@@ -89,23 +61,14 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
     .filter((r) => r.studentId === student.id && r.eventKey === selectedEventKey)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  // What the chart/table actually draw -- excludes anything past the
-  // visible cutoff outright.
-  const visibleRecords = visibleCutoff
-    ? allStudentEventRecords.filter((r) => new Date(r.date) >= visibleCutoff)
-    : allStudentEventRecords;
+  // What the chart/table actually draw -- older than the window simply isn't there.
+  const visibleRecords = allStudentEventRecords.filter((r) => new Date(r.date) >= visibleCutoff);
   const hasMoreBeyondVisible = visibleRecords.length < allStudentEventRecords.length;
-  const blurredRecordCount = visibleRecords.filter((r) => isRecordBlurred(r.date)).length;
-  // Free: the blur itself is the "there's more" signal. Paid: nothing ever
-  // blurs, so the collapsed-history notice is what's beyond the cutoff.
-  const showMoreNotice = isFreePlan ? blurredRecordCount > 0 : hasMoreBeyondVisible;
 
   const chartData = visibleRecords.map((r) => ({
     date: r.date.substring(5), // MM-DD
     count: r.count,
   }));
-  const chartBlurredWidthPct =
-    chartData.length > 0 ? Math.round((blurredRecordCount / chartData.length) * 100) : 0;
 
   // Best count per calendar month the student actually has a record in --
   // e.g. 6월 112개 / 7월 127개 / 8월 142개. Built once from the full
@@ -257,21 +220,25 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           </div>
         </div>
 
-        {/* Limited-history notice -- covers the chart, monthly growth, and table below */}
-        {showMoreNotice && (
-          <button
-            type="button"
-            onClick={handleBlurredClick}
-            className="w-full mb-6 flex items-center gap-2.5 text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 hover:bg-slate-100 transition-colors cursor-pointer text-left"
-          >
+        {/* Limited-history notice -- covers the chart and table below */}
+        {hasMoreBeyondVisible && (
+          <div className="w-full mb-6 flex items-center gap-2.5 text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
             <Lock className="w-4 h-4 shrink-0 text-slate-400" />
             <span className="flex-1">
               {isFreePlan
-                ? `무료 플랜은 최근 ${FREE_SHARP_MONTHS}개월 기록만 선명하게 볼 수 있어요. ${FREE_SHARP_MONTHS}~${FREE_VISIBLE_MONTHS}개월 전 기록은 흐리게 표시돼요 — 베이직 플랜으로 업그레이드하면 전체 기록을 볼 수 있습니다.`
-                : `최근 ${PAID_DEFAULT_MONTHS}개월 기록만 표시 중이에요. 더보기를 누르면 전체 기록을 볼 수 있어요.`}
+                ? `무료 플랜은 최근 ${FREE_VISIBLE_MONTHS}개월 기록만 볼 수 있어요. 베이직 플랜으로 업그레이드하면 최근 ${PAID_VISIBLE_MONTHS}개월까지 볼 수 있어요.`
+                : `최근 ${PAID_VISIBLE_MONTHS}개월 기록까지 표시돼요.`}
             </span>
-            {!isFreePlan && <span className="shrink-0 text-[#1B5E20] underline">더보기</span>}
-          </button>
+            {isFreePlan && (
+              <button
+                type="button"
+                onClick={() => setShowUpgradePopup(true)}
+                className="shrink-0 text-[#1B5E20] underline cursor-pointer"
+              >
+                업그레이드
+              </button>
+            )}
+          </div>
         )}
 
         {/* Growth Line Chart (Recharts) */}
@@ -286,39 +253,30 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             </span>
           </div>
 
-          <div className="h-44 w-full relative">
+          <div className="h-44 w-full">
             {chartData.length === 0 ? (
               <div className="h-full flex items-center justify-center text-xs text-slate-400">
                 선택한 종목의 측정 기록이 없습니다.
               </div>
             ) : (
-              <>
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} />
-                    <YAxis stroke="#94a3b8" fontSize={10} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                      itemStyle={{ color: '#1B5E20', fontSize: '12px', fontWeight: 'bold' }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="count"
-                      stroke="#1B5E20"
-                      strokeWidth={3}
-                      dot={{ fill: '#1B5E20', r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-                {chartBlurredWidthPct > 0 && (
-                  <div
-                    onClick={handleBlurredClick}
-                    style={{ width: `${chartBlurredWidthPct}%` }}
-                    className="absolute inset-y-0 left-0 backdrop-blur-sm bg-white/40 cursor-pointer rounded-l-xl"
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} />
+                  <YAxis stroke="#94a3b8" fontSize={10} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#ffffff', borderColor: '#cbd5e1', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                    itemStyle={{ color: '#1B5E20', fontSize: '12px', fontWeight: 'bold' }}
                   />
-                )}
-              </>
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#1B5E20"
+                    strokeWidth={3}
+                    dot={{ fill: '#1B5E20', r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             )}
           </div>
         </div>
@@ -410,42 +368,24 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                  {visibleRecords.map((r) => {
-                    const blurred = isRecordBlurred(r.date);
-                    return (
-                      <tr
-                        key={r.id}
-                        onClick={blurred ? handleBlurredClick : undefined}
-                        className={`hover:bg-slate-50/80 ${blurred ? 'cursor-pointer' : ''}`}
-                      >
-                        <td className={`p-2 pl-3 font-mono text-slate-600 ${blurred ? 'blur-[4px] select-none' : ''}`}>
-                          {r.date}
+                  {visibleRecords.map((r) => (
+                    <tr key={r.id} className="hover:bg-slate-50/80">
+                      <td className="p-2 pl-3 font-mono text-slate-600">{r.date}</td>
+                      <td className="p-2 text-right font-bold text-slate-900">{r.count}회</td>
+                      {onDeleteRecord && (
+                        <td className="p-2 pr-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setRecordToDelete(r)}
+                            className="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="기록 삭제"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </td>
-                        <td
-                          className={`p-2 text-right font-bold text-slate-900 ${blurred ? 'blur-[4px] select-none' : ''}`}
-                        >
-                          {r.count}회
-                        </td>
-                        {onDeleteRecord && (
-                          <td className="p-2 pr-3 text-right">
-                            {!blurred && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setRecordToDelete(r);
-                                }}
-                                className="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
-                                title="기록 삭제"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
+                      )}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

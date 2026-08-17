@@ -604,7 +604,12 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               </label>
               <select
                 value={selectedEventKey}
-                onChange={(e) => setSelectedEventKey(e.target.value as EventKey)}
+                onChange={(e) => {
+                  // Counts typed for the previous event must not silently
+                  // get saved against whatever event is selected next.
+                  setSelectedEventKey(e.target.value as EventKey);
+                  setCountsMap({});
+                }}
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 font-semibold focus:outline-none focus:border-[#66BB6A] shadow-xs"
               >
                 {eventKeys.map((key) => {
