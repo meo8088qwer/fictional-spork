@@ -185,7 +185,7 @@ export default function LandingPage() {
             <BrandMark />
           </Link>
           <nav className="hidden sm:flex flex-1 items-center justify-center gap-10 text-base font-bold text-slate-600">
-            <a href="#features" onClick={scrollToId('features')} className="hover:text-slate-900 transition-colors">기능</a>
+            <a href="#product" onClick={scrollToId('product')} className="hover:text-slate-900 transition-colors">기능</a>
             <a href="#pricing" onClick={scrollToId('pricing')} className="hover:text-slate-900 transition-colors">요금제</a>
             <a href="#faq" onClick={scrollToId('faq')} className="hover:text-slate-900 transition-colors">FAQ</a>
           </nav>
@@ -264,11 +264,11 @@ export default function LandingPage() {
               <img
                 src={ropeStickers}
                 alt="줄넘기 손잡이에 최고기록을 하나씩 붙여둔 스티커"
-                className="w-full max-w-sm mx-auto lg:max-w-none lg:h-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 object-cover"
+                className="w-full max-w-sm mx-auto lg:max-w-none lg:max-h-[600px] rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 object-cover"
               />
 
-              <div className="space-y-4">
-                <div>
+              <div>
+                <div className="mb-8">
                   <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight mb-3">
                     관장님, 최고기록을 아직
                     <br />
@@ -282,19 +282,21 @@ export default function LandingPage() {
                   </p>
                 </div>
 
-                {PROBLEMS.map((p) => (
-                  <div key={p.title} className="flex items-start gap-3 bg-white border border-slate-200/90 rounded-2xl p-4">
-                    <span className="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
-                      <X className="w-3.5 h-3.5" />
-                    </span>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-900 mb-0.5">{p.title}</h3>
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">{p.body}</p>
+                <div className="space-y-3 mb-8">
+                  {PROBLEMS.map((p) => (
+                    <div key={p.title} className="flex items-start gap-3 bg-white border border-slate-200/90 rounded-2xl p-4">
+                      <span className="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+                        <X className="w-3.5 h-3.5" />
+                      </span>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900 mb-0.5">{p.title}</h3>
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed">{p.body}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
 
-                <div className="rounded-2xl bg-slate-900 text-white p-6 sm:p-8 mt-2">
+                <div className="rounded-2xl bg-slate-900 text-white p-6 sm:p-8">
                   <h3 className="text-base font-bold mb-3">스티커가 나쁜 것은 아닙니다.</h3>
                   <p className="text-sm text-slate-300 font-medium leading-relaxed mb-4">
                     문제는 기록이 쌓이면서{' '}
@@ -755,7 +757,7 @@ export default function LandingPage() {
               <BrandMark />
             </Link>
             <div className="flex items-center gap-5 text-xs text-slate-400 font-medium">
-              <a href="#features" onClick={scrollToId('features')} className="hover:text-slate-600 transition-colors">기능</a>
+              <a href="#product" onClick={scrollToId('product')} className="hover:text-slate-600 transition-colors">기능</a>
               <a href="#pricing" onClick={scrollToId('pricing')} className="hover:text-slate-600 transition-colors">요금제</a>
               <Link to="/login" className="hover:text-slate-600 transition-colors">로그인</Link>
               <Link to="/signup" className="hover:text-slate-600 transition-colors">회원가입</Link>
