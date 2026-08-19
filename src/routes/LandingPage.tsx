@@ -7,6 +7,7 @@ import {
   Tv,
   Award,
   Check,
+  X,
   ArrowRight,
   ArrowDown,
   Plus,
@@ -15,6 +16,7 @@ import {
 } from 'lucide-react';
 import logoMark from '../assets/logo-mark.webp';
 import logoFull from '../assets/logo-full.webp';
+import ropeStickers from '../assets/rope-stickers.webp';
 import shotPodium from '../assets/showcase/shot-podium.webp';
 import shotLeaderboard from '../assets/showcase/shot-leaderboard.webp';
 import shotTv from '../assets/showcase/shot-tv.webp';
@@ -23,10 +25,10 @@ import shotProfileStats from '../assets/showcase/shot-profile-stats.webp';
 import shotProfileGrowth from '../assets/showcase/shot-profile-growth.webp';
 
 const PROBLEMS = [
-  { no: '01', title: '기록 입력', body: '기록을 측정하고 따로 메모' },
-  { no: '02', title: '데이터 관리', body: '학생별 기록을 계속 업데이트' },
-  { no: '03', title: '순위 계산', body: '누가 몇 등인지 다시 확인' },
-  { no: '04', title: '성장 확인', body: '지난 기록과 비교하려면 또 찾아보기' },
+  { title: '스티커가 떨어지고', body: '땀이나 물에 약해 스티커가 번지거나 떨어집니다.' },
+  { title: '시간이 많이 걸리고', body: '한 수업 시간에 많은 학생의 기록을 붙이고 확인하느라 시간이 많이 소요됩니다.' },
+  { title: '최고기록만 남고', body: '현재 최고기록은 확인 가능하지만 과거 기록과 성장 과정은 알기 어렵습니다.' },
+  { title: '기록이 쌓일수록', body: '관리해야 할 일이 늘어나고, 정확한 기록 관리가 어려워집니다.' },
 ];
 
 const FEATURES = [
@@ -247,33 +249,61 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 02. PROBLEM */}
+        {/* 02. PROBLEM -- sticker management */}
         <section className="bg-slate-50 border-y border-slate-200/70">
           <div className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
-            <div className="text-center max-w-lg mx-auto mb-10">
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-3">
-                관장님, 기록 관리 아직 이렇게 하고 계신가요?
-              </h2>
-              <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                오늘 측정한 기록을 적고, 학생별 기록을 다시 입력하고,
-                <br />
-                순위를 정리하고, 지난 기록과 비교하고…
-                <br />
-                기록이 쌓일수록 관리해야 할 일도 함께 늘어납니다.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-              {PROBLEMS.map((p) => (
-                <div key={p.no} className="bg-white border border-slate-200/90 rounded-2xl p-5">
-                  <span className="text-2xl font-bold text-slate-200">{p.no}</span>
-                  <h3 className="text-sm font-bold text-slate-900 mt-1 mb-1">{p.title}</h3>
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed">{p.body}</p>
+            <div className="grid lg:grid-cols-2 gap-10 items-start">
+              <div>
+                <img
+                  src={ropeStickers}
+                  alt="줄넘기 손잡이에 최고기록을 하나씩 붙여둔 스티커"
+                  className="w-full max-w-xs mx-auto lg:mx-0 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 mb-6"
+                />
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight mb-3">
+                  관장님, 최고기록을 아직
+                  <br />
+                  줄넘기에 <span className="text-[#1B5E20]">스티커</span>로 관리하고 계신가요?
+                </h2>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                  아이들의 최고기록을 줄넘기에 스티커로 붙여두면 수업 중에도 아이의 기록을
+                  한눈에 확인할 수 있습니다.
+                  <br />
+                  하지만 기록하는 학생이 많아질수록 조금씩 불편한 점이 생기기 시작합니다.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {PROBLEMS.map((p) => (
+                  <div key={p.title} className="flex items-start gap-3 bg-white border border-slate-200/90 rounded-2xl p-4">
+                    <span className="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+                      <X className="w-3.5 h-3.5" />
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 mb-0.5">{p.title}</h3>
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed">{p.body}</p>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="rounded-2xl bg-slate-900 text-white p-6 sm:p-8 mt-2">
+                  <h3 className="text-base font-bold mb-3">스티커가 나쁜 것은 아닙니다.</h3>
+                  <p className="text-sm text-slate-300 font-medium leading-relaxed mb-4">
+                    문제는 기록이 쌓이면서{' '}
+                    <strong className="text-white">
+                      '최고기록 하나'만으로는 아이의 성장을 모두 보여주기 어렵다는 것
+                    </strong>
+                    입니다.
+                  </p>
+                  <p className="text-sm text-slate-300 font-medium leading-relaxed mb-5">
+                    ROPERANK는 기존의 기록 방식을 없애는 것이 아니라, 아이들의 모든 기록을
+                    데이터로 남겨 최고기록은 물론, 과거 기록과 성장 과정까지 한눈에 보여줍니다.
+                  </p>
+                  <p className="text-sm font-bold text-[#A5D6A7] border-t border-white/10 pt-4 leading-relaxed">
+                    최고기록 하나를 남기는 것에서, 아이의 성장 전체를 기록하는 것으로.
+                  </p>
                 </div>
-              ))}
+              </div>
             </div>
-            <p className="text-center text-sm font-bold text-slate-700 max-w-md mx-auto">
-              아이들의 기록은 쌓이고 있는데, 관장님의 관리 시간도 함께 쌓이고 있습니다.
-            </p>
           </div>
         </section>
 
