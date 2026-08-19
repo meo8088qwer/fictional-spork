@@ -138,6 +138,13 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+function scrollToId(id: string) {
+  return (e: React.MouseEvent) => {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+}
+
 function BrandMark({ light = false }: { light?: boolean }) {
   return (
     <span className="flex items-center gap-2">
@@ -178,9 +185,9 @@ export default function LandingPage() {
             <BrandMark />
           </Link>
           <nav className="hidden sm:flex flex-1 items-center justify-center gap-10 text-base font-bold text-slate-600">
-            <a href="#features" className="hover:text-slate-900 transition-colors">기능</a>
-            <a href="#pricing" className="hover:text-slate-900 transition-colors">요금제</a>
-            <a href="#faq" className="hover:text-slate-900 transition-colors">FAQ</a>
+            <a href="#features" onClick={scrollToId('features')} className="hover:text-slate-900 transition-colors">기능</a>
+            <a href="#pricing" onClick={scrollToId('pricing')} className="hover:text-slate-900 transition-colors">요금제</a>
+            <a href="#faq" onClick={scrollToId('faq')} className="hover:text-slate-900 transition-colors">FAQ</a>
           </nav>
           <div className="flex items-center gap-2">
             <Link
@@ -231,6 +238,7 @@ export default function LandingPage() {
               </Link>
               <a
                 href="#product"
+                onClick={scrollToId('product')}
                 className="inline-flex items-center px-6 py-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm transition-all"
               >
                 서비스 둘러보기
@@ -253,26 +261,27 @@ export default function LandingPage() {
         <section className="bg-slate-50 border-y border-slate-200/70">
           <div className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
             <div className="grid lg:grid-cols-2 gap-10 items-start">
-              <div>
-                <img
-                  src={ropeStickers}
-                  alt="줄넘기 손잡이에 최고기록을 하나씩 붙여둔 스티커"
-                  className="w-full max-w-xs mx-auto lg:mx-0 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 mb-6"
-                />
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight mb-3">
-                  관장님, 최고기록을 아직
-                  <br />
-                  줄넘기에 <span className="text-[#1B5E20]">스티커</span>로 관리하고 계신가요?
-                </h2>
-                <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                  아이들의 최고기록을 줄넘기에 스티커로 붙여두면 수업 중에도 아이의 기록을
-                  한눈에 확인할 수 있습니다.
-                  <br />
-                  하지만 기록하는 학생이 많아질수록 조금씩 불편한 점이 생기기 시작합니다.
-                </p>
-              </div>
+              <img
+                src={ropeStickers}
+                alt="줄넘기 손잡이에 최고기록을 하나씩 붙여둔 스티커"
+                className="w-full max-w-sm mx-auto lg:max-w-none lg:h-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 object-cover"
+              />
 
               <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight mb-3">
+                    관장님, 최고기록을 아직
+                    <br />
+                    줄넘기에 <span className="text-[#1B5E20]">스티커</span>로 관리하고 계신가요?
+                  </h2>
+                  <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                    아이들의 최고기록을 줄넘기에 스티커로 붙여두면 수업 중에도 아이의 기록을
+                    한눈에 확인할 수 있습니다.
+                    <br />
+                    하지만 기록하는 학생이 많아질수록 조금씩 불편한 점이 생기기 시작합니다.
+                  </p>
+                </div>
+
                 {PROBLEMS.map((p) => (
                   <div key={p.title} className="flex items-start gap-3 bg-white border border-slate-200/90 rounded-2xl p-4">
                     <span className="w-6 h-6 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
@@ -519,6 +528,7 @@ export default function LandingPage() {
               </p>
               <a
                 href="#pricing"
+                onClick={scrollToId('pricing')}
                 className="inline-flex items-center gap-1.5 text-sm font-bold text-[#A5D6A7] hover:text-white transition-colors"
               >
                 내 기록에 도전하기
@@ -735,10 +745,18 @@ export default function LandingPage() {
 
         <footer className="border-t border-slate-200/80">
           <div className="max-w-5xl mx-auto px-4 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <BrandMark />
+            <Link
+              to="/about"
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              <BrandMark />
+            </Link>
             <div className="flex items-center gap-5 text-xs text-slate-400 font-medium">
-              <a href="#features" className="hover:text-slate-600 transition-colors">기능</a>
-              <a href="#pricing" className="hover:text-slate-600 transition-colors">요금제</a>
+              <a href="#features" onClick={scrollToId('features')} className="hover:text-slate-600 transition-colors">기능</a>
+              <a href="#pricing" onClick={scrollToId('pricing')} className="hover:text-slate-600 transition-colors">요금제</a>
               <Link to="/login" className="hover:text-slate-600 transition-colors">로그인</Link>
               <Link to="/signup" className="hover:text-slate-600 transition-colors">회원가입</Link>
             </div>
