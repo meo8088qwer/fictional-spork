@@ -260,12 +260,14 @@ export default function LandingPage() {
         {/* 02. PROBLEM -- sticker management */}
         <section className="bg-slate-50 border-y border-slate-200/70">
           <div className="max-w-5xl mx-auto px-4 lg:px-8 py-16 sm:py-20">
-            <div className="grid lg:grid-cols-2 gap-10 items-start">
-              <img
-                src={ropeStickers}
-                alt="줄넘기 손잡이에 최고기록을 하나씩 붙여둔 스티커"
-                className="w-full max-w-sm mx-auto lg:max-w-none lg:h-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 object-cover"
-              />
+            <div className="grid lg:grid-cols-2 gap-10">
+              <div className="relative w-full max-w-sm mx-auto lg:max-w-none aspect-[4/5] lg:aspect-auto rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 overflow-hidden">
+                <img
+                  src={ropeStickers}
+                  alt="줄넘기 손잡이에 최고기록을 하나씩 붙여둔 스티커"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              </div>
 
               <div>
                 <div className="mb-8">
