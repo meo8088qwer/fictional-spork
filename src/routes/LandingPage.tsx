@@ -264,7 +264,7 @@ export default function LandingPage() {
               <img
                 src={ropeStickers}
                 alt="줄넘기 손잡이에 최고기록을 하나씩 붙여둔 스티커"
-                className="w-full max-w-sm mx-auto lg:max-w-none lg:max-h-[600px] rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 object-cover"
+                className="w-full max-w-sm mx-auto lg:max-w-none lg:h-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60 object-cover"
               />
 
               <div>
