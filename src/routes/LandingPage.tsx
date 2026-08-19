@@ -176,7 +176,7 @@ export default function LandingPage() {
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3.5">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link
-            to="/about"
+            to="/"
             onClick={(e) => {
               e.preventDefault();
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -750,7 +750,7 @@ export default function LandingPage() {
         <footer className="border-t border-slate-200/80">
           <div className="max-w-5xl mx-auto px-4 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
             <Link
-              to="/about"
+              to="/"
               onClick={(e) => {
                 e.preventDefault();
                 window.scrollTo({ top: 0, behavior: 'smooth' });

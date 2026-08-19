@@ -12,7 +12,8 @@ import PublicTvPage from './routes/PublicTvPage';
 function RootRedirect() {
   const { session, loading } = useAuth();
   if (loading) return null;
-  return <Navigate to={session ? '/admin' : '/login'} replace />;
+  if (session) return <Navigate to="/admin" replace />;
+  return <LandingPage />;
 }
 
 export default function App() {
