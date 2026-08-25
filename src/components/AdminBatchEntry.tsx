@@ -85,7 +85,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EXCEL' | 'EVENTS' | 'STUDENTS'>('BATCH');
 
   // Batch entry state
-  const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_alternate');
+  const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_basic');
   const [measurementDate, setMeasurementDate] = useState<string>(todayLocalDate());
   const [gradeFilter, setGradeFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');

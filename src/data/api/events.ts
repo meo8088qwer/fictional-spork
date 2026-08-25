@@ -38,12 +38,29 @@ function toEventRow(gymId: string, meta: EventMeta) {
   };
 }
 
+// The table has no display-order column, so PostgREST returns rows in
+// whatever order Postgres feels like -- fine for gyms seeded after a
+// DEFAULT_EVENTS reorder, but stale for gyms whose rows were already
+// inserted in the old order. Sorting here (default events by their
+// canonical key order, custom events after, in their original relative
+// order) keeps every gym's event order in sync with DEFAULT_EVENTS without
+// touching the database.
+const DEFAULT_EVENT_ORDER = Object.keys(DEFAULT_EVENTS);
+function defaultEventPriority(key: string): number {
+  const idx = DEFAULT_EVENT_ORDER.indexOf(key);
+  return idx === -1 ? DEFAULT_EVENT_ORDER.length : idx;
+}
+
 export async function listEvents(gymId: string): Promise<Record<string, EventMeta>> {
   const { data, error } = await supabase.from('events').select('*').eq('gym_id', gymId);
   if (error) throw error;
 
+  const sorted = [...(data ?? [])].sort(
+    (a, b) => defaultEventPriority(a.key) - defaultEventPriority(b.key)
+  );
+
   const map: Record<string, EventMeta> = {};
-  for (const row of data ?? []) {
+  for (const row of sorted) {
     map[row.key] = mapEventRow(row);
   }
   return map;

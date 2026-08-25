@@ -38,7 +38,7 @@ export default function AdminAppPage() {
   const [activeView, setActiveView] = useState<
     'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'GLOBAL_RANKING' | 'PRICING' | 'MYPAGE'
   >('LEADERBOARD');
-  const [activeTab, setActiveTab] = useState<DisplayTab>('30s_alternate');
+  const [activeTab, setActiveTab] = useState<DisplayTab>('30s_basic');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
   const [gradeFilter, setGradeFilter] = useState<GradeCategoryFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');

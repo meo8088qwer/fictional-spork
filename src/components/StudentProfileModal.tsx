@@ -44,7 +44,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 }) => {
   const eventKeys = Object.keys(events);
   const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(
-    initialEventKey || eventKeys[0] || '30s_alternate'
+    initialEventKey || eventKeys[0] || '30s_basic'
   );
   const [showStudentDeleteConfirm, setShowStudentDeleteConfirm] = useState<boolean>(false);
   const [recordToDelete, setRecordToDelete] = useState<JumpRecord | null>(null);
