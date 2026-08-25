@@ -8,6 +8,7 @@ import { Leaderboard } from '../components/Leaderboard';
 import { RightRail } from '../components/RightRail';
 import { AdminBatchEntry } from '../components/AdminBatchEntry';
 import { PricingPage } from '../components/PricingPage';
+import { GlobalLeaderboard } from '../components/GlobalLeaderboard';
 import { MyPage } from '../components/MyPage';
 import { BroadcastTVMode } from '../components/BroadcastTVMode';
 import { StudentProfileModal } from '../components/StudentProfileModal';
@@ -35,7 +36,7 @@ export default function AdminAppPage() {
   const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord } = useRecords();
 
   const [activeView, setActiveView] = useState<
-    'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'PRICING' | 'MYPAGE'
+    'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'GLOBAL_RANKING' | 'PRICING' | 'MYPAGE'
   >('LEADERBOARD');
   const [activeTab, setActiveTab] = useState<DisplayTab>('30s_alternate');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
@@ -129,6 +130,10 @@ export default function AdminAppPage() {
             }}
             onNavigateToPricing={() => setActiveView('PRICING')}
           />
+        )}
+
+        {activeView === 'GLOBAL_RANKING' && (
+          <GlobalLeaderboard gym={gym} onNavigateToPricing={() => setActiveView('PRICING')} />
         )}
 
         {activeView === 'PRICING' && <PricingPage gym={gym} />}

@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import * as studentsApi from '../data/api/students';
 import * as eventsApi from '../data/api/events';
 import * as recordsApi from '../data/api/records';
+import { fetchGlobalLeaderboard } from '../data/api/globalLeaderboard';
 import { Student, EventMeta } from '../types';
 
 export function useStudents() {
@@ -104,4 +105,15 @@ export function useRecords() {
     batchSaveRecords: batchSaveRecords.mutateAsync,
     deleteRecord: deleteRecord.mutateAsync,
   };
+}
+
+export function useGlobalLeaderboard() {
+  const { session } = useAuth();
+  const query = useQuery({
+    queryKey: ['globalLeaderboard'],
+    queryFn: fetchGlobalLeaderboard,
+    enabled: !!session,
+  });
+
+  return { entries: query.data ?? [], isLoading: query.isLoading };
 }
