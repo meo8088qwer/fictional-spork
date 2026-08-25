@@ -38,8 +38,8 @@ export function computeOverallScore(
     const meta = eventsMap[key];
     let multiplier = 1.0;
     if (meta) {
-      if (meta.timeSeconds <= 10) multiplier = 2.5;
-      else if (meta.timeSeconds <= 30) multiplier = 1.2;
+      if (meta.timeSeconds <= 10) multiplier = 1.5;
+      else if (meta.timeSeconds <= 30) multiplier = 2;
       else multiplier = 1.0;
       if (meta.technique.includes('이중') || meta.technique.includes('삼중')) {
         multiplier *= 1.5;
