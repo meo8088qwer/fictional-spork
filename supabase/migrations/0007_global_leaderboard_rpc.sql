@@ -23,6 +23,11 @@ as $$
     join public.students s on s.id = r.student_id
     join public.gyms g on g.id = r.gym_id
     where g.plan <> 'free'
+      -- ponytail: hardcoded test-account exclusion list; move to a
+      -- gyms.is_test flag if this grows past a couple of accounts.
+      and g.owner_id not in (
+        select id from auth.users where email in ('test@naver.com', 'test2@naver.com')
+      )
       and r.event_key in (
         '30s_alternate', '30s_double', '30s_basic',
         '10s_alternate', '10s_double', '10s_basic'
