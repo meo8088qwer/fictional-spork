@@ -43,11 +43,15 @@ export const Podium: React.FC<PodiumProps> = ({ topThree, activeTab, onSelectStu
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 items-end">
         {ordered.map((item) => {
           const isFirst = item.rank === 1;
+          // Mobile (single column) stacks in DOM order (2,1,3) -- force 1,2,3
+          // there via `order`, then drop back to DOM order on sm+ where the
+          // 3-column grid already renders 2nd-1st-3rd left to right.
+          const mobileOrderClass = item.rank === 1 ? 'order-1' : item.rank === 2 ? 'order-2' : 'order-3';
           return (
             <button
               key={item.student.id}
               onClick={() => onSelectStudent(item.student.id)}
-              className={`rounded-2xl border text-center transition-all flex flex-col items-center cursor-pointer ${
+              className={`rounded-2xl border text-center transition-all flex flex-col items-center cursor-pointer ${mobileOrderClass} sm:order-none ${
                 isFirst
                   ? 'p-6 bg-[#E8F5E9] border-2 border-[#1B5E20] shadow-md'
                   : 'p-4 bg-white border-slate-200/90 hover:border-slate-300'
