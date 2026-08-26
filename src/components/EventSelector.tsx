@@ -19,9 +19,10 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
 }) => {
   // Mobile-only accordion state -- section headers stay static (always-open) on
   // sm+ via the `sm:grid` override below, so this state has no effect on desktop.
-  const [openSections, setOpenSections] = useState<{ thirty: boolean; ten: boolean }>({
+  const [openSections, setOpenSections] = useState<{ thirty: boolean; ten: boolean; custom: boolean }>({
     thirty: false,
     ten: false,
+    custom: false,
   });
 
   const getIcon = (key?: string) => {
@@ -125,6 +126,16 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
           >
             10초 종목
           </button>
+          {otherSecEvents.length > 0 && (
+            <button
+              onClick={() => setTimeFilter('CUSTOM')}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                timeFilter === 'CUSTOM' ? 'bg-[#1B5E20] text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              커스텀
+            </button>
+          )}
         </div>
       </div>
 
@@ -233,13 +244,22 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
         )}
 
         {/* Row 4: 맞춤/사용자 정의 기타 종목 */}
-        {otherSecEvents.length > 0 && (
+        {(timeFilter === 'ALL' || timeFilter === 'CUSTOM') && otherSecEvents.length > 0 && (
           <div>
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-2 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-slate-400" />
-              <span>체육관 맞춤 측정 종목 ({otherSecEvents.length})</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => setOpenSections((s) => ({ ...s, custom: !s.custom }))}
+              className="w-full text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-2 flex items-center justify-between gap-1.5 sm:pointer-events-none sm:cursor-default"
+            >
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-slate-400" />
+                <span>체육관 맞춤 측정 종목 ({otherSecEvents.length})</span>
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 sm:hidden transition-transform ${openSections.custom ? 'rotate-180' : ''}`}
+              />
+            </button>
+            <div className={`${openSections.custom ? 'grid' : 'hidden'} sm:grid grid-cols-1 sm:grid-cols-3 gap-3`}>
               {otherSecEvents.map(([key, meta]) => renderEventCard(key, meta))}
             </div>
           </div>
