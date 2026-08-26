@@ -44,9 +44,12 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
   };
 
   const allEventEntries = Object.entries(events) as [string, EventMeta][];
-  const thirtySecEvents = allEventEntries.filter(([_, meta]) => meta.timeSeconds === 30);
-  const tenSecEvents = allEventEntries.filter(([_, meta]) => meta.timeSeconds === 10);
-  const otherSecEvents = allEventEntries.filter(([_, meta]) => meta.timeSeconds !== 30 && meta.timeSeconds !== 10);
+  // Custom events always land in their own "맞춤 종목" section below, even
+  // when they happen to share a duration (10s/30s) with the default events --
+  // otherwise a custom 30s event would get lost inside the default 30초 row.
+  const thirtySecEvents = allEventEntries.filter(([_, meta]) => !meta.isCustom && meta.timeSeconds === 30);
+  const tenSecEvents = allEventEntries.filter(([_, meta]) => !meta.isCustom && meta.timeSeconds === 10);
+  const otherSecEvents = allEventEntries.filter(([_, meta]) => meta.isCustom);
 
   const renderEventCard = (key: string, meta: EventMeta) => {
     const isSelected = activeTab === key;
