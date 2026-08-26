@@ -1,11 +1,85 @@
 // Called right after the browser comes back from Toss's hosted
 // card-registration page. Exchanges authKey for a billingKey (server-side,
 // with the secret key), charges the first billing cycle immediately, and
-// activates the subscription. See supabase/functions/_shared/toss.ts.
+// activates the subscription.
+//
+// Self-contained (no ../_shared imports) so it can be pasted directly into
+// Supabase's browser-based Edge Function editor as a single file.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
-import { issueBillingKey, chargeBillingKey, PLAN_PRICE } from '../_shared/toss.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+const TOSS_API_BASE = 'https://api.tosspayments.com/v1';
+
+function authHeader(secretKey: string): string {
+  return `Basic ${btoa(`${secretKey}:`)}`;
+}
+
+interface TossBillingAuth {
+  billingKey: string;
+  card?: { number?: string; company?: string; issuerCode?: string };
+}
+
+// ponytail: card.number / card.company field names are from training-time
+// knowledge of the Toss Billing API, not verified against a live response
+// yet. Worst case the card brand/last4 display is blank -- doesn't break
+// the charge itself.
+async function issueBillingKey(secretKey: string, authKey: string, customerKey: string): Promise<TossBillingAuth> {
+  const res = await fetch(`${TOSS_API_BASE}/billing/authorizations/issue`, {
+    method: 'POST',
+    headers: { Authorization: authHeader(secretKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ authKey, customerKey }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || '카드 등록에 실패했습니다.');
+  return data;
+}
+
+interface TossChargeResult {
+  paymentKey: string;
+  status: string;
+  totalAmount: number;
+}
+
+interface ChargeParams {
+  customerKey: string;
+  orderId: string;
+  orderName: string;
+  amount: number;
+  customerName?: string;
+  customerEmail?: string;
+}
+
+async function chargeBillingKey(
+  secretKey: string,
+  billingKey: string,
+  params: ChargeParams
+): Promise<TossChargeResult> {
+  const res = await fetch(`${TOSS_API_BASE}/billing/${billingKey}`, {
+    method: 'POST',
+    headers: { Authorization: authHeader(secretKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || '결제에 실패했습니다.');
+  return data;
+}
+
+const PLAN_PRICE: Record<'basic' | 'pro', Record<'monthly' | 'yearly', number>> = {
+  basic: { monthly: 4900, yearly: 49000 },
+  pro: { monthly: 9900, yearly: 99000 },
+};
 
 function addCycle(cycle: 'monthly' | 'yearly'): string {
   const next = new Date();

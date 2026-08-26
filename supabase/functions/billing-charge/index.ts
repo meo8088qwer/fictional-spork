@@ -1,15 +1,68 @@
-// Scheduled job (run daily via Supabase Cron / pg_cron -- see setup notes
-// in the migration/README) that charges every subscription due for renewal
-// today. Has no user auth context since nothing initiates it, so it's
-// gated by CRON_SECRET instead of a user JWT.
+// Scheduled job (run daily via Supabase Cron) that charges every
+// subscription due for renewal today. Has no user auth context since
+// nothing initiates it, so it's gated by CRON_SECRET instead of a user JWT.
+//
+// Self-contained (no ../_shared imports) so it can be pasted directly into
+// Supabase's browser-based Edge Function editor as a single file.
 //
 // ponytail: no lock against two overlapping runs double-charging the same
 // gym on the same day. Low risk with a single daily schedule; if that ever
 // becomes a real problem, add a `select ... for update skip locked`.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
-import { chargeBillingKey, PLAN_PRICE } from '../_shared/toss.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+const TOSS_API_BASE = 'https://api.tosspayments.com/v1';
+
+function authHeader(secretKey: string): string {
+  return `Basic ${btoa(`${secretKey}:`)}`;
+}
+
+interface TossChargeResult {
+  paymentKey: string;
+  status: string;
+  totalAmount: number;
+}
+
+interface ChargeParams {
+  customerKey: string;
+  orderId: string;
+  orderName: string;
+  amount: number;
+  customerName?: string;
+  customerEmail?: string;
+}
+
+async function chargeBillingKey(
+  secretKey: string,
+  billingKey: string,
+  params: ChargeParams
+): Promise<TossChargeResult> {
+  const res = await fetch(`${TOSS_API_BASE}/billing/${billingKey}`, {
+    method: 'POST',
+    headers: { Authorization: authHeader(secretKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || '결제에 실패했습니다.');
+  return data;
+}
+
+const PLAN_PRICE: Record<'basic' | 'pro', Record<'monthly' | 'yearly', number>> = {
+  basic: { monthly: 4900, yearly: 49000 },
+  pro: { monthly: 9900, yearly: 99000 },
+};
 
 const MAX_FAILED_ATTEMPTS = 3;
 
