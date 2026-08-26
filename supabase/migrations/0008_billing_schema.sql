@@ -79,6 +79,13 @@ set search_path = public
 as $$
 declare
   v_gym_id uuid := public.auth_gym_id();
+  -- `return (select * from ...)` treats the parenthesized select as a
+  -- scalar subquery, which PostgreSQL requires to return exactly one
+  -- column -- fails with "subquery must return only one column" even
+  -- though the function's declared return type is a full row. Selecting
+  -- into a row-typed variable first is the correct way to return a whole
+  -- row from PL/pgSQL.
+  v_result public.my_subscription;
 begin
   if v_gym_id is null then
     raise exception 'No gym for current user';
@@ -88,7 +95,8 @@ begin
   values (v_gym_id)
   on conflict (gym_id) do nothing;
 
-  return (select * from public.my_subscription where gym_id = v_gym_id);
+  select * into v_result from public.my_subscription where gym_id = v_gym_id;
+  return v_result;
 end;
 $$;
 
