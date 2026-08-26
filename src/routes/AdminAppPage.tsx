@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Student, DisplayTab, TimeFilter, GradeCategoryFilter } from '../types';
 import { getLeaderboardData } from '../lib/scoring';
 import { Header } from '../components/Header';
@@ -35,7 +36,7 @@ export default function AdminAppPage() {
   } = useEvents();
   const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord } = useRecords();
 
-  const [activeView, setActiveView] = useState<
+  type AdminView =
     | 'LEADERBOARD'
     | 'ADMIN_BATCH'
     | 'EVENT_MANAGE'
@@ -43,8 +44,18 @@ export default function AdminAppPage() {
     | 'TV_MODE'
     | 'GLOBAL_RANKING'
     | 'PRICING'
-    | 'MYPAGE'
-  >('LEADERBOARD');
+    | 'MYPAGE';
+
+  // Tab switches go through the URL (?view=...) instead of plain useState so
+  // each one pushes a browser history entry -- otherwise the browser back
+  // button skips straight past the whole admin panel to whatever page was
+  // open before (usually /login), since in-app tab changes never touched
+  // history at all.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeView = (searchParams.get('view') as AdminView | null) ?? 'LEADERBOARD';
+  const setActiveView = (view: AdminView) => {
+    setSearchParams(view === 'LEADERBOARD' ? {} : { view });
+  };
   const [activeTab, setActiveTab] = useState<DisplayTab>('30s_basic');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
   const [gradeFilter, setGradeFilter] = useState<GradeCategoryFilter>('ALL');
