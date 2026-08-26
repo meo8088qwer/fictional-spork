@@ -66,8 +66,8 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         </div>
 
         {/* Grade Filter Chips */}
-        <div className="flex flex-col gap-1.5 items-start md:items-end">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs font-bold">
+        <div className="flex flex-col gap-1.5 items-start md:items-end w-full md:w-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs font-bold w-full min-w-0">
             <Filter className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" />
             {CATEGORY_OPTIONS.map((opt) => (
               <button
@@ -85,7 +85,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           </div>
 
           {subGrades && (
-            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-bold">
+            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-bold w-full min-w-0">
               {subGrades.map((grade) => (
                 <button
                   key={grade}
