@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Tv, ClipboardEdit, LogOut, Share2, UserCog, Menu, X, Sparkles, Globe } from 'lucide-react';
+import { Trophy, Tv, ClipboardEdit, LogOut, Share2, UserCog, Menu, X, Sparkles, Globe, Users, ListChecks } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-type AdminView = 'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'GLOBAL_RANKING' | 'PRICING' | 'MYPAGE';
+type AdminView =
+  | 'LEADERBOARD'
+  | 'ADMIN_BATCH'
+  | 'EVENT_MANAGE'
+  | 'STUDENT_MANAGE'
+  | 'TV_MODE'
+  | 'GLOBAL_RANKING'
+  | 'PRICING'
+  | 'MYPAGE';
 
 interface HeaderProps {
   activeView: AdminView;
@@ -20,6 +28,8 @@ const NAV_ITEMS: Array<{
 }> = [
   { view: 'LEADERBOARD', label: '랭킹보드', icon: Trophy },
   { view: 'ADMIN_BATCH', label: '기록 관리', icon: ClipboardEdit },
+  { view: 'EVENT_MANAGE', label: '종목 관리', icon: ListChecks },
+  { view: 'STUDENT_MANAGE', label: '수련생 관리', icon: Users },
   { view: 'TV_MODE', label: 'TV 전광판', icon: Tv },
   { view: 'GLOBAL_RANKING', label: '전체랭킹', icon: Globe },
 ];

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
 import { GRADE_GROUPS } from '../data/constants';
 import { getStudentPersonalBest } from '../lib/scoring';
@@ -75,6 +75,9 @@ interface AdminBatchEntryProps {
   onResetDefaultEvents: () => Promise<Record<string, EventMeta>>;
   onClose: (lastEventKey?: EventKey) => void;
   onNavigateToPricing: () => void;
+  // Which sub-section to land on -- the sidebar now links directly to
+  // 종목 관리/수련생 관리 instead of them being buttons inside this dashboard.
+  initialSubTab?: 'BATCH' | 'EXCEL' | 'EVENTS' | 'STUDENTS';
 }
 
 export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
@@ -90,13 +93,20 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   onResetDefaultEvents,
   onClose,
   onNavigateToPricing,
+  initialSubTab = 'BATCH',
 }) => {
   const eventKeys = Object.keys(events);
   const studentLimit = gym.plan === 'pro' ? 500 : gym.plan === 'basic' ? 150 : 50;
   const eventLimit = gym.plan === 'free' ? 6 : Infinity;
   const [actionError, setActionError] = useState<string>('');
   const [planLimitPopup, setPlanLimitPopup] = useState<PlanLimitCode | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EXCEL' | 'EVENTS' | 'STUDENTS'>('BATCH');
+  const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EXCEL' | 'EVENTS' | 'STUDENTS'>(initialSubTab);
+
+  // Re-sync when navigating here from a different sidebar link while this
+  // component stays mounted (e.g. 종목 관리 -> 수련생 관리 without a remount).
+  useEffect(() => {
+    setActiveSubTab(initialSubTab);
+  }, [initialSubTab]);
 
   // Batch entry state
   const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_basic');
@@ -548,27 +558,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             <FileSpreadsheet className="w-3.5 h-3.5" />
             <span>엑셀 대량 등록</span>
             {gym.plan === 'free' && <Lock className="w-3 h-3 text-slate-400" />}
-          </button>
-          <button
-            onClick={() => setActiveSubTab('EVENTS')}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeSubTab === 'EVENTS'
-                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <Trophy className="w-3.5 h-3.5" />
-            <span>종목 관리 ({eventKeys.length}개)</span>
-          </button>
-          <button
-            onClick={() => setActiveSubTab('STUDENTS')}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeSubTab === 'STUDENTS'
-                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <span>수련생 명단 ({students.length}명)</span>
           </button>
         </div>
       </div>

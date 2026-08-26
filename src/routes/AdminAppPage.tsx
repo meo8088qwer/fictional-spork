@@ -36,7 +36,14 @@ export default function AdminAppPage() {
   const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord } = useRecords();
 
   const [activeView, setActiveView] = useState<
-    'LEADERBOARD' | 'ADMIN_BATCH' | 'TV_MODE' | 'GLOBAL_RANKING' | 'PRICING' | 'MYPAGE'
+    | 'LEADERBOARD'
+    | 'ADMIN_BATCH'
+    | 'EVENT_MANAGE'
+    | 'STUDENT_MANAGE'
+    | 'TV_MODE'
+    | 'GLOBAL_RANKING'
+    | 'PRICING'
+    | 'MYPAGE'
   >('LEADERBOARD');
   const [activeTab, setActiveTab] = useState<DisplayTab>('30s_basic');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
@@ -112,12 +119,15 @@ export default function AdminAppPage() {
           />
         )}
 
-        {activeView === 'ADMIN_BATCH' && (
+        {(activeView === 'ADMIN_BATCH' || activeView === 'EVENT_MANAGE' || activeView === 'STUDENT_MANAGE') && (
           <AdminBatchEntry
             gym={gym}
             students={students}
             records={records}
             events={events}
+            initialSubTab={
+              activeView === 'EVENT_MANAGE' ? 'EVENTS' : activeView === 'STUDENT_MANAGE' ? 'STUDENTS' : 'BATCH'
+            }
             onBatchSaveRecords={batchSaveRecords}
             onAddStudent={addStudent}
             onDeleteStudent={handleDeleteStudent}
