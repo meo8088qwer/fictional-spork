@@ -108,11 +108,11 @@ export function useRecords() {
 }
 
 export function useGlobalLeaderboard() {
-  const { session } = useAuth();
+  // Viewing is public (no login required) -- only appearing in the results
+  // is gated to BASIC+ gyms, enforced server-side in the RPC itself.
   const query = useQuery({
     queryKey: ['globalLeaderboard'],
     queryFn: fetchGlobalLeaderboard,
-    enabled: !!session,
   });
 
   return { entries: query.data ?? [], isLoading: query.isLoading };

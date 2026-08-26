@@ -1,8 +1,8 @@
 -- Cross-gym leaderboard for the 6 default events only (custom events aren't
 -- comparable across gyms). Free-plan gyms are excluded from the results --
 -- their students can view this page but never appear in it, which is the
--- BASIC-upgrade hook the product wants. Login-only: granted to
--- `authenticated`, not `anon`.
+-- BASIC-upgrade hook the product wants. Viewing is public: granted to both
+-- `anon` and `authenticated` (public /g/:slug/global-ranking page included).
 
 create or replace function public.get_global_leaderboard()
 returns jsonb
@@ -36,4 +36,4 @@ as $$
   ) t;
 $$;
 
-grant execute on function public.get_global_leaderboard() to authenticated;
+grant execute on function public.get_global_leaderboard() to authenticated, anon;

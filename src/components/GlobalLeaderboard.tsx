@@ -7,8 +7,10 @@ import { Gym } from '../data/api/gyms';
 import { EventKey } from '../types';
 
 interface GlobalLeaderboardProps {
-  gym: Gym;
-  onNavigateToPricing: () => void;
+  // Absent on the public (no-login) page -- viewing is open to everyone,
+  // only the free-plan "you can view but not appear" banner needs a gym.
+  gym?: Gym;
+  onNavigateToPricing?: () => void;
 }
 
 const MEDALS = [
@@ -86,7 +88,7 @@ export const GlobalLeaderboard: React.FC<GlobalLeaderboardProps> = ({ gym, onNav
         모든 체육관의 수련생을 대상으로 한 종목별 TOP 20이에요.
       </p>
 
-      {gym.plan === 'free' && (
+      {gym && gym.plan === 'free' && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between gap-3">
           <span className="flex items-center gap-2 text-xs font-bold text-amber-800">
             <Lock className="w-4 h-4 shrink-0" />

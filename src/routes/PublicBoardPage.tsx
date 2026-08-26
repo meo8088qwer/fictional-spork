@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Tv, Trophy } from 'lucide-react';
+import { Tv, Trophy, Globe } from 'lucide-react';
 import { fetchPublicBoard } from '../data/api/publicBoard';
 import { getLeaderboardData } from '../lib/scoring';
 import { EventSelector } from '../components/EventSelector';
@@ -79,13 +79,22 @@ export default function PublicBoardPage() {
               <p className="text-[11px] text-slate-500 font-medium">실시간 랭킹보드</p>
             </div>
           </div>
-          <Link
-            to={`/g/${board.gymSlug}/tv`}
-            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap"
-          >
-            <Tv className="w-3.5 h-3.5" />
-            <span>TV 전광판 모드</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to={`/g/${board.gymSlug}/global-ranking`}
+              className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>전체랭킹</span>
+            </Link>
+            <Link
+              to={`/g/${board.gymSlug}/tv`}
+              className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <Tv className="w-3.5 h-3.5" />
+              <span>TV 전광판 모드</span>
+            </Link>
+          </div>
         </div>
       </header>
 

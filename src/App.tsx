@@ -8,6 +8,7 @@ import LandingPage from './routes/LandingPage';
 import AdminAppPage from './routes/AdminAppPage';
 import PublicBoardPage from './routes/PublicBoardPage';
 import PublicTvPage from './routes/PublicTvPage';
+import PublicGlobalRankingPage from './routes/PublicGlobalRankingPage';
 
 function RootRedirect() {
   const { session, loading } = useAuth();
@@ -25,6 +26,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/g/:slug" element={<PublicBoardPage />} />
       <Route path="/g/:slug/tv" element={<PublicTvPage />} />
+      <Route path="/g/:slug/global-ranking" element={<PublicGlobalRankingPage />} />
       <Route
         path="/admin/*"
         element={
