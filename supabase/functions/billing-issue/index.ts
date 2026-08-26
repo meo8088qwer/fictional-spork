@@ -28,13 +28,10 @@ function authHeader(secretKey: string): string {
 
 interface TossBillingAuth {
   billingKey: string;
-  card?: { number?: string; company?: string; issuerCode?: string };
+  cardNumber?: string;
+  cardCompany?: string;
+  card?: { number?: string };
 }
-
-// ponytail: card.number / card.company field names are from training-time
-// knowledge of the Toss Billing API, not verified against a live response
-// yet. Worst case the card brand/last4 display is blank -- doesn't break
-// the charge itself.
 async function issueBillingKey(secretKey: string, authKey: string, customerKey: string): Promise<TossBillingAuth> {
   const res = await fetch(`${TOSS_API_BASE}/billing/authorizations/issue`, {
     method: 'POST',
@@ -147,8 +144,8 @@ Deno.serve(async (req) => {
       .from('gym_subscriptions')
       .update({
         billing_key: auth.billingKey,
-        card_last4: auth.card?.number?.slice(-4) ?? null,
-        card_company: auth.card?.company ?? auth.card?.issuerCode ?? null,
+        card_last4: (auth.cardNumber ?? auth.card?.number)?.slice(-4) ?? null,
+        card_company: auth.cardCompany ?? null,
         desired_plan: plan,
         billing_cycle: billingCycle,
         status: 'active',

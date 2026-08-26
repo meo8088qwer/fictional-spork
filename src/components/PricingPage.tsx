@@ -70,7 +70,7 @@ interface PricingPageProps {
 }
 
 export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
-  const { refreshGym } = useAuth();
+  const { refreshGym, user } = useAuth();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [searchParams, setSearchParams] = useSearchParams();
   const { subscription, ensureSubscription, activateBilling } = useSubscription();
@@ -92,7 +92,14 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
     };
 
     if (billing === 'fail') {
-      setBanner({ type: 'error', text: '카드 등록이 취소되었어요. 다시 시도해 주세요.' });
+      const code = searchParams.get('code');
+      const message = searchParams.get('message');
+      setBanner({
+        type: 'error',
+        text: message
+          ? `카드 등록에 실패했어요: ${message}${code ? ` (${code})` : ''}`
+          : '카드 등록이 취소되었어요. 다시 시도해 주세요.',
+      });
       clearParams();
       return;
     }
@@ -136,7 +143,9 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
       await requestCardRegistration(
         sub.customerKey,
         `/admin?${params.toString()}`,
-        `/admin?${failParams.toString()}`
+        `/admin?${failParams.toString()}`,
+        user?.email,
+        gym.name
       );
     } catch (err) {
       setBanner({ type: 'error', text: err instanceof Error ? err.message : '카드 등록을 시작하지 못했어요.' });
