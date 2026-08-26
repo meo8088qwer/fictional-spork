@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DisplayTab, TimeFilter, EventMeta } from '../types';
-import { Footprints, Zap, Flame, Clock, Gauge, Trophy, Award, Crown, Sparkles } from 'lucide-react';
+import { Footprints, Zap, Flame, Clock, Gauge, Trophy, Award, Crown, Sparkles, ChevronDown } from 'lucide-react';
 
 interface EventSelectorProps {
   events: Record<string, EventMeta>;
@@ -17,6 +17,13 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
   timeFilter,
   setTimeFilter,
 }) => {
+  // Mobile-only accordion state -- section headers stay static (always-open) on
+  // sm+ via the `sm:grid` override below, so this state has no effect on desktop.
+  const [openSections, setOpenSections] = useState<{ thirty: boolean; ten: boolean }>({
+    thirty: false,
+    ten: false,
+  });
+
   const getIcon = (key?: string) => {
     switch (key) {
       case 'Footprints':
@@ -181,11 +188,20 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
         {/* Row 2: 30초 종목 */}
         {(timeFilter === 'ALL' || timeFilter === '30S') && thirtySecEvents.length > 0 && (
           <div>
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-2 flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-slate-400" />
-              <span>30초 스피드 종목 ({thirtySecEvents.length})</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => setOpenSections((s) => ({ ...s, thirty: !s.thirty }))}
+              className="w-full text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-2 flex items-center justify-between gap-1.5 sm:pointer-events-none sm:cursor-default"
+            >
+              <span className="flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-slate-400" />
+                <span>30초 스피드 종목 ({thirtySecEvents.length})</span>
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 sm:hidden transition-transform ${openSections.thirty ? 'rotate-180' : ''}`}
+              />
+            </button>
+            <div className={`${openSections.thirty ? 'grid' : 'hidden'} sm:grid grid-cols-1 sm:grid-cols-3 gap-3`}>
               {thirtySecEvents.map(([key, meta]) => renderEventCard(key, meta))}
             </div>
           </div>
@@ -194,11 +210,20 @@ export const EventSelector: React.FC<EventSelectorProps> = ({
         {/* Row 3: 10초 종목 */}
         {(timeFilter === 'ALL' || timeFilter === '10S') && tenSecEvents.length > 0 && (
           <div>
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-2 flex items-center gap-1.5">
-              <Flame className="w-4 h-4 text-slate-400" />
-              <span>10초 순발력 종목 ({tenSecEvents.length})</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => setOpenSections((s) => ({ ...s, ten: !s.ten }))}
+              className="w-full text-xs font-bold text-slate-500 uppercase tracking-wider px-1 mb-2 flex items-center justify-between gap-1.5 sm:pointer-events-none sm:cursor-default"
+            >
+              <span className="flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-slate-400" />
+                <span>10초 순발력 종목 ({tenSecEvents.length})</span>
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 sm:hidden transition-transform ${openSections.ten ? 'rotate-180' : ''}`}
+              />
+            </button>
+            <div className={`${openSections.ten ? 'grid' : 'hidden'} sm:grid grid-cols-1 sm:grid-cols-3 gap-3`}>
               {tenSecEvents.map(([key, meta]) => renderEventCard(key, meta))}
             </div>
           </div>
