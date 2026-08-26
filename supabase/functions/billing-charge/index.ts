@@ -1,0 +1,122 @@
+// Scheduled job (run daily via Supabase Cron / pg_cron -- see setup notes
+// in the migration/README) that charges every subscription due for renewal
+// today. Has no user auth context since nothing initiates it, so it's
+// gated by CRON_SECRET instead of a user JWT.
+//
+// ponytail: no lock against two overlapping runs double-charging the same
+// gym on the same day. Low risk with a single daily schedule; if that ever
+// becomes a real problem, add a `select ... for update skip locked`.
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders, jsonResponse } from '../_shared/cors.ts';
+import { chargeBillingKey, PLAN_PRICE } from '../_shared/toss.ts';
+
+const MAX_FAILED_ATTEMPTS = 3;
+
+function addCycle(cycle: 'monthly' | 'yearly'): string {
+  const next = new Date();
+  if (cycle === 'yearly') next.setFullYear(next.getFullYear() + 1);
+  else next.setMonth(next.getMonth() + 1);
+  return next.toISOString().slice(0, 10);
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  const cronSecret = Deno.env.get('CRON_SECRET');
+  if (cronSecret && req.headers.get('x-cron-secret') !== cronSecret) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const tossSecretKey = Deno.env.get('TOSS_SECRET_KEY')!;
+  const admin = createClient(supabaseUrl, serviceKey);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: due, error } = await admin
+    .from('gym_subscriptions')
+    .select('gym_id, customer_key, billing_key, desired_plan, billing_cycle, failed_attempts')
+    .eq('status', 'active')
+    .lte('next_billing_date', today)
+    .not('billing_key', 'is', null);
+
+  if (error) return jsonResponse({ error: error.message }, 500);
+
+  const results: Array<{ gym_id: string; ok: boolean; error?: string }> = [];
+
+  for (const sub of due ?? []) {
+    const plan = sub.desired_plan as 'basic' | 'pro';
+    const cycle = sub.billing_cycle as 'monthly' | 'yearly';
+    const amount = PLAN_PRICE[plan]?.[cycle];
+    const orderId = `${sub.gym_id}-${today}`;
+
+    if (!amount || !sub.billing_key) {
+      results.push({ gym_id: sub.gym_id, ok: false, error: 'missing amount/billing_key' });
+      continue;
+    }
+
+    try {
+      const charge = await chargeBillingKey(tossSecretKey, sub.billing_key, {
+        customerKey: sub.customer_key,
+        orderId,
+        orderName: `줄넘기 랭킹보드 ${plan.toUpperCase()} 플랜 갱신`,
+        amount,
+      });
+
+      await admin
+        .from('gym_subscriptions')
+        .update({
+          status: 'active',
+          next_billing_date: addCycle(cycle),
+          failed_attempts: 0,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('gym_id', sub.gym_id);
+
+      await admin.from('gym_payments').insert({
+        gym_id: sub.gym_id,
+        order_id: orderId,
+        plan,
+        billing_cycle: cycle,
+        amount,
+        status: 'paid',
+        toss_payment_key: charge.paymentKey,
+      });
+
+      await admin.from('gyms').update({ plan }).eq('id', sub.gym_id);
+      results.push({ gym_id: sub.gym_id, ok: true });
+    } catch (err) {
+      const failureReason = err instanceof Error ? err.message : String(err);
+      const failedAttempts = (sub.failed_attempts ?? 0) + 1;
+      const downgrade = failedAttempts >= MAX_FAILED_ATTEMPTS;
+
+      await admin
+        .from('gym_subscriptions')
+        .update({
+          status: downgrade ? 'past_due' : 'active',
+          failed_attempts: failedAttempts,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('gym_id', sub.gym_id);
+
+      await admin.from('gym_payments').insert({
+        gym_id: sub.gym_id,
+        order_id: `${orderId}-fail-${failedAttempts}`,
+        plan,
+        billing_cycle: cycle,
+        amount,
+        status: 'failed',
+        failure_reason: failureReason,
+      });
+
+      if (downgrade) {
+        await admin.from('gyms').update({ plan: 'free' }).eq('id', sub.gym_id);
+      }
+
+      results.push({ gym_id: sub.gym_id, ok: false, error: failureReason });
+    }
+  }
+
+  return jsonResponse({ processed: results.length, results });
+});

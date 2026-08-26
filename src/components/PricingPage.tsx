@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
-import { Check, Lock, Mail, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Check, Lock, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
-
-// Contact address for the manual "subscribe" flow below -- there's no
-// payment gateway wired up yet, so a Basic signup becomes an email lead the
-// gym owner (you) follows up on with bank transfer details by hand. Swap
-// this for a dedicated business inbox or KakaoTalk channel whenever you'd
-// rather that not be your personal address.
-const SUPPORT_EMAIL = 'a01099988088@gmail.com';
+import { useSubscription } from '../hooks/useGymData';
+import { requestCardRegistration } from '../lib/tossPayments';
 
 type BillingCycle = 'monthly' | 'yearly';
 
@@ -74,17 +70,79 @@ interface PricingPageProps {
 }
 
 export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
-  const { user } = useAuth();
+  const { refreshGym } = useAuth();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
-  const [showContactModal, setShowContactModal] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { subscription, ensureSubscription, activateBilling } = useSubscription();
+  const [subscribingKey, setSubscribingKey] = useState<Tier['key'] | null>(null);
+  const [banner, setBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const mailtoHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
-    '베이직 플랜 구독 신청'
-  )}&body=${encodeURIComponent(
-    `체육관: ${gym.name}\n이메일: ${user?.email ?? ''}\n결제 주기: ${
-      billingCycle === 'yearly' ? '연간' : '월간'
-    }\n\n(결제 안내를 회신으로 보내주세요.)`
-  )}`;
+  // Toss redirects the whole page back here after card registration with
+  // ?billing=success&authKey=&customerKey=&plan=&cycle= (or ?billing=fail).
+  // Runs once per redirect, then strips those params so a refresh doesn't
+  // re-trigger the charge.
+  useEffect(() => {
+    const billing = searchParams.get('billing');
+    if (!billing) return;
+
+    const clearParams = () => {
+      const next = new URLSearchParams(searchParams);
+      ['billing', 'authKey', 'customerKey', 'plan', 'cycle', 'code', 'message'].forEach((k) => next.delete(k));
+      setSearchParams(next, { replace: true });
+    };
+
+    if (billing === 'fail') {
+      setBanner({ type: 'error', text: '카드 등록이 취소되었어요. 다시 시도해 주세요.' });
+      clearParams();
+      return;
+    }
+
+    if (billing === 'success') {
+      const authKey = searchParams.get('authKey');
+      const customerKey = searchParams.get('customerKey');
+      const plan = searchParams.get('plan');
+      const cycle = searchParams.get('cycle');
+      if (!authKey || !customerKey || !plan || !cycle) {
+        setBanner({ type: 'error', text: '결제 정보가 올바르지 않아요. 다시 시도해 주세요.' });
+        clearParams();
+        return;
+      }
+
+      activateBilling({
+        authKey,
+        customerKey,
+        plan: plan as 'basic' | 'pro',
+        billingCycle: cycle as 'monthly' | 'yearly',
+      })
+        .then(async () => {
+          await refreshGym();
+          setBanner({ type: 'success', text: '구독이 시작됐어요! 플랜이 바로 적용됩니다.' });
+        })
+        .catch((err) => {
+          setBanner({ type: 'error', text: err instanceof Error ? err.message : '결제 처리 중 오류가 발생했어요.' });
+        })
+        .finally(clearParams);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const handleSubscribe = async (tierKey: 'basic' | 'pro') => {
+    setBanner(null);
+    setSubscribingKey(tierKey);
+    try {
+      const sub = await ensureSubscription();
+      const params = new URLSearchParams({ view: 'PRICING', billing: 'success', plan: tierKey, cycle: billingCycle });
+      const failParams = new URLSearchParams({ view: 'PRICING', billing: 'fail' });
+      await requestCardRegistration(
+        sub.customerKey,
+        `/admin?${params.toString()}`,
+        `/admin?${failParams.toString()}`
+      );
+    } catch (err) {
+      setBanner({ type: 'error', text: err instanceof Error ? err.message : '카드 등록을 시작하지 못했어요.' });
+      setSubscribingKey(null);
+    }
+  };
 
   return (
     <div>
@@ -94,6 +152,41 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
           체육관 규모에 맞는 플랜을 선택하세요.
         </p>
       </div>
+
+      {banner && (
+        <div
+          className={`mb-6 max-w-xl mx-auto rounded-xl p-3.5 flex items-center gap-2.5 text-xs font-bold ${
+            banner.type === 'success'
+              ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border border-rose-200 text-rose-700'
+          }`}
+        >
+          {banner.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 shrink-0" />
+          )}
+          <span>{banner.text}</span>
+        </div>
+      )}
+
+      {subscription && subscription.status !== 'none' && (
+        <div className="mb-6 max-w-xl mx-auto rounded-xl border border-slate-200 bg-white p-3.5 flex items-center justify-between gap-3 text-xs">
+          <span className="flex items-center gap-2 font-bold text-slate-700">
+            <CreditCard className="w-4 h-4 text-slate-400" />
+            {subscription.cardCompany ?? '카드'} {subscription.cardLast4 ? `**** ${subscription.cardLast4}` : ''}
+          </span>
+          <span className="text-slate-500 font-medium">
+            {subscription.status === 'active' && subscription.nextBillingDate
+              ? `다음 결제일 ${subscription.nextBillingDate}`
+              : subscription.status === 'past_due'
+              ? '결제 실패 - 카드 정보를 확인해 주세요'
+              : subscription.status === 'canceled'
+              ? '구독 해지됨'
+              : ''}
+          </span>
+        </div>
+      )}
 
       <div className="flex flex-col items-center gap-2 mb-8">
         <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
@@ -198,10 +291,12 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
               ) : tier.key === 'basic' ? (
                 <button
                   type="button"
-                  onClick={() => setShowContactModal(true)}
-                  className="w-full py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all cursor-pointer"
+                  disabled={subscribingKey === tier.key}
+                  onClick={() => handleSubscribe(tier.key as 'basic')}
+                  className="w-full py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-60 text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  구독하기
+                  <CreditCard className="w-3.5 h-3.5" />
+                  <span>{subscribingKey === tier.key ? '카드 등록 화면으로 이동 중...' : '카드 등록하고 구독하기'}</span>
                 </button>
               ) : (
                 <button
@@ -216,38 +311,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
           );
         })}
       </div>
-
-      {showContactModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs grid place-items-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
-            <button
-              type="button"
-              onClick={() => setShowContactModal(false)}
-              className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-2xl bg-[#E8F5E9] text-[#1B5E20] flex items-center justify-center mb-4">
-                <Mail className="w-6 h-6" />
-              </div>
-              <h3 className="text-base font-bold text-slate-900 mb-1.5">베이직 플랜 구독 신청</h3>
-              <p className="text-xs text-slate-600 font-medium leading-relaxed mb-6">
-                아직 자동결제 연동 전이라, 아래 버튼으로 신청 메일을 보내주시면
-                입금 계좌 안내를 회신드려요. 입금 확인 후 24시간 이내로 플랜이 적용됩니다.
-              </p>
-              <a
-                href={mailtoHref}
-                className="w-full py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5"
-              >
-                <Mail className="w-3.5 h-3.5" />
-                <span>구독 신청 메일 보내기</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

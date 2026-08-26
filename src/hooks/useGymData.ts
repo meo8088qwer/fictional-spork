@@ -4,6 +4,7 @@ import * as studentsApi from '../data/api/students';
 import * as eventsApi from '../data/api/events';
 import * as recordsApi from '../data/api/records';
 import { fetchGlobalLeaderboard } from '../data/api/globalLeaderboard';
+import * as billingApi from '../data/api/billing';
 import { Student, EventMeta } from '../types';
 
 export function useStudents() {
@@ -104,6 +105,37 @@ export function useRecords() {
     isLoading: query.isLoading,
     batchSaveRecords: batchSaveRecords.mutateAsync,
     deleteRecord: deleteRecord.mutateAsync,
+  };
+}
+
+export function useSubscription() {
+  const { gym } = useAuth();
+  const queryClient = useQueryClient();
+  const gymId = gym?.id;
+
+  const query = useQuery({
+    queryKey: ['subscription', gymId],
+    queryFn: billingApi.getMySubscription,
+    enabled: !!gymId,
+  });
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['subscription', gymId] });
+
+  const ensureSubscription = useMutation({
+    mutationFn: billingApi.ensureSubscription,
+    onSuccess: invalidate,
+  });
+
+  const activateBilling = useMutation({
+    mutationFn: billingApi.activateBilling,
+    onSuccess: invalidate,
+  });
+
+  return {
+    subscription: query.data ?? null,
+    isLoading: query.isLoading,
+    ensureSubscription: ensureSubscription.mutateAsync,
+    activateBilling: activateBilling.mutateAsync,
   };
 }
 
