@@ -5,6 +5,20 @@ import { getStudentPersonalBest } from '../lib/scoring';
 import { todayLocalDate } from '../lib/dateHelper';
 import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
 import { Gym } from '../data/api/gyms';
+
+// Next student_no for the current year, based on the highest existing
+// suffix rather than the current headcount -- headcount undercounts once
+// any student has ever been deleted, which collided with a still-existing
+// higher-numbered student and tripped the DB's unique(gym_id, student_no).
+function nextStudentNo(students: Student[], extraOffset: number): string {
+  const prefix = `${new Date().getFullYear()}-`;
+  const maxExisting = students.reduce((max, s) => {
+    if (!s.studentNo.startsWith(prefix)) return max;
+    const n = parseInt(s.studentNo.slice(prefix.length), 10);
+    return Number.isNaN(n) ? max : Math.max(max, n);
+  }, 0);
+  return `${prefix}${String(maxExisting + extraOffset + 1).padStart(3, '0')}`;
+}
 import {
   downloadExcelTemplate,
   parseExcelFile,
@@ -291,7 +305,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
       // Auto-create student if not exists
       if (!student) {
-        const nextNo = `${new Date().getFullYear()}-${String(students.length + createdStudentNames.length + 1).padStart(3, '0')}`;
+        const nextNo = nextStudentNo(students, createdStudentNames.length);
         const avatarColors = [
           'from-orange-500 to-amber-500',
           'from-blue-500 to-cyan-500',
@@ -414,7 +428,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         continue;
       }
 
-      const nextNo = `${new Date().getFullYear()}-${String(students.length + addedCount + 1).padStart(3, '0')}`;
+      const nextNo = nextStudentNo(students, addedCount);
       const randomColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
 
       try {
@@ -454,7 +468,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       return;
     }
 
-    const nextNo = `${new Date().getFullYear()}-${String(students.length + 1).padStart(3, '0')}`;
+    const nextNo = nextStudentNo(students, 0);
     const avatarColors = [
       'from-orange-500 to-amber-500',
       'from-blue-500 to-cyan-500',
