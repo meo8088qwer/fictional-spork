@@ -77,7 +77,7 @@ interface AdminBatchEntryProps {
   onNavigateToPricing: () => void;
   // Which sub-section to land on -- the sidebar now links directly to
   // 종목 관리/수련생 관리 instead of them being buttons inside this dashboard.
-  initialSubTab?: 'BATCH' | 'EXCEL' | 'EVENTS' | 'STUDENTS';
+  initialSubTab?: 'BATCH' | 'EVENTS' | 'STUDENTS';
 }
 
 export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
@@ -100,7 +100,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const eventLimit = gym.plan === 'free' ? 6 : Infinity;
   const [actionError, setActionError] = useState<string>('');
   const [planLimitPopup, setPlanLimitPopup] = useState<PlanLimitCode | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EXCEL' | 'EVENTS' | 'STUDENTS'>(initialSubTab);
+  const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EVENTS' | 'STUDENTS'>(initialSubTab);
 
   // Re-sync when navigating here from a different sidebar link while this
   // component stays mounted (e.g. 종목 관리 -> 수련생 관리 without a remount).
@@ -513,53 +513,18 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-6 mb-8">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
-              <ClipboardEdit className="w-5 h-5" />
-            </span>
-            <h2 className="text-lg font-bold text-slate-900">
-              관리자 전용 기록 일괄 & 엑셀 등록 대시보드
-            </h2>
-          </div>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            체육관 수련생들의 측정 종목 기록을 화면 직접 입력 또는 엑셀파일(.xlsx)로 손쉽게 등록하세요.
-          </p>
+      <div className="border-b border-slate-100 pb-4 mb-6">
+        <div className="flex items-center gap-2">
+          <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
+            <ClipboardEdit className="w-5 h-5" />
+          </span>
+          <h2 className="text-lg font-bold text-slate-900">
+            관리자 전용 기록 일괄 & 엑셀 등록 대시보드
+          </h2>
         </div>
-
-        {/* Sub Navigation */}
-        <div className="flex flex-wrap items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 text-xs font-bold">
-          <button
-            onClick={() => setActiveSubTab('BATCH')}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeSubTab === 'BATCH'
-                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <ClipboardEdit className="w-3.5 h-3.5" />
-            <span>직접 일괄 입력</span>
-          </button>
-          <button
-            onClick={() => {
-              if (gym.plan === 'free') {
-                setPlanLimitPopup('BASIC_FEATURE_LOCKED');
-              } else {
-                setActiveSubTab('EXCEL');
-              }
-            }}
-            className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeSubTab === 'EXCEL'
-                ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>엑셀 대량 등록</span>
-            {gym.plan === 'free' && <Lock className="w-3 h-3 text-slate-400" />}
-          </button>
-        </div>
+        <p className="text-xs text-slate-500 mt-1 font-medium">
+          체육관 수련생들의 측정 종목 기록을 화면 직접 입력 또는 엑셀파일(.xlsx)로 손쉽게 등록하세요.
+        </p>
       </div>
 
       {savedSuccessAlert && (
@@ -584,9 +549,277 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         </div>
       )}
 
-      {/* BATCH ENTRY SUB TAB */}
+      {/* BATCH ENTRY SUB TAB -- excel bulk upload lives on this same page
+          now instead of behind a separate tab */}
       {activeSubTab === 'BATCH' && (
-        <div>
+        <div className="space-y-8">
+          {/* Excel bulk record upload (merged in from the old separate tab) */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs">
+                엑셀 기록 일괄 등록
+              </span>
+              <h3 className="text-sm font-bold text-slate-900">엑셀 파일로 여러 명 기록 한 번에 올리기</h3>
+            </div>
+
+          {/* Step 1: Download Template & Instructions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Template Download Card */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="p-2.5 rounded-xl bg-slate-100 text-slate-600">
+                  <Download className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    1. 엑셀 표준 등록 양식 다운로드
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    다양한 종목을 한번에 등록할 수 있는 표준 .xlsx 양식을 다운받으세요.
+                  </p>
+                </div>
+              </div>
+
+              <ul className="text-xs text-slate-600 space-y-1.5 mb-4 pl-1 font-medium">
+                <li className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  <strong>종합 종목별 양식:</strong> 한 줄에 수련생 이름과 6개 종목 기록을 함께 작성
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  <strong>필수 항목:</strong> 수련생이름, 학년, 측정일자, 종목별 측정기록(회)
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  <strong>학년 간편 입력 지원:</strong> <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">유-6</code>, <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">유-7</code>, <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">초-1</code> ~ <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">초-6</code> 자동 변환
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  <strong>자동 등록:</strong> 신규 수련생 이름 입력 시 수련생 명단 자동 생성!
+                </li>
+              </ul>
+
+              <button
+                onClick={() => downloadExcelTemplate(events, students, records)}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>엑셀 등록 양식 파일 (.xlsx) 다운로드</span>
+              </button>
+            </div>
+
+            {/* Personal Best Guarantee Card */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="p-2.5 rounded-xl bg-slate-100 text-slate-600">
+                  <ShieldCheck className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    2. 최고 기록(PB) 보호 및 갱신 원칙
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    기록 업로드 시 최고 기록 보존 및 자동 판정이 적용됩니다.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs text-slate-700 font-medium bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-600 font-bold shrink-0">[신기록 갱신]</span>
+                  <span>
+                    엑셀의 기록이 기존 최고기록보다 높은 경우 (예: 기존 70회 → 엑셀 75회), <strong>75회로 신기록 갱신</strong>되며 랭킹 상승!
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-slate-500 font-bold shrink-0">[최고기록 유지]</span>
+                  <span>
+                    엑셀의 기록이 기존 최고기록보다 낮거나 같은 경우 (예: 기존 70회 → 엑셀 65회), <strong>기존 70회 기록 유지</strong>! (65회는 측정 이력에 저장)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Success Summary Banner */}
+          {excelSuccessSummary && (
+            <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-xs font-bold text-emerald-900 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span>{excelSuccessSummary}</span>
+              </div>
+              <button
+                onClick={() => setExcelSuccessSummary('')}
+                className="text-emerald-700 hover:text-emerald-900 text-[11px] font-bold underline shrink-0"
+              >
+                확인
+              </button>
+            </div>
+          )}
+
+          {/* Step 2: Upload Zone */}
+          {gym.plan === 'free' ? (
+            <button
+              type="button"
+              onClick={() => setPlanLimitPopup('BASIC_FEATURE_LOCKED')}
+              className="w-full bg-slate-50/80 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-6 text-center transition-all cursor-pointer"
+            >
+              <div className="flex flex-col items-center justify-center gap-2">
+                <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-slate-400">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <div>
+                  <span className="text-sm font-bold text-slate-900 block">
+                    엑셀 일괄 등록은 베이직 요금제부터 사용할 수 있어요
+                  </span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    눌러서 요금제를 업그레이드하면 바로 사용할 수 있습니다.
+                  </span>
+                </div>
+              </div>
+            </button>
+          ) : (
+          <div className="bg-slate-50/80 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-6 text-center transition-all">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx, .xls, .csv"
+              onChange={handleFileChange}
+              className="hidden"
+              id="excel-file-input"
+            />
+            <label
+              htmlFor="excel-file-input"
+              className="cursor-pointer flex flex-col items-center justify-center gap-2"
+            >
+              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-slate-600">
+                <Upload className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-sm font-bold text-slate-900 block">
+                  작성된 엑셀 파일(.xlsx, .xls, .csv) 선택 또는 드래그앤드롭
+                </span>
+                <span className="text-xs text-slate-500 font-medium">
+                  다운로드받은 양식에 수련생 기록을 기재한 뒤 업로드해주세요.
+                </span>
+              </div>
+            </label>
+
+            {excelFileName && (
+              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
+                <FileSpreadsheet className="w-4 h-4 text-slate-500" />
+                <span>선택된 파일: {excelFileName}</span>
+              </div>
+            )}
+
+            {isParsingExcel && (
+              <p className="text-xs text-slate-500 font-bold mt-2 animate-pulse">
+                엑셀 파일을 분석하고 수련생 기록 데이터를 검증하는 중입니다...
+              </p>
+            )}
+
+            {excelError && (
+              <div className="mt-3 bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-700 font-bold flex items-center justify-center gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600" />
+                <span>{excelError}</span>
+              </div>
+            )}
+          </div>
+          )}
+
+          {/* Step 3: Parsed Data Preview & Confirmation */}
+          {parsedExcelRows.length > 0 && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>엑셀 데이터 검증 결과 (총 {parsedExcelRows.length}건 감지)</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    아래 항목을 확인한 후 [엑셀 데이터 최종 등록] 버튼을 눌러주세요.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleConfirmExcelImport}
+                  className="px-5 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>엑셀 데이터 최종 등록하기 ({parsedExcelRows.length}건)</span>
+                </button>
+              </div>
+
+              {/* Preview Table */}
+              <div className="overflow-x-auto max-h-72 border border-slate-200 rounded-xl">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-100 sticky top-0 border-b border-slate-200 text-slate-600 font-bold">
+                    <tr>
+                      <th className="p-2.5">수련생 이름</th>
+                      <th className="p-2.5">학년</th>
+                      <th className="p-2.5">측정 종목</th>
+                      <th className="p-2.5">측정일자</th>
+                      <th className="p-2.5 text-right">엑셀 기록(회)</th>
+                      <th className="p-2.5 text-right">기존 PB(회)</th>
+                      <th className="p-2.5 text-center">적용 판정</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {parsedExcelRows.map((row, idx) => {
+                      const matchedStudent = students.find((s) => s.name === row.studentName);
+                      const eventMeta = events[row.eventKey];
+                      const previousPb = matchedStudent
+                        ? getStudentPersonalBest(records, matchedStudent.id, row.eventKey)
+                        : null;
+
+                      const isNewPB = !previousPb || row.count > previousPb.count;
+                      const isNewStudent = !matchedStudent;
+
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50 font-medium text-slate-800">
+                          <td className="p-2.5 font-bold text-slate-900 flex items-center gap-1.5">
+                            <span>{row.studentName}</span>
+                            {isNewStudent && (
+                              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">
+                                신규
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-2.5 text-slate-500">{row.grade || matchedStudent?.grade || '미지정'}</td>
+                          <td className="p-2.5 font-semibold text-slate-800">
+                            {eventMeta ? eventMeta.title : row.eventKey}
+                          </td>
+                          <td className="p-2.5 font-mono text-slate-500 text-[11px]">{row.date}</td>
+                          <td className="p-2.5 text-right font-bold text-slate-900 text-sm">
+                            {row.count}회
+                          </td>
+                          <td className="p-2.5 text-right font-bold text-slate-600">
+                            {previousPb ? `${previousPb.count}회` : '-'}
+                          </td>
+                          <td className="p-2.5 text-center">
+                            {isNewPB ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]">
+                                <Award className="w-3 h-3 text-emerald-600" />
+                                신기록 갱신
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-[11px]">
+                                최고기록 ({previousPb?.count}회) 유지
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          </div>
+
+          {/* Direct manual entry (previously its own tab) */}
+          <div>
           {/* Personal Best Reassurance Banner */}
           <div className="mb-6 bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-slate-600 font-medium">
             <ShieldCheck className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
@@ -836,244 +1069,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               <span>일괄 기록 저장하기</span>
             </button>
           </div>
-        </div>
-      )}
-
-      {/* EXCEL IMPORT SUB TAB */}
-      {activeSubTab === 'EXCEL' && (
-        <div className="space-y-6">
-          {/* Step 1: Download Template & Instructions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Template Download Card */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-2.5 rounded-xl bg-slate-100 text-slate-600">
-                  <Download className="w-5 h-5" />
-                </span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    1. 엑셀 표준 등록 양식 다운로드
-                  </h3>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    다양한 종목을 한번에 등록할 수 있는 표준 .xlsx 양식을 다운받으세요.
-                  </p>
-                </div>
-              </div>
-
-              <ul className="text-xs text-slate-600 space-y-1.5 mb-4 pl-1 font-medium">
-                <li className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                  <strong>종합 종목별 양식:</strong> 한 줄에 수련생 이름과 6개 종목 기록을 함께 작성
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                  <strong>필수 항목:</strong> 수련생이름, 학년, 측정일자, 종목별 측정기록(회)
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                  <strong>학년 간편 입력 지원:</strong> <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">유-6</code>, <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">유-7</code>, <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">초-1</code> ~ <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-bold">초-6</code> 자동 변환
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                  <strong>자동 등록:</strong> 신규 수련생 이름 입력 시 수련생 명단 자동 생성!
-                </li>
-              </ul>
-
-              <button
-                onClick={() => downloadExcelTemplate(events, students, records)}
-                className="w-full py-2.5 px-4 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                <span>엑셀 등록 양식 파일 (.xlsx) 다운로드</span>
-              </button>
-            </div>
-
-            {/* Personal Best Guarantee Card */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-2.5 rounded-xl bg-slate-100 text-slate-600">
-                  <ShieldCheck className="w-5 h-5" />
-                </span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    2. 최고 기록(PB) 보호 및 갱신 원칙
-                  </h3>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    기록 업로드 시 최고 기록 보존 및 자동 판정이 적용됩니다.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-xs text-slate-700 font-medium bg-slate-50 p-3 rounded-xl border border-slate-200/60">
-                <div className="flex items-start gap-2">
-                  <span className="text-emerald-600 font-bold shrink-0">[신기록 갱신]</span>
-                  <span>
-                    엑셀의 기록이 기존 최고기록보다 높은 경우 (예: 기존 70회 → 엑셀 75회), <strong>75회로 신기록 갱신</strong>되며 랭킹 상승!
-                  </span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-slate-500 font-bold shrink-0">[최고기록 유지]</span>
-                  <span>
-                    엑셀의 기록이 기존 최고기록보다 낮거나 같은 경우 (예: 기존 70회 → 엑셀 65회), <strong>기존 70회 기록 유지</strong>! (65회는 측정 이력에 저장)
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
-
-          {/* Success Summary Banner */}
-          {excelSuccessSummary && (
-            <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-xs font-bold text-emerald-900 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                <span>{excelSuccessSummary}</span>
-              </div>
-              <button
-                onClick={() => setExcelSuccessSummary('')}
-                className="text-emerald-700 hover:text-emerald-900 text-[11px] font-bold underline shrink-0"
-              >
-                확인
-              </button>
-            </div>
-          )}
-
-          {/* Step 2: Upload Zone */}
-          <div className="bg-slate-50/80 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-6 text-center transition-all">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx, .xls, .csv"
-              onChange={handleFileChange}
-              className="hidden"
-              id="excel-file-input"
-            />
-            <label
-              htmlFor="excel-file-input"
-              className="cursor-pointer flex flex-col items-center justify-center gap-2"
-            >
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs text-slate-600">
-                <Upload className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-sm font-bold text-slate-900 block">
-                  작성된 엑셀 파일(.xlsx, .xls, .csv) 선택 또는 드래그앤드롭
-                </span>
-                <span className="text-xs text-slate-500 font-medium">
-                  다운로드받은 양식에 수련생 기록을 기재한 뒤 업로드해주세요.
-                </span>
-              </div>
-            </label>
-
-            {excelFileName && (
-              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
-                <FileSpreadsheet className="w-4 h-4 text-slate-500" />
-                <span>선택된 파일: {excelFileName}</span>
-              </div>
-            )}
-
-            {isParsingExcel && (
-              <p className="text-xs text-slate-500 font-bold mt-2 animate-pulse">
-                엑셀 파일을 분석하고 수련생 기록 데이터를 검증하는 중입니다...
-              </p>
-            )}
-
-            {excelError && (
-              <div className="mt-3 bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-700 font-bold flex items-center justify-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600" />
-                <span>{excelError}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Step 3: Parsed Data Preview & Confirmation */}
-          {parsedExcelRows.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>엑셀 데이터 검증 결과 (총 {parsedExcelRows.length}건 감지)</span>
-                  </h3>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    아래 항목을 확인한 후 [엑셀 데이터 최종 등록] 버튼을 눌러주세요.
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleConfirmExcelImport}
-                  className="px-5 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>엑셀 데이터 최종 등록하기 ({parsedExcelRows.length}건)</span>
-                </button>
-              </div>
-
-              {/* Preview Table */}
-              <div className="overflow-x-auto max-h-72 border border-slate-200 rounded-xl">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-100 sticky top-0 border-b border-slate-200 text-slate-600 font-bold">
-                    <tr>
-                      <th className="p-2.5">수련생 이름</th>
-                      <th className="p-2.5">학년</th>
-                      <th className="p-2.5">측정 종목</th>
-                      <th className="p-2.5">측정일자</th>
-                      <th className="p-2.5 text-right">엑셀 기록(회)</th>
-                      <th className="p-2.5 text-right">기존 PB(회)</th>
-                      <th className="p-2.5 text-center">적용 판정</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {parsedExcelRows.map((row, idx) => {
-                      const matchedStudent = students.find((s) => s.name === row.studentName);
-                      const eventMeta = events[row.eventKey];
-                      const previousPb = matchedStudent
-                        ? getStudentPersonalBest(records, matchedStudent.id, row.eventKey)
-                        : null;
-
-                      const isNewPB = !previousPb || row.count > previousPb.count;
-                      const isNewStudent = !matchedStudent;
-
-                      return (
-                        <tr key={idx} className="hover:bg-slate-50 font-medium text-slate-800">
-                          <td className="p-2.5 font-bold text-slate-900 flex items-center gap-1.5">
-                            <span>{row.studentName}</span>
-                            {isNewStudent && (
-                              <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-bold">
-                                신규
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-2.5 text-slate-500">{row.grade || matchedStudent?.grade || '미지정'}</td>
-                          <td className="p-2.5 font-semibold text-slate-800">
-                            {eventMeta ? eventMeta.title : row.eventKey}
-                          </td>
-                          <td className="p-2.5 font-mono text-slate-500 text-[11px]">{row.date}</td>
-                          <td className="p-2.5 text-right font-bold text-slate-900 text-sm">
-                            {row.count}회
-                          </td>
-                          <td className="p-2.5 text-right font-bold text-slate-600">
-                            {previousPb ? `${previousPb.count}회` : '-'}
-                          </td>
-                          <td className="p-2.5 text-center">
-                            {isNewPB ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px]">
-                                <Award className="w-3 h-3 text-emerald-600" />
-                                신기록 갱신
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-[11px]">
-                                최고기록 ({previousPb?.count}회) 유지
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
