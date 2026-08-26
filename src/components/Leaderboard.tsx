@@ -201,44 +201,59 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   )}
                 </div>
 
-                {/* Name & Avatar */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold text-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}
-                  >
-                    {item.student.name.substring(0, 1)}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-base text-slate-900">
-                        {item.student.name}
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                        {item.student.studentNo.slice(-3)}
-                      </span>
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                        {badgeTitle}
-                      </span>
+                {/* Name & Avatar (+ inline count on mobile) */}
+                <div className="flex items-center justify-between gap-3 min-w-0">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div
+                      className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold text-sm flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}
+                    >
+                      {item.student.name.substring(0, 1)}
                     </div>
 
-                    {/* Progress Bar Visualizer */}
-                    <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
-                      <div
-                        className="h-full transition-all duration-500 rounded-full bg-[#1B5E20]"
-                        style={{ width: `${percentage}%` }}
-                      ></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-base text-slate-900">
+                          {item.student.name}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                          {item.student.studentNo.slice(-3)}
+                        </span>
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                          {badgeTitle}
+                        </span>
+                      </div>
+
+                      {/* Progress Bar Visualizer */}
+                      <div className="w-full bg-slate-100 rounded-full h-2 mt-2 overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-500 rounded-full bg-[#1B5E20]"
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile-only: count sits beside the name instead of its own row below */}
+                  <div className="text-right shrink-0 sm:hidden">
+                    <div className="text-xl font-bold text-slate-900 tracking-tight leading-none">
+                      {item.personalBestCount.toLocaleString()}
+                      <span className="text-[10px] text-slate-500 font-semibold ml-0.5">
+                        {activeTab === 'OVERALL' ? '점' : '회'}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Grade */}
-                <div className="text-left sm:text-center text-xs font-bold text-slate-600">
-                  {item.student.grade}
+                {/* Grade (+ date on mobile, where the count row used to carry it) */}
+                <div className="text-left sm:text-center text-xs font-bold text-slate-600 flex items-center justify-between sm:block">
+                  <span>{item.student.grade}</span>
+                  <span className="sm:hidden text-[10px] text-slate-400 font-mono font-normal">
+                    {item.recordDate || '기록 없음'}
+                  </span>
                 </div>
 
-                {/* Record Count */}
-                <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-center">
+                {/* Record Count -- desktop only; mobile shows the inline version above */}
+                <div className="hidden sm:flex text-right sm:flex-col items-center sm:items-end justify-center">
                   <div className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                     {item.personalBestCount.toLocaleString()}
                     <span className="text-xs text-slate-500 font-semibold ml-1">
