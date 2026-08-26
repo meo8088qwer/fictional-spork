@@ -45,9 +45,20 @@ export async function requestCardRegistration(
   }
   await loadTossScript();
   const tossPayments = window.TossPayments!(TOSS_CLIENT_KEY);
-  await tossPayments.requestBillingAuth('카드', {
-    customerKey,
-    successUrl: `${window.location.origin}${successPath}`,
-    failUrl: `${window.location.origin}${failPath}`,
-  });
+  try {
+    await tossPayments.requestBillingAuth('카드', {
+      customerKey,
+      successUrl: `${window.location.origin}${successPath}`,
+      failUrl: `${window.location.origin}${failPath}`,
+    });
+  } catch (err) {
+    // Toss's SDK often rejects with a plain { code, message } object
+    // instead of an Error instance, so err.message can be undefined --
+    // normalize so callers always get a usable string.
+    const message =
+      err && typeof err === 'object' && 'message' in err
+        ? String((err as { message: unknown }).message)
+        : String(err);
+    throw new Error(message || '결제 모듈 호출 중 오류가 발생했습니다.');
+  }
 }

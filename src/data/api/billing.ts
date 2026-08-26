@@ -1,5 +1,17 @@
 import { supabase } from '../../lib/supabaseClient';
 
+// Supabase's PostgrestError is a plain object, not an Error instance --
+// `throw error` on one silently breaks any `catch (err) { err instanceof
+// Error ? err.message : '...' }` upstream (exactly what masked the real
+// "카드 등록을 시작하지 못했어요" cause). Always throw a real Error instead.
+function toError(error: unknown): Error {
+  if (error instanceof Error) return error;
+  if (error && typeof error === 'object' && 'message' in error) {
+    return new Error(String((error as { message: unknown }).message));
+  }
+  return new Error(String(error));
+}
+
 export interface Subscription {
   gymId: string;
   customerKey: string;
@@ -31,13 +43,13 @@ function mapSubscriptionRow(row: any): Subscription {
 // before card registration since Toss requires a customerKey up front.
 export async function ensureSubscription(): Promise<Subscription> {
   const { data, error } = await supabase.rpc('ensure_gym_subscription');
-  if (error) throw error;
+  if (error) throw toError(error);
   return mapSubscriptionRow(data);
 }
 
 export async function getMySubscription(): Promise<Subscription | null> {
   const { data, error } = await supabase.from('my_subscription').select('*').maybeSingle();
-  if (error) throw error;
+  if (error) throw toError(error);
   return data ? mapSubscriptionRow(data) : null;
 }
 
@@ -66,6 +78,6 @@ export async function activateBilling(params: ActivateBillingParams): Promise<vo
         // fall through to the generic error below
       }
     }
-    throw error;
+    throw toError(error);
   }
 }
