@@ -7,8 +7,10 @@ import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight, LayoutGrid
 // Rows shown on the fixed (non-rotating) page -- enough to feel like a real
 // scoreboard wall without the rows getting too cramped to read from across
 // a gym floor.
-const FIXED_RANK_COUNT = 15;
+const FIXED_RANK_COUNT = 20;
 const OVERALL_DEFAULTS = 'OVERALL_DEFAULTS';
+const ALL_SIX = 'ALL_SIX';
+const ALL_SIX_ROWS_PER_EVENT = 5;
 
 interface BroadcastTVModeProps {
   gymName: string;
@@ -36,24 +38,42 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   const [displayMode, setDisplayMode] = useState<'ROTATE' | 'FIXED'>('ROTATE');
   const [fixedView, setFixedView] = useState<string>(OVERALL_DEFAULTS);
   const isOverallDefaultsView = fixedView === OVERALL_DEFAULTS;
+  const isAllSixView = fixedView === ALL_SIX;
+  // Default 6 events only, in their canonical 30s x3 -> 10s x3 order --
+  // reused both for the defaults-only overall score and for the "all 6 at
+  // once" grid (which relies on this exact order to put 30s events on the
+  // top row and 10s events on the bottom row via a 3-col CSS grid).
+  const sixEventKeys = EVENT_KEYS.filter((k) => events[k]);
   // "모든 종목 순위" intentionally sums only the 6 default events (not
   // custom ones) so it stays a fair, universal comparison across gyms.
   const defaultEventsMap: Record<string, EventMeta> = Object.fromEntries(
-    EVENT_KEYS.filter((k) => events[k]).map((k) => [k, events[k]])
+    sixEventKeys.map((k) => [k, events[k]])
   );
-  const fixedLeaderboardItems = getLeaderboardData(
-    students,
-    records,
-    isOverallDefaultsView ? 'OVERALL' : (fixedView as EventKey),
-    'ALL',
-    '',
-    isOverallDefaultsView ? defaultEventsMap : events
-  ).slice(0, FIXED_RANK_COUNT);
+  const fixedLeaderboardItems = isAllSixView
+    ? []
+    : getLeaderboardData(
+        students,
+        records,
+        isOverallDefaultsView ? 'OVERALL' : (fixedView as EventKey),
+        'ALL',
+        '',
+        isOverallDefaultsView ? defaultEventsMap : events
+      ).slice(0, FIXED_RANK_COUNT);
 
   // Row entrance stagger scales with the auto-transition interval, so a
   // fast 3s cycle feels snappy and a slow 8s cycle feels more deliberate.
   const rowStaggerStep = autoPlaySeconds * 0.06;
   const rowAnimDuration = 0.35 + autoPlaySeconds * 0.03;
+
+  // Re-mounting the FIXED page's rows is what replays their entrance
+  // animation (React reuses a DOM node -- and its already-finished
+  // animation -- whenever the key doesn't change, which is why only the
+  // very first visit used to animate). Bump this on every entry into FIXED
+  // mode and every view change so the stagger-in replays each time.
+  const [fixedRenderKey, setFixedRenderKey] = useState<number>(0);
+  useEffect(() => {
+    if (displayMode === 'FIXED') setFixedRenderKey((k) => k + 1);
+  }, [displayMode, fixedView]);
 
   const currentEventKey: EventKey = eventKeys[currentEventIndex] || eventKeys[0];
   const eventMeta = events[currentEventKey] || events[eventKeys[0]];
@@ -172,6 +192,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
               className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer max-w-[220px]"
             >
               <option value={OVERALL_DEFAULTS}>종합 순위 (기본 6종목 합산)</option>
+              <option value={ALL_SIX}>종목별 한눈에 보기 (6종목)</option>
               <optgroup label="종목별 순위">
                 {eventKeys.map((key) => (
                   <option key={key} value={key}>
@@ -212,28 +233,89 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       )}
 
       {displayMode === 'FIXED' && (
-        <div className="relative z-10 my-auto animate-tv-transition">
-          <div className="text-center mb-6">
+        <div key={fixedRenderKey} className="relative z-10 my-auto animate-tv-transition">
+          <div className="text-center mb-5">
             <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-              {isOverallDefaultsView ? '종합 순위' : events[fixedView]?.title ?? fixedView}
+              {isOverallDefaultsView
+                ? '종합 순위'
+                : isAllSixView
+                ? '종목별 한눈에 보기'
+                : events[fixedView]?.title ?? fixedView}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-1.5">
               {isOverallDefaultsView
                 ? '기본 6종목 환산 점수 합산 순위'
+                : isAllSixView
+                ? '기본 6종목 순위를 한 화면에서 확인'
                 : events[fixedView]
                 ? `측정 시간 ${events[fixedView].timeSeconds}초 · ${events[fixedView].description}`
                 : ''}
             </p>
           </div>
 
-          {fixedLeaderboardItems.length === 0 ? (
+          {isAllSixView ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {sixEventKeys.map((eventKey, panelIndex) => {
+                const meta = events[eventKey];
+                const items = getLeaderboardData(students, records, eventKey, 'ALL', '', events).slice(
+                  0,
+                  ALL_SIX_ROWS_PER_EVENT
+                );
+                return (
+                  <div
+                    key={eventKey}
+                    className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-xs"
+                    style={{
+                      animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
+                      animationDelay: `${panelIndex * (rowStaggerStep / 2)}s`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100">
+                      <span className="text-sm font-bold text-slate-900">{meta?.shortTitle ?? meta?.title}</span>
+                      <span className="text-[10px] font-mono font-bold text-slate-400">{meta?.timeSeconds}s</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {items.length === 0 ? (
+                        <div className="text-[11px] text-slate-300 text-center py-3">기록 없음</div>
+                      ) : (
+                        items.map((item, idx) => (
+                          <div key={item.student.id} className="flex items-center justify-between gap-2 text-xs">
+                            <span className="flex items-center gap-1.5 min-w-0">
+                              <span
+                                className={`w-5 h-5 rounded-md font-bold text-[10px] flex items-center justify-center shrink-0 ${
+                                  idx === 0
+                                    ? 'bg-[#1B5E20] text-white'
+                                    : idx === 1
+                                    ? 'bg-slate-200 text-slate-700'
+                                    : idx === 2
+                                    ? 'bg-slate-300 text-slate-700'
+                                    : 'text-slate-400'
+                                }`}
+                              >
+                                {idx + 1}
+                              </span>
+                              <span className="font-semibold text-slate-800 truncate">{item.student.name}</span>
+                            </span>
+                            <span className="font-bold text-slate-900 shrink-0">
+                              {item.personalBestCount}
+                              <span className="text-[9px] text-slate-400 font-bold ml-0.5">회</span>
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : fixedLeaderboardItems.length === 0 ? (
             <div className="text-center text-slate-400 font-bold py-16">아직 등록된 기록이 없습니다.</div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {fixedLeaderboardItems.map((item, index) => (
                 <div
                   key={item.student.id}
-                  className={`flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-2xl border shadow-xs ${
+                  className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border shadow-xs ${
                     index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
                   }`}
                   style={{
@@ -241,9 +323,9 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
                     animationDelay: `${index * (rowStaggerStep / 2)}s`,
                   }}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span
-                      className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 ${
+                      className={`w-6 h-6 rounded-lg font-bold text-[11px] flex items-center justify-center shrink-0 ${
                         index === 0
                           ? 'bg-[#1B5E20] text-white'
                           : index === 1
@@ -255,14 +337,9 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
                     >
                       {index + 1}
                     </span>
-                    <div
-                      className={`w-7 h-7 rounded-lg bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold text-[11px] flex items-center justify-center shrink-0`}
-                    >
-                      {item.student.name.substring(0, 1)}
-                    </div>
-                    <span className="text-sm font-bold text-slate-900 truncate">{item.student.name}</span>
+                    <span className="text-xs font-bold text-slate-900 truncate">{item.student.name}</span>
                   </div>
-                  <span className="text-base font-bold text-slate-900 shrink-0">
+                  <span className="text-2xl font-bold text-slate-900 shrink-0 tracking-tight">
                     {item.personalBestCount}
                     <span className="text-[10px] text-slate-500 font-bold ml-0.5">회</span>
                   </span>
