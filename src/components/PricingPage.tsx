@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Check, Lock, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Check, Lock, CreditCard, AlertCircle, CheckCircle2, Receipt, XCircle } from 'lucide-react';
 import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
-import { useSubscription } from '../hooks/useGymData';
+import { useSubscription, usePayments } from '../hooks/useGymData';
 import { requestOneTimePayment } from '../lib/tossPayments';
+import { ConfirmModal } from './ConfirmModal';
 
 type BillingCycle = 'monthly' | 'yearly';
 
@@ -82,9 +83,12 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
   const { refreshGym, user } = useAuth();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [searchParams, setSearchParams] = useSearchParams();
-  const { subscription, ensureSubscription, confirmPayment } = useSubscription();
+  const { subscription, ensureSubscription, confirmPayment, cancelSubscription } = useSubscription();
+  const { payments } = usePayments();
   const [subscribingKey, setSubscribingKey] = useState<Tier['key'] | null>(null);
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   // react-router hands back a new `searchParams` object identity on every
   // render, so this effect (deliberately dependent on it, to catch the
   // params changing) can re-fire mid-flight while confirmPayment is still
@@ -194,6 +198,20 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
     }
   };
 
+  const handleCancel = async () => {
+    setIsCanceling(true);
+    try {
+      await cancelSubscription();
+      await refreshGym();
+      setBanner({ type: 'success', text: '구독이 해지됐어요. 지금부터 FREE 플랜으로 이용됩니다.' });
+    } catch (err) {
+      setBanner({ type: 'error', text: err instanceof Error ? err.message : '구독 해지 중 오류가 발생했어요.' });
+    } finally {
+      setIsCanceling(false);
+      setShowCancelConfirm(false);
+    }
+  };
+
   return (
     <div>
       <div className="text-center mb-8">
@@ -221,7 +239,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
       )}
 
       {subscription && subscription.status !== 'none' && (
-        <div className="mb-6 max-w-xl mx-auto rounded-xl border border-slate-200 bg-white p-3.5 flex items-center justify-between gap-3 text-xs">
+        <div className="mb-6 max-w-xl mx-auto rounded-xl border border-slate-200 bg-white p-3.5 flex items-center justify-between gap-3 text-xs flex-wrap">
           <span className="flex items-center gap-2 font-bold text-slate-700">
             <CreditCard className="w-4 h-4 text-slate-400" />
             {subscription.cardCompany ?? '카드'} {subscription.cardLast4 ? `**** ${subscription.cardLast4}` : ''}
@@ -235,6 +253,16 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
               ? '구독 해지됨'
               : ''}
           </span>
+          {subscription.status === 'active' && (
+            <button
+              type="button"
+              onClick={() => setShowCancelConfirm(true)}
+              className="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span>구독 해지</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -330,6 +358,23 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
                   <Lock className="w-3.5 h-3.5" />
                   <span>추후 오픈 예정</span>
                 </button>
+              ) : isCurrent && tier.key === 'basic' ? (
+                <div className="space-y-1.5">
+                  <div className="w-full py-2.5 rounded-xl bg-[#1B5E20]/10 text-[#1B5E20] font-bold text-xs text-center">
+                    현재 이용중
+                  </div>
+                  <button
+                    type="button"
+                    disabled={subscribingKey === tier.key}
+                    onClick={() => handleSubscribe('basic')}
+                    className="w-full py-2 rounded-xl bg-white border border-[#1B5E20]/30 hover:bg-[#1B5E20]/5 disabled:opacity-60 text-[#1B5E20] font-bold text-[11px] transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <CreditCard className="w-3 h-3" />
+                    <span>
+                      {subscribingKey === tier.key ? '결제 화면으로 이동 중...' : '다시 결제하기 (주기·카드 변경)'}
+                    </span>
+                  </button>
+                </div>
               ) : isCurrent ? (
                 <button
                   type="button"
@@ -361,6 +406,52 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
           );
         })}
       </div>
+
+      {payments.length > 0 && (
+        <div className="mt-10 max-w-2xl mx-auto">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
+            <Receipt className="w-4 h-4 text-slate-400" />
+            <span>결제 내역</span>
+          </h2>
+          <div className="bg-white border border-slate-200/90 rounded-2xl divide-y divide-slate-100 overflow-hidden">
+            {payments.map((p) => (
+              <div key={p.id} className="px-4 py-3 flex items-center justify-between gap-3 text-xs">
+                <div>
+                  <div className="font-bold text-slate-800">
+                    {p.plan.toUpperCase()} 플랜 ({p.billingCycle === 'yearly' ? '연간' : '월간'})
+                  </div>
+                  <div className="text-slate-400 font-mono mt-0.5">
+                    {new Date(p.paidAt).toLocaleString('ko-KR')}
+                  </div>
+                  {p.status === 'failed' && p.failureReason && (
+                    <div className="text-rose-500 font-medium mt-0.5">{p.failureReason}</div>
+                  )}
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="font-bold text-slate-900">{p.amount.toLocaleString()}원</div>
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      p.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
+                    }`}
+                  >
+                    {p.status === 'paid' ? '결제완료' : '결제실패'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        isOpen={showCancelConfirm}
+        title="구독 해지"
+        message="구독을 해지하면 지금 바로 FREE 플랜으로 전환돼요. 자동 갱신이 아니라서 다시 해지를 무를 방법은 없고, 원하시면 언제든 다시 결제해서 재구독할 수 있어요. 해지할까요?"
+        confirmText={isCanceling ? '해지 중...' : '해지하기'}
+        variant="danger"
+        onConfirm={handleCancel}
+        onClose={() => setShowCancelConfirm(false)}
+      />
     </div>
   );
 };

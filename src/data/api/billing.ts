@@ -53,6 +53,48 @@ export async function getMySubscription(): Promise<Subscription | null> {
   return data ? mapSubscriptionRow(data) : null;
 }
 
+// Drops the gym back to free immediately -- see cancel_gym_subscription()'s
+// doc comment for why "cancel" means that right now instead of "stop
+// billing at period end" (there's no recurring charge to stop yet).
+export async function cancelSubscription(): Promise<Subscription> {
+  const { data, error } = await supabase.rpc('cancel_gym_subscription');
+  if (error) throw toError(error);
+  return mapSubscriptionRow(data);
+}
+
+export interface PaymentRecord {
+  id: string;
+  orderId: string;
+  plan: string;
+  billingCycle: string;
+  amount: number;
+  status: 'paid' | 'failed';
+  failureReason: string | null;
+  paidAt: string;
+}
+
+function mapPaymentRow(row: any): PaymentRecord {
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    plan: row.plan,
+    billingCycle: row.billing_cycle,
+    amount: row.amount,
+    status: row.status,
+    failureReason: row.failure_reason,
+    paidAt: row.paid_at,
+  };
+}
+
+export async function listPayments(): Promise<PaymentRecord[]> {
+  const { data, error } = await supabase
+    .from('gym_payments')
+    .select('*')
+    .order('paid_at', { ascending: false });
+  if (error) throw toError(error);
+  return (data ?? []).map(mapPaymentRow);
+}
+
 export interface ConfirmPaymentParams {
   paymentKey: string;
   orderId: string;

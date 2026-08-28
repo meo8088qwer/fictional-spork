@@ -138,12 +138,31 @@ export function useSubscription() {
     onSuccess: invalidate,
   });
 
+  const cancelSubscription = useMutation({
+    mutationFn: billingApi.cancelSubscription,
+    onSuccess: invalidate,
+  });
+
   return {
     subscription: query.data ?? null,
     isLoading: query.isLoading,
     ensureSubscription: ensureSubscription.mutateAsync,
     confirmPayment: confirmPayment.mutateAsync,
+    cancelSubscription: cancelSubscription.mutateAsync,
   };
+}
+
+export function usePayments() {
+  const { gym } = useAuth();
+  const gymId = gym?.id;
+
+  const query = useQuery({
+    queryKey: ['payments', gymId],
+    queryFn: billingApi.listPayments,
+    enabled: !!gymId,
+  });
+
+  return { payments: query.data ?? [], isLoading: query.isLoading };
 }
 
 export function useGlobalLeaderboard() {
