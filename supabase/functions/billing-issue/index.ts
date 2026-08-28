@@ -1,7 +1,16 @@
-// Called right after the browser comes back from Toss's hosted
-// card-registration page. Exchanges authKey for a billingKey (server-side,
-// with the secret key), charges the first billing cycle immediately, and
-// activates the subscription.
+// Called right after the browser comes back from Toss's hosted payment
+// widget. Confirms the one-time card payment (server-side, with the secret
+// key) and activates the subscription for one billing cycle.
+//
+// INTERIM FLOW: this gym's Toss account doesn't have 자동결제(빌링)
+// contract approval yet, so this uses a regular one-time payment (no
+// contract required) instead of billing-key registration. It does NOT
+// auto-renew -- billing-charge/index.ts's expiry check downgrades a gym
+// back to free if next_billing_date passes without a manual re-payment.
+// Once the 자동결제 contract is approved: swap src/lib/tossPayments.ts's
+// PricingPage call back to requestCardRegistration, and this function back
+// to calling POST /v1/billing/authorizations/issue + charging the
+// billingKey (see git history for the previous version of this file).
 //
 // Self-contained (no ../_shared imports) so it can be pasted directly into
 // Supabase's browser-based Edge Function editor as a single file.
@@ -26,50 +35,28 @@ function authHeader(secretKey: string): string {
   return `Basic ${btoa(`${secretKey}:`)}`;
 }
 
-interface TossBillingAuth {
-  billingKey: string;
-  cardNumber?: string;
-  cardCompany?: string;
-  card?: { number?: string };
-}
-async function issueBillingKey(secretKey: string, authKey: string, customerKey: string): Promise<TossBillingAuth> {
-  const res = await fetch(`${TOSS_API_BASE}/billing/authorizations/issue`, {
-    method: 'POST',
-    headers: { Authorization: authHeader(secretKey), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ authKey, customerKey }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || '카드 등록에 실패했습니다.');
-  return data;
-}
-
-interface TossChargeResult {
+interface TossPaymentConfirmResult {
   paymentKey: string;
   status: string;
   totalAmount: number;
+  cardCompany?: string;
+  cardNumber?: string;
+  card?: { company?: string; number?: string };
 }
 
-interface ChargeParams {
-  customerKey: string;
-  orderId: string;
-  orderName: string;
-  amount: number;
-  customerName?: string;
-  customerEmail?: string;
-}
-
-async function chargeBillingKey(
+async function confirmOneTimePayment(
   secretKey: string,
-  billingKey: string,
-  params: ChargeParams
-): Promise<TossChargeResult> {
-  const res = await fetch(`${TOSS_API_BASE}/billing/${billingKey}`, {
+  paymentKey: string,
+  orderId: string,
+  amount: number
+): Promise<TossPaymentConfirmResult> {
+  const res = await fetch(`${TOSS_API_BASE}/payments/confirm`, {
     method: 'POST',
     headers: { Authorization: authHeader(secretKey), 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
+    body: JSON.stringify({ paymentKey, orderId, amount }),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || '결제에 실패했습니다.');
+  if (!res.ok) throw new Error(data.message || '결제 승인에 실패했습니다.');
   return data;
 }
 
@@ -89,8 +76,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { authKey, customerKey, plan, billingCycle } = await req.json();
-    if (!authKey || !customerKey || !plan || !billingCycle) {
+    const { paymentKey, orderId, customerKey, plan, billingCycle } = await req.json();
+    if (!paymentKey || !orderId || !customerKey || !plan || !billingCycle) {
       return jsonResponse({ error: '잘못된 요청입니다.' }, 400);
     }
     if (!PLAN_PRICE[plan as 'basic' | 'pro']?.[billingCycle as 'monthly' | 'yearly']) {
@@ -128,24 +115,24 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'customerKey가 일치하지 않습니다.' }, 403);
     }
 
-    const auth = await issueBillingKey(tossSecretKey, authKey, customerKey);
+    // Amount is always computed server-side from PLAN_PRICE, never taken
+    // from the client -- Toss's confirm call rejects if it doesn't match
+    // what was actually authorized in the widget, so this doubles as
+    // tamper protection against a client sending a lower price.
     const amount = PLAN_PRICE[plan as 'basic' | 'pro'][billingCycle as 'monthly' | 'yearly'];
-    const orderId = `${gym.id}-${Date.now()}`;
+    const confirmed = await confirmOneTimePayment(tossSecretKey, paymentKey, orderId, amount);
 
-    const charge = await chargeBillingKey(tossSecretKey, auth.billingKey, {
-      customerKey,
-      orderId,
-      orderName: `줄넘기 랭킹보드 ${String(plan).toUpperCase()} 플랜 (${billingCycle === 'yearly' ? '연간' : '월간'})`,
-      amount,
-      customerName: gym.name,
-    });
+    // Toss's response shape for card details isn't consistent between
+    // endpoints (billing-auth issue returns it top-level, this confirm
+    // endpoint may nest it under `card`) -- check both.
+    const cardCompany = confirmed.card?.company ?? confirmed.cardCompany ?? null;
+    const cardNumber = confirmed.card?.number ?? confirmed.cardNumber ?? null;
 
     await admin
       .from('gym_subscriptions')
       .update({
-        billing_key: auth.billingKey,
-        card_last4: (auth.cardNumber ?? auth.card?.number)?.slice(-4) ?? null,
-        card_company: auth.cardCompany ?? null,
+        card_last4: cardNumber ? cardNumber.slice(-4) : null,
+        card_company: cardCompany,
         desired_plan: plan,
         billing_cycle: billingCycle,
         status: 'active',
@@ -155,15 +142,21 @@ Deno.serve(async (req) => {
       })
       .eq('gym_id', gym.id);
 
-    await admin.from('gym_payments').insert({
+    const { error: paymentInsertError } = await admin.from('gym_payments').insert({
       gym_id: gym.id,
       order_id: orderId,
       plan,
       billing_cycle: billingCycle,
       amount,
       status: 'paid',
-      toss_payment_key: charge.paymentKey,
+      toss_payment_key: confirmed.paymentKey,
     });
+    // order_id is unique -- a duplicate here just means this confirm
+    // already ran once (e.g. the success redirect got replayed), and the
+    // subscription update above is idempotent, so it's safe to ignore.
+    if (paymentInsertError && !String(paymentInsertError.message).toLowerCase().includes('duplicate')) {
+      throw new Error(paymentInsertError.message);
+    }
 
     await admin.from('gyms').update({ plan }).eq('id', gym.id);
 

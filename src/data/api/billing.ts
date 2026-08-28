@@ -53,17 +53,20 @@ export async function getMySubscription(): Promise<Subscription | null> {
   return data ? mapSubscriptionRow(data) : null;
 }
 
-export interface ActivateBillingParams {
-  authKey: string;
+export interface ConfirmPaymentParams {
+  paymentKey: string;
+  orderId: string;
   customerKey: string;
   plan: 'basic' | 'pro';
   billingCycle: 'monthly' | 'yearly';
 }
 
-// Calls the billing-issue Edge Function, which exchanges authKey for a
-// billingKey with Toss (server-side, using the secret key) and activates
-// the subscription. Throws with a user-facing message on failure.
-export async function activateBilling(params: ActivateBillingParams): Promise<void> {
+// Calls the billing-issue Edge Function, which confirms a one-time Toss
+// card payment (server-side, using the secret key) and activates the
+// subscription for one billing cycle. Interim flow -- doesn't auto-renew,
+// see requestOneTimePayment's doc comment. Throws with a user-facing
+// message on failure.
+export async function confirmPayment(params: ConfirmPaymentParams): Promise<void> {
   const { error } = await supabase.functions.invoke('billing-issue', { body: params });
   if (error) {
     // FunctionsHttpError wraps the raw Response in `.context` -- surface

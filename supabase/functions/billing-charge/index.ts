@@ -171,5 +171,25 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Interim manual-renewal path (see billing-issue/index.ts's doc comment):
+  // subscriptions with no billing_key are never picked up by the
+  // auto-charge query above, so if their paid period lapses without the
+  // gym owner manually paying again, downgrade them back to free here.
+  const { data: expired } = await admin
+    .from('gym_subscriptions')
+    .select('gym_id')
+    .eq('status', 'active')
+    .is('billing_key', null)
+    .lte('next_billing_date', today);
+
+  for (const sub of expired ?? []) {
+    await admin
+      .from('gym_subscriptions')
+      .update({ status: 'past_due', updated_at: new Date().toISOString() })
+      .eq('gym_id', sub.gym_id);
+    await admin.from('gyms').update({ plan: 'free' }).eq('id', sub.gym_id);
+    results.push({ gym_id: sub.gym_id, ok: true, error: 'expired, downgraded to free' });
+  }
+
   return jsonResponse({ processed: results.length, results });
 });

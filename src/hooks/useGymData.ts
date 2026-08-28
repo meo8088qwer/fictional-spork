@@ -133,8 +133,8 @@ export function useSubscription() {
     onSuccess: invalidate,
   });
 
-  const activateBilling = useMutation({
-    mutationFn: billingApi.activateBilling,
+  const confirmPayment = useMutation({
+    mutationFn: billingApi.confirmPayment,
     onSuccess: invalidate,
   });
 
@@ -142,7 +142,7 @@ export function useSubscription() {
     subscription: query.data ?? null,
     isLoading: query.isLoading,
     ensureSubscription: ensureSubscription.mutateAsync,
-    activateBilling: activateBilling.mutateAsync,
+    confirmPayment: confirmPayment.mutateAsync,
   };
 }
 

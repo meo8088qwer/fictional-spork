@@ -4,7 +4,7 @@ import { Check, Lock, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-react
 import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useGymData';
-import { requestCardRegistration } from '../lib/tossPayments';
+import { requestOneTimePayment } from '../lib/tossPayments';
 
 type BillingCycle = 'monthly' | 'yearly';
 
@@ -69,25 +69,36 @@ interface PricingPageProps {
   gym: Gym;
 }
 
+// Interim payment path (see requestOneTimePayment's doc comment) needs the
+// same amount client-side (to invoke the widget) and server-side (source
+// of truth for the confirm call) -- TIERS above already carries this per
+// tier, this just resolves cycle too.
+function tierAmount(tierKey: 'basic' | 'pro', cycle: BillingCycle): number {
+  const tier = TIERS.find((t) => t.key === tierKey)!;
+  return cycle === 'yearly' ? yearlyPrice(tier.monthlyPrice) : tier.monthlyPrice;
+}
+
 export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
   const { refreshGym, user } = useAuth();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [searchParams, setSearchParams] = useSearchParams();
-  const { subscription, ensureSubscription, activateBilling } = useSubscription();
+  const { subscription, ensureSubscription, confirmPayment } = useSubscription();
   const [subscribingKey, setSubscribingKey] = useState<Tier['key'] | null>(null);
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Toss redirects the whole page back here after card registration with
-  // ?billing=success&authKey=&customerKey=&plan=&cycle= (or ?billing=fail).
-  // Runs once per redirect, then strips those params so a refresh doesn't
-  // re-trigger the charge.
+  // Toss redirects the whole page back here after payment with
+  // ?billing=success&paymentKey=&orderId=&customerKey=&plan=&cycle= (or
+  // ?billing=fail). Runs once per redirect, then strips those params so a
+  // refresh doesn't re-trigger the confirm call.
   useEffect(() => {
     const billing = searchParams.get('billing');
     if (!billing) return;
 
     const clearParams = () => {
       const next = new URLSearchParams(searchParams);
-      ['billing', 'authKey', 'customerKey', 'plan', 'cycle', 'code', 'message'].forEach((k) => next.delete(k));
+      ['billing', 'paymentKey', 'orderId', 'amount', 'customerKey', 'plan', 'cycle', 'code', 'message'].forEach((k) =>
+        next.delete(k)
+      );
       setSearchParams(next, { replace: true });
     };
 
@@ -97,33 +108,38 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
       setBanner({
         type: 'error',
         text: message
-          ? `카드 등록에 실패했어요: ${message}${code ? ` (${code})` : ''}`
-          : '카드 등록이 취소되었어요. 다시 시도해 주세요.',
+          ? `결제에 실패했어요: ${message}${code ? ` (${code})` : ''}`
+          : '결제가 취소됐어요. 다시 시도해 주세요.',
       });
       clearParams();
       return;
     }
 
     if (billing === 'success') {
-      const authKey = searchParams.get('authKey');
+      const paymentKey = searchParams.get('paymentKey');
+      const orderId = searchParams.get('orderId');
       const customerKey = searchParams.get('customerKey');
       const plan = searchParams.get('plan');
       const cycle = searchParams.get('cycle');
-      if (!authKey || !customerKey || !plan || !cycle) {
+      if (!paymentKey || !orderId || !customerKey || !plan || !cycle) {
         setBanner({ type: 'error', text: '결제 정보가 올바르지 않아요. 다시 시도해 주세요.' });
         clearParams();
         return;
       }
 
-      activateBilling({
-        authKey,
+      confirmPayment({
+        paymentKey,
+        orderId,
         customerKey,
         plan: plan as 'basic' | 'pro',
         billingCycle: cycle as 'monthly' | 'yearly',
       })
         .then(async () => {
           await refreshGym();
-          setBanner({ type: 'success', text: '구독이 시작됐어요! 플랜이 바로 적용됩니다.' });
+          setBanner({
+            type: 'success',
+            text: '결제가 완료됐어요! 플랜이 바로 적용됩니다. (자동 갱신은 아직 준비 중이라, 다음 결제일에 다시 결제해주셔야 해요.)',
+          });
         })
         .catch((err) => {
           setBanner({ type: 'error', text: err instanceof Error ? err.message : '결제 처리 중 오류가 발생했어요.' });
@@ -138,17 +154,29 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
     setSubscribingKey(tierKey);
     try {
       const sub = await ensureSubscription();
-      const params = new URLSearchParams({ view: 'PRICING', billing: 'success', plan: tierKey, cycle: billingCycle });
+      const amount = tierAmount(tierKey, billingCycle);
+      const orderId = `${gym.id}-${Date.now()}`;
+      const orderName = `줄넘기 랭킹보드 ${tierKey.toUpperCase()} 플랜 (${billingCycle === 'yearly' ? '연간' : '월간'})`;
+      const params = new URLSearchParams({
+        view: 'PRICING',
+        billing: 'success',
+        customerKey: sub.customerKey,
+        plan: tierKey,
+        cycle: billingCycle,
+      });
       const failParams = new URLSearchParams({ view: 'PRICING', billing: 'fail' });
-      await requestCardRegistration(
+      await requestOneTimePayment(
         sub.customerKey,
+        orderId,
+        orderName,
+        amount,
         `/admin?${params.toString()}`,
         `/admin?${failParams.toString()}`,
         user?.email,
         gym.name
       );
     } catch (err) {
-      setBanner({ type: 'error', text: err instanceof Error ? err.message : '카드 등록을 시작하지 못했어요.' });
+      setBanner({ type: 'error', text: err instanceof Error ? err.message : '결제를 시작하지 못했어요.' });
       setSubscribingKey(null);
     }
   };
@@ -187,9 +215,9 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
           </span>
           <span className="text-slate-500 font-medium">
             {subscription.status === 'active' && subscription.nextBillingDate
-              ? `다음 결제일 ${subscription.nextBillingDate}`
+              ? `다음 결제 예정일 ${subscription.nextBillingDate} (자동 갱신 전까지는 직접 결제해주세요)`
               : subscription.status === 'past_due'
-              ? '결제 실패 - 카드 정보를 확인해 주세요'
+              ? '결제 기한이 지났어요 - 다시 결제해 주세요'
               : subscription.status === 'canceled'
               ? '구독 해지됨'
               : ''}
@@ -305,7 +333,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
                   className="w-full py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-60 text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <CreditCard className="w-3.5 h-3.5" />
-                  <span>{subscribingKey === tier.key ? '카드 등록 화면으로 이동 중...' : '카드 등록하고 구독하기'}</span>
+                  <span>{subscribingKey === tier.key ? '결제 화면으로 이동 중...' : '카드로 결제하고 구독하기'}</span>
                 </button>
               ) : (
                 <button
