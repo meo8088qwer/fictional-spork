@@ -145,6 +145,7 @@ export default function AdminAppPage() {
             onAddCustomEvent={addCustomEvent}
             onDeleteCustomEvent={deleteCustomEvent}
             onResetDefaultEvents={resetDefaultEvents}
+            onDeleteRecord={deleteRecord}
             onClose={(lastEventKey) => {
               if (lastEventKey) setActiveTab(lastEventKey);
               setActiveView('LEADERBOARD');

@@ -73,6 +73,7 @@ interface AdminBatchEntryProps {
   onAddCustomEvent: (eventMeta: EventMeta) => Promise<EventMeta>;
   onDeleteCustomEvent: (eventKey: string) => Promise<void>;
   onResetDefaultEvents: () => Promise<Record<string, EventMeta>>;
+  onDeleteRecord: (recordId: string) => Promise<void>;
   onClose: (lastEventKey?: EventKey) => void;
   onNavigateToPricing: () => void;
   // Which sub-section to land on -- the sidebar now links directly to
@@ -91,6 +92,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   onAddCustomEvent,
   onDeleteCustomEvent,
   onResetDefaultEvents,
+  onDeleteRecord,
   onClose,
   onNavigateToPricing,
   initialSubTab = 'BATCH',
@@ -117,6 +119,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   // Map of studentId -> entered jump count
   const [countsMap, setCountsMap] = useState<Record<string, string>>({});
   const [savedSuccessAlert, setSavedSuccessAlert] = useState<boolean>(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState<boolean>(false);
+  // This page's own recent-saves log for a quick undo -- intentionally
+  // component-local (not persisted), so it only exists while you're on the
+  // 기록관리 page, matching what was asked for.
+  const [recentSaves, setRecentSaves] = useState<JumpRecord[]>([]);
 
   // Excel Upload state
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -218,7 +225,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     setCountsMap({});
   };
 
-  const handleSaveBatch = async () => {
+  const buildBatchEntries = () => {
     const entriesToSave: Array<{
       studentId: string;
       studentName: string;
@@ -243,25 +250,41 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       }
     });
 
-    if (entriesToSave.length === 0) {
+    return entriesToSave;
+  };
+
+  // Coaches kept saving to the wrong event by mis-clicking the dropdown, so
+  // this only opens a confirm naming the event -- the actual save happens
+  // in handleSaveBatch once they confirm.
+  const handleSaveBatchClick = () => {
+    if (buildBatchEntries().length === 0) {
       alert('입력된 기록이 없습니다. 수련생 옆의 숫자를 입력해 주세요!');
       return;
     }
+    setShowSaveConfirm(true);
+  };
+
+  const handleSaveBatch = async () => {
+    const entriesToSave = buildBatchEntries();
+    if (entriesToSave.length === 0) return;
 
     setActionError('');
     try {
-      await onBatchSaveRecords(entriesToSave);
+      const saved = await onBatchSaveRecords(entriesToSave);
       setSavedSuccessAlert(true);
-      setTimeout(() => {
-        setSavedSuccessAlert(false);
-        // Land back on the leaderboard already showing the event just
-        // saved -- otherwise it defaults to the first event, and a save to
-        // any other event looks like it silently did nothing.
-        onClose(selectedEventKey);
-      }, 1200);
+      setRecentSaves((prev) => [...saved, ...prev].slice(0, 20));
+      setCountsMap({});
+      setTimeout(() => setSavedSuccessAlert(false), 1200);
+      // Stay on the 기록관리 page instead of bouncing to the leaderboard --
+      // coaches enter several batches in a row and kept losing their place.
     } catch (e) {
       setActionError(e instanceof PlanLimitError ? planLimitMessage(e.code) : '기록 저장 중 오류가 발생했습니다.');
     }
+  };
+
+  const handleUndoSave = async (record: JumpRecord) => {
+    await onDeleteRecord(record.id);
+    setRecentSaves((prev) => prev.filter((r) => r.id !== record.id));
   };
 
   // Excel File Upload Handler
@@ -820,6 +843,42 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
           {/* Direct manual entry (previously its own tab) */}
           <div>
+          {/* Recent Saves + Undo -- local to this page only, resets on navigation */}
+          {recentSaves.length > 0 && (
+            <div className="mb-6 bg-white border border-slate-200/80 rounded-2xl p-3.5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-700">최근 저장 내역 (이 페이지에서만 표시)</span>
+                <button
+                  type="button"
+                  onClick={() => setRecentSaves([])}
+                  className="text-[11px] text-slate-400 hover:text-slate-600 cursor-pointer"
+                >
+                  목록 지우기
+                </button>
+              </div>
+              <div className="space-y-1.5 max-h-40 overflow-auto">
+                {recentSaves.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between gap-2 text-xs bg-slate-50 rounded-lg px-3 py-2"
+                  >
+                    <span className="font-semibold text-slate-700 truncate">
+                      {r.studentName} · {events[r.eventKey]?.title ?? r.eventKey} · {r.count}회
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleUndoSave(r)}
+                      className="shrink-0 text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>되돌리기</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Personal Best Reassurance Banner */}
           <div className="mb-6 bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-slate-600 font-medium">
             <ShieldCheck className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
@@ -1062,7 +1121,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             </button>
 
             <button
-              onClick={handleSaveBatch}
+              onClick={handleSaveBatchClick}
               className="px-6 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-sm transition-all flex items-center gap-2"
             >
               <Save className="w-4 h-4" />
@@ -1629,6 +1688,17 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           </div>
         </div>
       )}
+
+      {/* Confirm Batch Save -- coaches kept saving to the wrong event */}
+      <ConfirmModal
+        isOpen={showSaveConfirm}
+        title="기록 저장"
+        message={`[${events[selectedEventKey]?.title ?? selectedEventKey}] 종목으로 오늘(${measurementDate}) 입력한 기록을 저장할까요?`}
+        confirmText="저장하기"
+        variant="primary"
+        onConfirm={handleSaveBatch}
+        onClose={() => setShowSaveConfirm(false)}
+      />
 
       {/* Confirm Custom Event Delete Modal */}
       <ConfirmModal
