@@ -4,75 +4,89 @@ import { getLeaderboardData } from '../lib/scoring';
 import { EVENT_KEYS } from '../data/constants';
 import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight, LayoutGrid } from 'lucide-react';
 
-// Rows shown on the fixed (non-rotating) page -- enough to feel like a real
-// scoreboard wall without the rows getting too cramped to read from across
-// a gym floor.
-const FIXED_RANK_COUNT = 20;
+// Rows shown on the fixed (non-rotating) page -- laid out 2 columns x 15
+// rows (matching the auto-rotate page's card size) so 30 fit on one screen.
+const FIXED_RANK_COUNT = 30;
 const OVERALL_DEFAULTS = 'OVERALL_DEFAULTS';
 const ALL_SIX = 'ALL_SIX';
 const ALL_SIX_ROWS_PER_EVENT = 5;
 
-// Shared row card -- same look on the auto-rotating page and the fixed
-// page, per feedback that the fixed page should match it exactly.
+// Shared row card -- same look everywhere on the TV screen (auto-rotate,
+// fixed rankings, and the 6-event grid), just smaller via `compact` where
+// space is tight, so a single visual language covers all of it.
 const RankRow: React.FC<{
   item: StudentLeaderboardItem;
   index: number;
   rowAnimDuration: number;
   rowStaggerStep: number;
-}> = ({ item, index, rowAnimDuration, rowStaggerStep }) => (
-  <div
-    className={`p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
-      index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
-    }`}
-    style={{
-      animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
-      animationDelay: `${index * rowStaggerStep}s`,
-    }}
-  >
-    <div className="flex items-center gap-4 min-w-0">
-      {/* Rank Number */}
-      <div className="w-10 h-10 rounded-xl font-bold text-lg flex items-center justify-center shrink-0">
-        {index === 0 ? (
-          <span className="w-10 h-10 rounded-xl bg-[#1B5E20] text-white flex items-center justify-center">1</span>
-        ) : index === 1 ? (
-          <span className="w-10 h-10 rounded-xl bg-slate-200 text-slate-800 flex items-center justify-center">
-            2
-          </span>
-        ) : index === 2 ? (
-          <span className="w-10 h-10 rounded-xl bg-slate-300 text-slate-800 flex items-center justify-center">
-            3
-          </span>
-        ) : (
-          <span className="text-slate-400">{index + 1}</span>
-        )}
-      </div>
+  compact?: boolean;
+}> = ({ item, index, rowAnimDuration, rowStaggerStep, compact = false }) => {
+  const badgeSize = compact ? 'w-7 h-7 text-xs' : 'w-10 h-10 text-lg';
+  const avatarSize = compact ? 'w-8 h-8 text-xs' : 'w-12 h-12 text-base';
+  const nameSize = compact ? 'text-sm' : 'text-lg';
+  const gradeSize = compact ? 'text-[10px] px-2 py-0.5' : 'text-xs px-2.5 py-0.5';
+  const dateSize = compact ? 'text-[10px]' : 'text-xs';
+  const countSize = compact ? 'text-lg' : 'text-3xl';
+  const rankColor =
+    index === 0
+      ? 'bg-[#1B5E20] text-white'
+      : index === 1
+      ? 'bg-slate-200 text-slate-800'
+      : index === 2
+      ? 'bg-slate-300 text-slate-800'
+      : 'text-slate-400';
 
-      {/* Avatar */}
-      <div
-        className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold text-base flex items-center justify-center shrink-0`}
-      >
-        {item.student.name.substring(0, 1)}
-      </div>
-
-      {/* Info */}
-      <div className="min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-lg font-bold text-slate-900 truncate">{item.student.name}</span>
-          <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold shrink-0">
-            {item.student.grade}
-          </span>
+  return (
+    <div
+      className={`${compact ? 'p-2.5 gap-2' : 'p-4 gap-4'} rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
+        index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
+      }`}
+      style={{
+        animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
+        animationDelay: `${index * rowStaggerStep}s`,
+      }}
+    >
+      <div className={`flex items-center min-w-0 ${compact ? 'gap-2' : 'gap-4'}`}>
+        {/* Rank Number */}
+        <div className={`${badgeSize} rounded-xl font-bold flex items-center justify-center shrink-0`}>
+          {index <= 2 ? (
+            <span className={`${badgeSize} rounded-xl ${rankColor} flex items-center justify-center`}>
+              {index + 1}
+            </span>
+          ) : (
+            <span className={rankColor}>{index + 1}</span>
+          )}
         </div>
-        <div className="text-xs text-slate-400 font-medium mt-0.5 font-mono truncate">측정일: {item.recordDate}</div>
+
+        {/* Avatar */}
+        <div
+          className={`${avatarSize} rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold flex items-center justify-center shrink-0`}
+        >
+          {item.student.name.substring(0, 1)}
+        </div>
+
+        {/* Info */}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className={`${nameSize} font-bold text-slate-900 truncate`}>{item.student.name}</span>
+            <span className={`${gradeSize} rounded-full bg-slate-100 text-slate-600 font-bold shrink-0`}>
+              {item.student.grade}
+            </span>
+          </div>
+          <div className={`${dateSize} text-slate-400 font-medium mt-0.5 font-mono truncate`}>
+            측정일: {item.recordDate}
+          </div>
+        </div>
+      </div>
+
+      {/* Record Count */}
+      <div className="text-right shrink-0">
+        <span className={`${countSize} font-bold text-slate-900 tracking-tight`}>{item.personalBestCount}</span>
+        <span className={`${compact ? 'text-[10px]' : 'text-sm'} text-slate-500 font-bold ml-1`}>회</span>
       </div>
     </div>
-
-    {/* Record Count */}
-    <div className="text-right">
-      <span className="text-3xl font-bold text-slate-900 tracking-tight">{item.personalBestCount}</span>
-      <span className="text-sm text-slate-500 font-bold ml-1">회</span>
-    </div>
-  </div>
-);
+  );
+};
 
 interface BroadcastTVModeProps {
   gymName: string;
@@ -347,6 +361,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
                             index={idx}
                             rowAnimDuration={rowAnimDuration}
                             rowStaggerStep={rowStaggerStep / 2}
+                            compact
                           />
                         ))
                       )}
@@ -358,9 +373,11 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
           ) : fixedLeaderboardItems.length === 0 ? (
             <div className="text-center text-slate-400 font-bold py-16">아직 등록된 기록이 없습니다.</div>
           ) : (
-            // Same row card as the auto-rotating page, per feedback --
-            // scrolls if 20 rows don't fit the screen at this size.
-            <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-1">
+            // Same row card and size as the auto-rotating page, laid out
+            // 2 columns x 15 rows (~30 people): ranks 1-15 fill the left
+            // column top-to-bottom before 16-30 start the right column
+            // (grid-flow-col + explicit row count), not left-right zigzag.
+            <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-flow-col lg:grid-rows-[repeat(15,auto)] gap-3 max-h-[80vh] overflow-y-auto pr-1">
               {fixedLeaderboardItems.map((item, index) => (
                 <RankRow
                   key={item.student.id}
