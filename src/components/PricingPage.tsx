@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Check, Lock, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Gym } from '../data/api/gyms';
@@ -85,6 +85,14 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
   const { subscription, ensureSubscription, confirmPayment } = useSubscription();
   const [subscribingKey, setSubscribingKey] = useState<Tier['key'] | null>(null);
   const [banner, setBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  // react-router hands back a new `searchParams` object identity on every
+  // render, so this effect (deliberately dependent on it, to catch the
+  // params changing) can re-fire mid-flight while confirmPayment is still
+  // pending and clearParams() hasn't removed billing=success from the URL
+  // yet -- without this guard that sent a second confirm call for the same
+  // orderId, which Toss rejects as already-processed (seen as a spurious
+  // error even though the first call had already succeeded).
+  const processingOrderIdRef = useRef<string | null>(null);
 
   // Toss redirects the whole page back here after payment with
   // ?billing=success&paymentKey=&orderId=&customerKey=&plan=&cycle= (or
@@ -126,6 +134,8 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
         clearParams();
         return;
       }
+      if (processingOrderIdRef.current === orderId) return;
+      processingOrderIdRef.current = orderId;
 
       confirmPayment({
         paymentKey,
@@ -144,7 +154,10 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
         .catch((err) => {
           setBanner({ type: 'error', text: err instanceof Error ? err.message : '결제 처리 중 오류가 발생했어요.' });
         })
-        .finally(clearParams);
+        .finally(() => {
+          clearParams();
+          processingOrderIdRef.current = null;
+        });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
