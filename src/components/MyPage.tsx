@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Building2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Building2, AlertCircle, CheckCircle2, CreditCard, XCircle, Receipt } from 'lucide-react';
 import { Gym } from '../data/api/gyms';
+import { useAuth } from '../contexts/AuthContext';
+import { useSubscription, usePayments } from '../hooks/useGymData';
+import { useTossRedirect } from '../hooks/useTossRedirect';
+import { requestOneTimePayment } from '../lib/tossPayments';
+import { planAmount, BillingCycle } from '../data/pricing';
+import { ConfirmModal } from './ConfirmModal';
 
 interface MyPageProps {
   email: string | undefined;
@@ -8,6 +14,7 @@ interface MyPageProps {
   onSaveName: (name: string) => Promise<void>;
   onSaveSlug: (slug: string) => Promise<void>;
   onSavePassword: (newPassword: string) => Promise<void>;
+  onNavigateToPricing: () => void;
 }
 
 function sanitizeSlugInput(value: string): string {
@@ -19,7 +26,14 @@ function sanitizeSlugInput(value: string): string {
     .replace(/^-+/, '');
 }
 
-export const MyPage: React.FC<MyPageProps> = ({ email, gym, onSaveName, onSaveSlug, onSavePassword }) => {
+export const MyPage: React.FC<MyPageProps> = ({
+  email,
+  gym,
+  onSaveName,
+  onSaveSlug,
+  onSavePassword,
+  onNavigateToPricing,
+}) => {
   const [name, setName] = useState(gym.name);
   const [slug, setSlug] = useState(gym.slug);
   const [isSavingGym, setIsSavingGym] = useState(false);
@@ -31,6 +45,63 @@ export const MyPage: React.FC<MyPageProps> = ({ email, gym, onSaveName, onSaveSl
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  const { refreshGym } = useAuth();
+  const { subscription, ensureSubscription, cancelSubscription } = useSubscription();
+  const { payments } = usePayments();
+  const { banner: billingBanner, setBanner: setBillingBanner } = useTossRedirect();
+  const [repayCycle, setRepayCycle] = useState<BillingCycle>('monthly');
+  const [isPaying, setIsPaying] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+
+  const handleRepay = async () => {
+    if (!subscription) return;
+    setIsPaying(true);
+    setBillingBanner(null);
+    try {
+      const sub = await ensureSubscription();
+      const plan = subscription.desiredPlan;
+      const amount = planAmount(plan, repayCycle);
+      const orderId = `${gym.id}-${Date.now()}`;
+      const orderName = `줄넘기 랭킹보드 ${plan.toUpperCase()} 플랜 (${repayCycle === 'yearly' ? '연간' : '월간'})`;
+      const params = new URLSearchParams({
+        view: 'MYPAGE',
+        billing: 'success',
+        customerKey: sub.customerKey,
+        plan,
+        cycle: repayCycle,
+      });
+      const failParams = new URLSearchParams({ view: 'MYPAGE', billing: 'fail' });
+      await requestOneTimePayment(
+        sub.customerKey,
+        orderId,
+        orderName,
+        amount,
+        `/admin?${params.toString()}`,
+        `/admin?${failParams.toString()}`,
+        email,
+        gym.name
+      );
+    } catch (err) {
+      setBillingBanner({ type: 'error', text: err instanceof Error ? err.message : '결제를 시작하지 못했어요.' });
+      setIsPaying(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    setIsCanceling(true);
+    try {
+      await cancelSubscription();
+      await refreshGym();
+      setBillingBanner({ type: 'success', text: '구독이 해지됐어요. 지금부터 FREE 플랜으로 이용됩니다.' });
+    } catch (err) {
+      setBillingBanner({ type: 'error', text: err instanceof Error ? err.message : '구독 해지 중 오류가 발생했어요.' });
+    } finally {
+      setIsCanceling(false);
+      setShowCancelConfirm(false);
+    }
+  };
 
   const handleGymSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +168,151 @@ export const MyPage: React.FC<MyPageProps> = ({ email, gym, onSaveName, onSaveSl
           {email}
         </div>
       </div>
+
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm mb-6">
+        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">
+          <CreditCard className="w-4 h-4 text-slate-400" />
+          구독 관리
+        </h2>
+
+        {billingBanner && (
+          <div
+            className={`mb-4 p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+              billingBanner.type === 'success'
+                ? 'bg-[#E8F5E9] border border-[#A5D6A7] text-[#1B5E20]'
+                : 'bg-rose-50 border border-rose-200 text-rose-600'
+            }`}
+          >
+            {billingBanner.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 shrink-0" />
+            )}
+            <span>{billingBanner.text}</span>
+          </div>
+        )}
+
+        {!subscription || subscription.status === 'none' ? (
+          <div className="text-center py-4">
+            <p className="text-xs text-slate-500 font-medium mb-3">
+              아직 구독 중인 플랜이 없어요. (현재 {gym.plan.toUpperCase()} 플랜)
+            </p>
+            <button
+              type="button"
+              onClick={onNavigateToPricing}
+              className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all cursor-pointer"
+            >
+              요금제 보러 가기
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 flex items-center justify-between gap-2 text-xs flex-wrap">
+              <span className="flex items-center gap-2 font-bold text-slate-700">
+                {subscription.cardCompany ?? '카드'}{' '}
+                {subscription.cardLast4 ? `**** ${subscription.cardLast4}` : ''}
+              </span>
+              <span className="text-slate-500 font-medium">
+                {subscription.status === 'active' && subscription.nextBillingDate
+                  ? `다음 결제 예정일 ${subscription.nextBillingDate}`
+                  : subscription.status === 'past_due'
+                  ? '결제 기한이 지났어요'
+                  : subscription.status === 'canceled'
+                  ? '구독 해지됨'
+                  : ''}
+              </span>
+              {subscription.status === 'active' && (
+                <button
+                  type="button"
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>구독 해지</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setRepayCycle('monthly')}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    repayCycle === 'monthly' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                  }`}
+                >
+                  월간
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRepayCycle('yearly')}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    repayCycle === 'yearly' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+                  }`}
+                >
+                  연간
+                </button>
+              </div>
+              <button
+                type="button"
+                disabled={isPaying}
+                onClick={handleRepay}
+                className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-60 text-white font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>{isPaying ? '결제 화면으로 이동 중...' : '다시 결제하기 (주기·카드 변경)'}</span>
+              </button>
+            </div>
+
+            {payments.length > 0 && (
+              <div>
+                <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-2">
+                  <Receipt className="w-3.5 h-3.5 text-slate-400" />
+                  결제 내역
+                </h3>
+                <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
+                  {payments.map((p) => (
+                    <div key={p.id} className="px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs">
+                      <div>
+                        <div className="font-bold text-slate-800">
+                          {p.plan.toUpperCase()} 플랜 ({p.billingCycle === 'yearly' ? '연간' : '월간'})
+                        </div>
+                        <div className="text-slate-400 font-mono mt-0.5">
+                          {new Date(p.paidAt).toLocaleString('ko-KR')}
+                        </div>
+                        {p.status === 'failed' && p.failureReason && (
+                          <div className="text-rose-500 font-medium mt-0.5">{p.failureReason}</div>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-bold text-slate-900">{p.amount.toLocaleString()}원</div>
+                        <span
+                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                            p.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
+                          }`}
+                        >
+                          {p.status === 'paid' ? '결제완료' : '결제실패'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <ConfirmModal
+        isOpen={showCancelConfirm}
+        title="구독 해지"
+        message="구독을 해지하면 지금 바로 FREE 플랜으로 전환돼요. 자동 갱신이 아니라서 다시 해지를 무를 방법은 없고, 원하시면 언제든 다시 결제해서 재구독할 수 있어요. 해지할까요?"
+        confirmText={isCanceling ? '해지 중...' : '해지하기'}
+        variant="danger"
+        onConfirm={handleCancel}
+        onClose={() => setShowCancelConfirm(false)}
+      />
 
       <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm mb-6">
         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">

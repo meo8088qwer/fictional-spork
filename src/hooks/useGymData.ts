@@ -135,7 +135,10 @@ export function useSubscription() {
 
   const confirmPayment = useMutation({
     mutationFn: billingApi.confirmPayment,
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: ['payments', gymId] });
+    },
   });
 
   const cancelSubscription = useMutation({

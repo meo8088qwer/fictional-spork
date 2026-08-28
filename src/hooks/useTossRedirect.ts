@@ -1,0 +1,93 @@
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useSubscription } from './useGymData';
+
+export interface Banner {
+  type: 'success' | 'error';
+  text: string;
+}
+
+// Shared by PricingPage (first subscribe) and MyPage (re-pay/change cycle)
+// -- both redirect through Toss's one-time payment widget and land back
+// here with ?billing=success&paymentKey=&orderId=&customerKey=&plan=&cycle=
+// (or ?billing=fail&code=&message=) on whichever `view` they came from.
+export function useTossRedirect() {
+  const { refreshGym } = useAuth();
+  const { confirmPayment } = useSubscription();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [banner, setBanner] = useState<Banner | null>(null);
+  // react-router hands back a new `searchParams` object identity on every
+  // render, so this effect (deliberately dependent on it) can re-fire
+  // mid-flight while confirmPayment is still pending and clearParams()
+  // hasn't removed billing=success from the URL yet -- without this guard
+  // that sent a second confirm call for the same orderId, which Toss
+  // rejects as already-processed.
+  const processingOrderIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const billing = searchParams.get('billing');
+    if (!billing) return;
+
+    const clearParams = () => {
+      const next = new URLSearchParams(searchParams);
+      ['billing', 'paymentKey', 'orderId', 'amount', 'customerKey', 'plan', 'cycle', 'code', 'message'].forEach((k) =>
+        next.delete(k)
+      );
+      setSearchParams(next, { replace: true });
+    };
+
+    if (billing === 'fail') {
+      const code = searchParams.get('code');
+      const message = searchParams.get('message');
+      setBanner({
+        type: 'error',
+        text: message
+          ? `결제에 실패했어요: ${message}${code ? ` (${code})` : ''}`
+          : '결제가 취소됐어요. 다시 시도해 주세요.',
+      });
+      clearParams();
+      return;
+    }
+
+    if (billing === 'success') {
+      const paymentKey = searchParams.get('paymentKey');
+      const orderId = searchParams.get('orderId');
+      const customerKey = searchParams.get('customerKey');
+      const plan = searchParams.get('plan');
+      const cycle = searchParams.get('cycle');
+      if (!paymentKey || !orderId || !customerKey || !plan || !cycle) {
+        setBanner({ type: 'error', text: '결제 정보가 올바르지 않아요. 다시 시도해 주세요.' });
+        clearParams();
+        return;
+      }
+      if (processingOrderIdRef.current === orderId) return;
+      processingOrderIdRef.current = orderId;
+
+      confirmPayment({
+        paymentKey,
+        orderId,
+        customerKey,
+        plan: plan as 'basic' | 'pro',
+        billingCycle: cycle as 'monthly' | 'yearly',
+      })
+        .then(async () => {
+          await refreshGym();
+          setBanner({
+            type: 'success',
+            text: '결제가 완료됐어요! 플랜이 바로 적용됩니다. (자동 갱신은 아직 준비 중이라, 다음 결제일에 다시 결제해주셔야 해요.)',
+          });
+        })
+        .catch((err) => {
+          setBanner({ type: 'error', text: err instanceof Error ? err.message : '결제 처리 중 오류가 발생했어요.' });
+        })
+        .finally(() => {
+          clearParams();
+          processingOrderIdRef.current = null;
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  return { banner, setBanner };
+}

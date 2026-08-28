@@ -191,6 +191,7 @@ export default function AdminAppPage() {
             onSaveName={updateGymName}
             onSaveSlug={updateGymSlug}
             onSavePassword={updatePassword}
+            onNavigateToPricing={() => setActiveView('PRICING')}
           />
         )}
 

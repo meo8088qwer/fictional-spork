@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Check, Lock, CreditCard, AlertCircle, CheckCircle2, Receipt, XCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, Lock, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
-import { useSubscription, usePayments } from '../hooks/useGymData';
+import { useSubscription } from '../hooks/useGymData';
+import { useTossRedirect } from '../hooks/useTossRedirect';
 import { requestOneTimePayment } from '../lib/tossPayments';
-import { ConfirmModal } from './ConfirmModal';
+import { planAmount } from '../data/pricing';
 
 type BillingCycle = 'monthly' | 'yearly';
 
@@ -70,108 +70,19 @@ interface PricingPageProps {
   gym: Gym;
 }
 
-// Interim payment path (see requestOneTimePayment's doc comment) needs the
-// same amount client-side (to invoke the widget) and server-side (source
-// of truth for the confirm call) -- TIERS above already carries this per
-// tier, this just resolves cycle too.
-function tierAmount(tierKey: 'basic' | 'pro', cycle: BillingCycle): number {
-  const tier = TIERS.find((t) => t.key === tierKey)!;
-  return cycle === 'yearly' ? yearlyPrice(tier.monthlyPrice) : tier.monthlyPrice;
-}
-
 export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
-  const { refreshGym, user } = useAuth();
+  const { user } = useAuth();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { subscription, ensureSubscription, confirmPayment, cancelSubscription } = useSubscription();
-  const { payments } = usePayments();
+  const { ensureSubscription } = useSubscription();
+  const { banner, setBanner } = useTossRedirect();
   const [subscribingKey, setSubscribingKey] = useState<Tier['key'] | null>(null);
-  const [banner, setBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [isCanceling, setIsCanceling] = useState(false);
-  // react-router hands back a new `searchParams` object identity on every
-  // render, so this effect (deliberately dependent on it, to catch the
-  // params changing) can re-fire mid-flight while confirmPayment is still
-  // pending and clearParams() hasn't removed billing=success from the URL
-  // yet -- without this guard that sent a second confirm call for the same
-  // orderId, which Toss rejects as already-processed (seen as a spurious
-  // error even though the first call had already succeeded).
-  const processingOrderIdRef = useRef<string | null>(null);
-
-  // Toss redirects the whole page back here after payment with
-  // ?billing=success&paymentKey=&orderId=&customerKey=&plan=&cycle= (or
-  // ?billing=fail). Runs once per redirect, then strips those params so a
-  // refresh doesn't re-trigger the confirm call.
-  useEffect(() => {
-    const billing = searchParams.get('billing');
-    if (!billing) return;
-
-    const clearParams = () => {
-      const next = new URLSearchParams(searchParams);
-      ['billing', 'paymentKey', 'orderId', 'amount', 'customerKey', 'plan', 'cycle', 'code', 'message'].forEach((k) =>
-        next.delete(k)
-      );
-      setSearchParams(next, { replace: true });
-    };
-
-    if (billing === 'fail') {
-      const code = searchParams.get('code');
-      const message = searchParams.get('message');
-      setBanner({
-        type: 'error',
-        text: message
-          ? `결제에 실패했어요: ${message}${code ? ` (${code})` : ''}`
-          : '결제가 취소됐어요. 다시 시도해 주세요.',
-      });
-      clearParams();
-      return;
-    }
-
-    if (billing === 'success') {
-      const paymentKey = searchParams.get('paymentKey');
-      const orderId = searchParams.get('orderId');
-      const customerKey = searchParams.get('customerKey');
-      const plan = searchParams.get('plan');
-      const cycle = searchParams.get('cycle');
-      if (!paymentKey || !orderId || !customerKey || !plan || !cycle) {
-        setBanner({ type: 'error', text: '결제 정보가 올바르지 않아요. 다시 시도해 주세요.' });
-        clearParams();
-        return;
-      }
-      if (processingOrderIdRef.current === orderId) return;
-      processingOrderIdRef.current = orderId;
-
-      confirmPayment({
-        paymentKey,
-        orderId,
-        customerKey,
-        plan: plan as 'basic' | 'pro',
-        billingCycle: cycle as 'monthly' | 'yearly',
-      })
-        .then(async () => {
-          await refreshGym();
-          setBanner({
-            type: 'success',
-            text: '결제가 완료됐어요! 플랜이 바로 적용됩니다. (자동 갱신은 아직 준비 중이라, 다음 결제일에 다시 결제해주셔야 해요.)',
-          });
-        })
-        .catch((err) => {
-          setBanner({ type: 'error', text: err instanceof Error ? err.message : '결제 처리 중 오류가 발생했어요.' });
-        })
-        .finally(() => {
-          clearParams();
-          processingOrderIdRef.current = null;
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
   const handleSubscribe = async (tierKey: 'basic' | 'pro') => {
     setBanner(null);
     setSubscribingKey(tierKey);
     try {
       const sub = await ensureSubscription();
-      const amount = tierAmount(tierKey, billingCycle);
+      const amount = planAmount(tierKey, billingCycle);
       const orderId = `${gym.id}-${Date.now()}`;
       const orderName = `줄넘기 랭킹보드 ${tierKey.toUpperCase()} 플랜 (${billingCycle === 'yearly' ? '연간' : '월간'})`;
       const params = new URLSearchParams({
@@ -195,20 +106,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
     } catch (err) {
       setBanner({ type: 'error', text: err instanceof Error ? err.message : '결제를 시작하지 못했어요.' });
       setSubscribingKey(null);
-    }
-  };
-
-  const handleCancel = async () => {
-    setIsCanceling(true);
-    try {
-      await cancelSubscription();
-      await refreshGym();
-      setBanner({ type: 'success', text: '구독이 해지됐어요. 지금부터 FREE 플랜으로 이용됩니다.' });
-    } catch (err) {
-      setBanner({ type: 'error', text: err instanceof Error ? err.message : '구독 해지 중 오류가 발생했어요.' });
-    } finally {
-      setIsCanceling(false);
-      setShowCancelConfirm(false);
     }
   };
 
@@ -238,32 +135,11 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
         </div>
       )}
 
-      {subscription && subscription.status !== 'none' && (
-        <div className="mb-6 max-w-xl mx-auto rounded-xl border border-slate-200 bg-white p-3.5 flex items-center justify-between gap-3 text-xs flex-wrap">
-          <span className="flex items-center gap-2 font-bold text-slate-700">
-            <CreditCard className="w-4 h-4 text-slate-400" />
-            {subscription.cardCompany ?? '카드'} {subscription.cardLast4 ? `**** ${subscription.cardLast4}` : ''}
-          </span>
-          <span className="text-slate-500 font-medium">
-            {subscription.status === 'active' && subscription.nextBillingDate
-              ? `다음 결제 예정일 ${subscription.nextBillingDate} (자동 갱신 전까지는 직접 결제해주세요)`
-              : subscription.status === 'past_due'
-              ? '결제 기한이 지났어요 - 다시 결제해 주세요'
-              : subscription.status === 'canceled'
-              ? '구독 해지됨'
-              : ''}
-          </span>
-          {subscription.status === 'active' && (
-            <button
-              type="button"
-              onClick={() => setShowCancelConfirm(true)}
-              className="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
-            >
-              <XCircle className="w-3.5 h-3.5" />
-              <span>구독 해지</span>
-            </button>
-          )}
-        </div>
+      {gym.plan !== 'free' && (
+        <p className="mb-6 max-w-xl mx-auto text-center text-xs text-slate-500 font-medium">
+          카드 변경, 구독 해지, 결제 내역은{' '}
+          <span className="font-bold text-slate-700">마이페이지</span>에서 관리할 수 있어요.
+        </p>
       )}
 
       <div className="flex flex-col items-center gap-2 mb-8">
@@ -358,23 +234,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
                   <Lock className="w-3.5 h-3.5" />
                   <span>추후 오픈 예정</span>
                 </button>
-              ) : isCurrent && tier.key === 'basic' ? (
-                <div className="space-y-1.5">
-                  <div className="w-full py-2.5 rounded-xl bg-[#1B5E20]/10 text-[#1B5E20] font-bold text-xs text-center">
-                    현재 이용중
-                  </div>
-                  <button
-                    type="button"
-                    disabled={subscribingKey === tier.key}
-                    onClick={() => handleSubscribe('basic')}
-                    className="w-full py-2 rounded-xl bg-white border border-[#1B5E20]/30 hover:bg-[#1B5E20]/5 disabled:opacity-60 text-[#1B5E20] font-bold text-[11px] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <CreditCard className="w-3 h-3" />
-                    <span>
-                      {subscribingKey === tier.key ? '결제 화면으로 이동 중...' : '다시 결제하기 (주기·카드 변경)'}
-                    </span>
-                  </button>
-                </div>
               ) : isCurrent ? (
                 <button
                   type="button"
@@ -406,52 +265,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
           );
         })}
       </div>
-
-      {payments.length > 0 && (
-        <div className="mt-10 max-w-2xl mx-auto">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-3">
-            <Receipt className="w-4 h-4 text-slate-400" />
-            <span>결제 내역</span>
-          </h2>
-          <div className="bg-white border border-slate-200/90 rounded-2xl divide-y divide-slate-100 overflow-hidden">
-            {payments.map((p) => (
-              <div key={p.id} className="px-4 py-3 flex items-center justify-between gap-3 text-xs">
-                <div>
-                  <div className="font-bold text-slate-800">
-                    {p.plan.toUpperCase()} 플랜 ({p.billingCycle === 'yearly' ? '연간' : '월간'})
-                  </div>
-                  <div className="text-slate-400 font-mono mt-0.5">
-                    {new Date(p.paidAt).toLocaleString('ko-KR')}
-                  </div>
-                  {p.status === 'failed' && p.failureReason && (
-                    <div className="text-rose-500 font-medium mt-0.5">{p.failureReason}</div>
-                  )}
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="font-bold text-slate-900">{p.amount.toLocaleString()}원</div>
-                  <span
-                    className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                      p.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
-                    }`}
-                  >
-                    {p.status === 'paid' ? '결제완료' : '결제실패'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <ConfirmModal
-        isOpen={showCancelConfirm}
-        title="구독 해지"
-        message="구독을 해지하면 지금 바로 FREE 플랜으로 전환돼요. 자동 갱신이 아니라서 다시 해지를 무를 방법은 없고, 원하시면 언제든 다시 결제해서 재구독할 수 있어요. 해지할까요?"
-        confirmText={isCanceling ? '해지 중...' : '해지하기'}
-        variant="danger"
-        onConfirm={handleCancel}
-        onClose={() => setShowCancelConfirm(false)}
-      />
     </div>
   );
 };
