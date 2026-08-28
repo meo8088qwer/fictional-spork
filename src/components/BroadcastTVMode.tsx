@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta } from '../types';
 import { getLeaderboardData } from '../lib/scoring';
-import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight } from 'lucide-react';
+import { EVENT_KEYS } from '../data/constants';
+import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight, LayoutGrid } from 'lucide-react';
+
+// Rows shown on the fixed (non-rotating) page -- enough to feel like a real
+// scoreboard wall without the rows getting too cramped to read from across
+// a gym floor.
+const FIXED_RANK_COUNT = 15;
+const OVERALL_DEFAULTS = 'OVERALL_DEFAULTS';
 
 interface BroadcastTVModeProps {
   gymName: string;
@@ -24,6 +31,25 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [autoPlaySeconds, setAutoPlaySeconds] = useState<number>(5);
 
+  // Fixed (non-rotating) page -- shown instead of the auto-transitioning
+  // view above when the coach wants one ranking to just sit on screen.
+  const [displayMode, setDisplayMode] = useState<'ROTATE' | 'FIXED'>('ROTATE');
+  const [fixedView, setFixedView] = useState<string>(OVERALL_DEFAULTS);
+  const isOverallDefaultsView = fixedView === OVERALL_DEFAULTS;
+  // "모든 종목 순위" intentionally sums only the 6 default events (not
+  // custom ones) so it stays a fair, universal comparison across gyms.
+  const defaultEventsMap: Record<string, EventMeta> = Object.fromEntries(
+    EVENT_KEYS.filter((k) => events[k]).map((k) => [k, events[k]])
+  );
+  const fixedLeaderboardItems = getLeaderboardData(
+    students,
+    records,
+    isOverallDefaultsView ? 'OVERALL' : (fixedView as EventKey),
+    'ALL',
+    '',
+    isOverallDefaultsView ? defaultEventsMap : events
+  ).slice(0, FIXED_RANK_COUNT);
+
   // Row entrance stagger scales with the auto-transition interval, so a
   // fast 3s cycle feels snappy and a slow 8s cycle feels more deliberate.
   const rowStaggerStep = autoPlaySeconds * 0.06;
@@ -44,12 +70,12 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
     .filter((entry): entry is { key: string; meta: EventMeta; student: Student; count: number } => entry !== null);
 
   useEffect(() => {
-    if (!isAutoPlay || eventKeys.length === 0) return;
+    if (displayMode !== 'ROTATE' || !isAutoPlay || eventKeys.length === 0) return;
     const timer = setInterval(() => {
       setCurrentEventIndex((prev) => (prev + 1) % eventKeys.length);
     }, autoPlaySeconds * 1000);
     return () => clearInterval(timer);
-  }, [isAutoPlay, autoPlaySeconds, eventKeys.length]);
+  }, [displayMode, isAutoPlay, autoPlaySeconds, eventKeys.length]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -87,30 +113,74 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => setIsAutoPlay(!isAutoPlay)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs ${
-              isAutoPlay
-                ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
-                : 'bg-white border-slate-200 text-slate-600'
-            }`}
-          >
-            {isAutoPlay ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            <span>{isAutoPlay ? `자동 전환 중 (${autoPlaySeconds}초)` : '자동 전환 정지'}</span>
-          </button>
+          {/* Rotate vs Fixed Page Switch */}
+          <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 text-xs font-bold">
+            <button
+              onClick={() => setDisplayMode('ROTATE')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                displayMode === 'ROTATE' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+              }`}
+            >
+              <ArrowRight className="w-3.5 h-3.5" />
+              <span>자동 전환</span>
+            </button>
+            <button
+              onClick={() => setDisplayMode('FIXED')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                displayMode === 'FIXED' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>고정 화면</span>
+            </button>
+          </div>
 
-          <select
-            value={autoPlaySeconds}
-            onChange={(e) => setAutoPlaySeconds(Number(e.target.value))}
-            title="전환 간격"
-            className="px-2 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer"
-          >
-            {[3, 4, 5, 6, 7, 8].map((sec) => (
-              <option key={sec} value={sec}>
-                {sec}초
-              </option>
-            ))}
-          </select>
+          {displayMode === 'ROTATE' && (
+            <>
+              <button
+                onClick={() => setIsAutoPlay(!isAutoPlay)}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs ${
+                  isAutoPlay
+                    ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
+                    : 'bg-white border-slate-200 text-slate-600'
+                }`}
+              >
+                {isAutoPlay ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                <span>{isAutoPlay ? `자동 전환 중 (${autoPlaySeconds}초)` : '자동 전환 정지'}</span>
+              </button>
+
+              <select
+                value={autoPlaySeconds}
+                onChange={(e) => setAutoPlaySeconds(Number(e.target.value))}
+                title="전환 간격"
+                className="px-2 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer"
+              >
+                {[3, 4, 5, 6, 7, 8].map((sec) => (
+                  <option key={sec} value={sec}>
+                    {sec}초
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+          {displayMode === 'FIXED' && (
+            <select
+              value={fixedView}
+              onChange={(e) => setFixedView(e.target.value)}
+              title="고정 화면에 표시할 순위"
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer max-w-[220px]"
+            >
+              <option value={OVERALL_DEFAULTS}>종합 순위 (기본 6종목 합산)</option>
+              <optgroup label="종목별 순위">
+                {eventKeys.map((key) => (
+                  <option key={key} value={key}>
+                    {events[key]?.title ?? key}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          )}
 
           <button
             onClick={toggleFullscreen}
@@ -129,17 +199,82 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       </div>
 
       {/* Auto-transition progress bar */}
-      <div className="relative z-10 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
-        {isAutoPlay && (
-          <div
-            key={`${currentEventIndex}-${autoPlaySeconds}`}
-            className="h-full bg-[#1B5E20] rounded-full"
-            style={{ animation: `tv-progress ${autoPlaySeconds}s linear` }}
-          />
-        )}
-      </div>
+      {displayMode === 'ROTATE' && (
+        <div className="relative z-10 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+          {isAutoPlay && (
+            <div
+              key={`${currentEventIndex}-${autoPlaySeconds}`}
+              className="h-full bg-[#1B5E20] rounded-full"
+              style={{ animation: `tv-progress ${autoPlaySeconds}s linear` }}
+            />
+          )}
+        </div>
+      )}
+
+      {displayMode === 'FIXED' && (
+        <div className="relative z-10 my-auto animate-tv-transition">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              {isOverallDefaultsView ? '종합 순위' : events[fixedView]?.title ?? fixedView}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-1.5">
+              {isOverallDefaultsView
+                ? '기본 6종목 환산 점수 합산 순위'
+                : events[fixedView]
+                ? `측정 시간 ${events[fixedView].timeSeconds}초 · ${events[fixedView].description}`
+                : ''}
+            </p>
+          </div>
+
+          {fixedLeaderboardItems.length === 0 ? (
+            <div className="text-center text-slate-400 font-bold py-16">아직 등록된 기록이 없습니다.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {fixedLeaderboardItems.map((item, index) => (
+                <div
+                  key={item.student.id}
+                  className={`flex items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-2xl border shadow-xs ${
+                    index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
+                  }`}
+                  style={{
+                    animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
+                    animationDelay: `${index * (rowStaggerStep / 2)}s`,
+                  }}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span
+                      className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 ${
+                        index === 0
+                          ? 'bg-[#1B5E20] text-white'
+                          : index === 1
+                          ? 'bg-slate-200 text-slate-800'
+                          : index === 2
+                          ? 'bg-slate-300 text-slate-800'
+                          : 'text-slate-400'
+                      }`}
+                    >
+                      {index + 1}
+                    </span>
+                    <div
+                      className={`w-7 h-7 rounded-lg bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold text-[11px] flex items-center justify-center shrink-0`}
+                    >
+                      {item.student.name.substring(0, 1)}
+                    </div>
+                    <span className="text-sm font-bold text-slate-900 truncate">{item.student.name}</span>
+                  </div>
+                  <span className="text-base font-bold text-slate-900 shrink-0">
+                    {item.personalBestCount}
+                    <span className="text-[10px] text-slate-500 font-bold ml-0.5">회</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main Discipline Banner & Rankings */}
+      {displayMode === 'ROTATE' && (
       <div
         key={currentEventKey}
         className="relative z-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-tv-transition"
@@ -240,6 +375,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
           ))}
         </div>
       </div>
+      )}
 
       {/* Bottom Ticker Tape */}
       <div className="relative z-10 bg-white border border-slate-200/90 py-2.5 px-4 overflow-hidden rounded-2xl shadow-xs">
