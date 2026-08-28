@@ -71,16 +71,20 @@ export async function confirmPayment(params: ConfirmPaymentParams): Promise<void
   if (error) {
     // FunctionsHttpError wraps the raw Response in `.context` -- surface
     // our own { error: string } body instead of supabase-js's generic
-    // "non-2xx status code" message when we can.
+    // "non-2xx status code" message when we can. The throw must sit
+    // outside the parsing try/catch -- throwing inside it was being
+    // caught by that same catch and silently discarded, so the specific
+    // message never actually reached the caller.
     const context = (error as { context?: Response }).context;
+    let body: { error?: string } | null = null;
     if (context) {
       try {
-        const body = await context.json();
-        if (body?.error) throw new Error(body.error);
+        body = await context.json();
       } catch {
-        // fall through to the generic error below
+        // not JSON -- fall through to the generic error below
       }
     }
+    if (body?.error) throw new Error(body.error);
     throw toError(error);
   }
 }
