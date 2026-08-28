@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Student, JumpRecord, EventKey, EventMeta } from '../types';
+import { Student, JumpRecord, EventKey, EventMeta, StudentLeaderboardItem } from '../types';
 import { getLeaderboardData } from '../lib/scoring';
 import { EVENT_KEYS } from '../data/constants';
 import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight, LayoutGrid } from 'lucide-react';
@@ -11,6 +11,68 @@ const FIXED_RANK_COUNT = 20;
 const OVERALL_DEFAULTS = 'OVERALL_DEFAULTS';
 const ALL_SIX = 'ALL_SIX';
 const ALL_SIX_ROWS_PER_EVENT = 5;
+
+// Shared row card -- same look on the auto-rotating page and the fixed
+// page, per feedback that the fixed page should match it exactly.
+const RankRow: React.FC<{
+  item: StudentLeaderboardItem;
+  index: number;
+  rowAnimDuration: number;
+  rowStaggerStep: number;
+}> = ({ item, index, rowAnimDuration, rowStaggerStep }) => (
+  <div
+    className={`p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
+      index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
+    }`}
+    style={{
+      animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
+      animationDelay: `${index * rowStaggerStep}s`,
+    }}
+  >
+    <div className="flex items-center gap-4">
+      {/* Rank Number */}
+      <div className="w-10 h-10 rounded-xl font-bold text-lg flex items-center justify-center shrink-0">
+        {index === 0 ? (
+          <span className="w-10 h-10 rounded-xl bg-[#1B5E20] text-white flex items-center justify-center">1</span>
+        ) : index === 1 ? (
+          <span className="w-10 h-10 rounded-xl bg-slate-200 text-slate-800 flex items-center justify-center">
+            2
+          </span>
+        ) : index === 2 ? (
+          <span className="w-10 h-10 rounded-xl bg-slate-300 text-slate-800 flex items-center justify-center">
+            3
+          </span>
+        ) : (
+          <span className="text-slate-400">{index + 1}</span>
+        )}
+      </div>
+
+      {/* Avatar */}
+      <div
+        className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold text-base flex items-center justify-center shrink-0`}
+      >
+        {item.student.name.substring(0, 1)}
+      </div>
+
+      {/* Info */}
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold text-slate-900">{item.student.name}</span>
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">
+            {item.student.grade}
+          </span>
+        </div>
+        <div className="text-xs text-slate-400 font-medium mt-0.5 font-mono">측정일: {item.recordDate}</div>
+      </div>
+    </div>
+
+    {/* Record Count */}
+    <div className="text-right">
+      <span className="text-3xl font-bold text-slate-900 tracking-tight">{item.personalBestCount}</span>
+      <span className="text-sm text-slate-500 font-bold ml-1">회</span>
+    </div>
+  </div>
+);
 
 interface BroadcastTVModeProps {
   gymName: string;
@@ -311,39 +373,17 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
           ) : fixedLeaderboardItems.length === 0 ? (
             <div className="text-center text-slate-400 font-bold py-16">아직 등록된 기록이 없습니다.</div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            // Same row card as the auto-rotating page, per feedback --
+            // scrolls if 20 rows don't fit the screen at this size.
+            <div className="space-y-3 max-h-[75vh] overflow-y-auto pr-1">
               {fixedLeaderboardItems.map((item, index) => (
-                <div
+                <RankRow
                   key={item.student.id}
-                  className={`flex items-center justify-between gap-2 px-3 py-2 rounded-xl border shadow-xs ${
-                    index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
-                  }`}
-                  style={{
-                    animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
-                    animationDelay: `${index * (rowStaggerStep / 2)}s`,
-                  }}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className={`w-6 h-6 rounded-lg font-bold text-[11px] flex items-center justify-center shrink-0 ${
-                        index === 0
-                          ? 'bg-[#1B5E20] text-white'
-                          : index === 1
-                          ? 'bg-slate-200 text-slate-800'
-                          : index === 2
-                          ? 'bg-slate-300 text-slate-800'
-                          : 'text-slate-400'
-                      }`}
-                    >
-                      {index + 1}
-                    </span>
-                    <span className="text-xs font-bold text-slate-900 truncate">{item.student.name}</span>
-                  </div>
-                  <span className="text-2xl font-bold text-slate-900 shrink-0 tracking-tight">
-                    {item.personalBestCount}
-                    <span className="text-[10px] text-slate-500 font-bold ml-0.5">회</span>
-                  </span>
-                </div>
+                  item={item}
+                  index={index}
+                  rowAnimDuration={rowAnimDuration}
+                  rowStaggerStep={rowStaggerStep / 2}
+                />
               ))}
             </div>
           )}
@@ -390,67 +430,13 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
             to show all 10 at once. */}
         <div className="lg:col-span-8 space-y-3 max-h-[80vh] overflow-y-auto pr-1">
           {leaderboardItems.slice(0, 10).map((item, index) => (
-            <div
+            <RankRow
               key={item.student.id}
-              className={`p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
-                index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
-              }`}
-              style={{
-                animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
-                animationDelay: `${index * rowStaggerStep}s`,
-              }}
-            >
-              <div className="flex items-center gap-4">
-                {/* Rank Number */}
-                <div className="w-10 h-10 rounded-xl font-bold text-lg flex items-center justify-center shrink-0">
-                  {index === 0 ? (
-                    <span className="w-10 h-10 rounded-xl bg-[#1B5E20] text-white flex items-center justify-center">
-                      1
-                    </span>
-                  ) : index === 1 ? (
-                    <span className="w-10 h-10 rounded-xl bg-slate-200 text-slate-800 flex items-center justify-center">
-                      2
-                    </span>
-                  ) : index === 2 ? (
-                    <span className="w-10 h-10 rounded-xl bg-slate-300 text-slate-800 flex items-center justify-center">
-                      3
-                    </span>
-                  ) : (
-                    <span className="text-slate-400">{index + 1}</span>
-                  )}
-                </div>
-
-                {/* Avatar */}
-                <div
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-tr ${item.student.avatarColor} text-white font-bold text-base flex items-center justify-center shrink-0`}
-                >
-                  {item.student.name.substring(0, 1)}
-                </div>
-
-                {/* Info */}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-slate-900">
-                      {item.student.name}
-                    </span>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">
-                      {item.student.grade}
-                    </span>
-                  </div>
-                  <div className="text-xs text-slate-400 font-medium mt-0.5 font-mono">
-                    측정일: {item.recordDate}
-                  </div>
-                </div>
-              </div>
-
-              {/* Record Count */}
-              <div className="text-right">
-                <span className="text-3xl font-bold text-slate-900 tracking-tight">
-                  {item.personalBestCount}
-                </span>
-                <span className="text-sm text-slate-500 font-bold ml-1">회</span>
-              </div>
-            </div>
+              item={item}
+              index={index}
+              rowAnimDuration={rowAnimDuration}
+              rowStaggerStep={rowStaggerStep}
+            />
           ))}
         </div>
       </div>
