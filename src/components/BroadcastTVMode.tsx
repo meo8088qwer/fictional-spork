@@ -385,9 +385,11 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
           </div>
         </div>
 
-        {/* Right: Top 5 Live Rankings (8 cols) */}
-        <div className="lg:col-span-8 space-y-3">
-          {leaderboardItems.slice(0, 5).map((item, index) => (
+        {/* Right: Top 10 Live Rankings (8 cols) -- same card size as before,
+            just more of them, so it scrolls if the viewport is too short
+            to show all 10 at once. */}
+        <div className="lg:col-span-8 space-y-3 max-h-[80vh] overflow-y-auto pr-1">
+          {leaderboardItems.slice(0, 10).map((item, index) => (
             <div
               key={item.student.id}
               className={`p-4 rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
