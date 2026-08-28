@@ -4,12 +4,13 @@ import { getLeaderboardData } from '../lib/scoring';
 import { EVENT_KEYS } from '../data/constants';
 import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight, LayoutGrid } from 'lucide-react';
 
-// Rows shown on the fixed (non-rotating) page -- laid out 2 columns x 15
-// rows (matching the auto-rotate page's card size) so 30 fit on one screen.
-const FIXED_RANK_COUNT = 30;
+// Rows shown on the fixed (non-rotating) page -- laid out 2 columns x 10
+// rows so all 20 fit on one screen with no scrolling (a TV has no way to
+// scroll it into view).
+const FIXED_RANK_COUNT = 20;
 const OVERALL_DEFAULTS = 'OVERALL_DEFAULTS';
 const ALL_SIX = 'ALL_SIX';
-const ALL_SIX_ROWS_PER_EVENT = 5;
+const ALL_SIX_ROWS_PER_EVENT = 7;
 
 // Shared row card -- same look everywhere on the TV screen (auto-rotate,
 // fixed rankings, and the 6-event grid), just smaller via `compact` where
@@ -350,7 +351,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
                       <span className="text-sm font-bold text-slate-900">{meta?.shortTitle ?? meta?.title}</span>
                       <span className="text-[10px] font-mono font-bold text-slate-400">{meta?.timeSeconds}s</span>
                     </div>
-                    <div className="space-y-2 max-h-[46vh] overflow-y-auto pr-1">
+                    <div className="space-y-2">
                       {items.length === 0 ? (
                         <div className="text-xs text-slate-300 text-center py-6">기록 없음</div>
                       ) : (
@@ -374,10 +375,12 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
             <div className="text-center text-slate-400 font-bold py-16">아직 등록된 기록이 없습니다.</div>
           ) : (
             // Same row card and size as the auto-rotating page, laid out
-            // 2 columns x 15 rows (~30 people): ranks 1-15 fill the left
-            // column top-to-bottom before 16-30 start the right column
-            // (grid-flow-col + explicit row count), not left-right zigzag.
-            <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-flow-col lg:grid-rows-[repeat(15,auto)] gap-3 max-h-[80vh] overflow-y-auto pr-1">
+            // 2 columns x 10 rows (FIXED_RANK_COUNT / 2 -- keep the 10 in
+            // grid-rows in sync if that constant changes): ranks 1-10 fill
+            // the left column top-to-bottom before 11-20 start the right
+            // column (grid-flow-col + explicit row count), not zigzag. No
+            // scroll -- a TV has no way to scroll it into view.
+            <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-flow-col lg:grid-rows-[repeat(10,auto)] gap-3">
               {fixedLeaderboardItems.map((item, index) => (
                 <RankRow
                   key={item.student.id}
