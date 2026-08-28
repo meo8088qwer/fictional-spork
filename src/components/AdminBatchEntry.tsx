@@ -473,8 +473,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const handleConfirmBatchRosterImport = async () => {
     if (parsedRosterRows.length === 0) return;
 
-    const existingNames = new Set(students.map((s) => s.name.trim()));
+    const existingByName = new Map(students.map((s) => [s.name.trim(), s]));
     let addedCount = 0;
+    let updatedClassCount = 0;
     let skippedCount = 0;
 
     const avatarColors = [
@@ -490,8 +491,20 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     let stopMessage = '';
 
     for (const row of parsedRosterRows) {
-      if (existingNames.has(row.name.trim())) {
-        skippedCount++;
+      const existing = existingByName.get(row.name.trim());
+      if (existing) {
+        // Existing student: only touch their 반 if the sheet gives one and
+        // it's actually different -- name/grade/gender aren't re-imported.
+        if (row.classLabel && row.classLabel !== existing.classLabel) {
+          try {
+            await onUpdateStudentClass({ studentId: existing.id, classLabel: row.classLabel });
+            updatedClassCount++;
+          } catch {
+            // best-effort; keep going with the rest of the sheet
+          }
+        } else {
+          skippedCount++;
+        }
         continue;
       }
 
@@ -499,15 +512,16 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       const randomColor = avatarColors[Math.floor(Math.random() * avatarColors.length)];
 
       try {
-        await onAddStudent({
+        const created = await onAddStudent({
           studentNo: nextNo,
           name: row.name.trim(),
           grade: row.grade || '초등 3학년',
           gender: row.gender || 'M',
           avatarColor: randomColor,
           joinDate: todayLocalDate(),
+          classLabel: row.classLabel,
         });
-        existingNames.add(row.name.trim());
+        existingByName.set(created.name.trim(), created);
         addedCount++;
       } catch (e) {
         stopMessage =
@@ -519,9 +533,12 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
     if (stopMessage) setActionError(stopMessage);
 
-    if (addedCount > 0) {
-      let msg = `총 ${addedCount}명의 수련생이 명단에 새로 등록되었습니다!`;
-      if (skippedCount > 0) msg += ` (중복된 수련생 ${skippedCount}명 자동 제외)`;
+    if (addedCount > 0 || updatedClassCount > 0) {
+      let msg = '';
+      if (addedCount > 0) msg += `${addedCount}명 신규 등록`;
+      if (updatedClassCount > 0) msg += `${msg ? ', ' : ''}${updatedClassCount}명 반 정보 갱신`;
+      msg += '되었습니다!';
+      if (skippedCount > 0) msg += ` (변경사항 없는 기존 수련생 ${skippedCount}명 제외)`;
       setRosterSuccessMsg(msg);
     }
     setParsedRosterRows([]);
@@ -1293,7 +1310,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   </h3>
                 </div>
                 <p className="text-xs text-slate-600 font-medium mt-1">
-                  처음 이용 시 80명 이상의 수련생 명단을 일일이 입력할 필요 없이, 엑셀 파일 하나로 빠르게 일괄 등록할 수 있습니다.
+                  처음 이용 시 80명 이상의 수련생 명단을 일일이 입력할 필요 없이, 엑셀 파일 하나로 빠르게 일괄 등록할 수 있습니다. 이미
+                  등록된 수련생은 '반' 열만 채워서 다시 올리면 반 정보만 갱신됩니다.
                 </p>
               </div>
 
@@ -1327,7 +1345,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   수련생 명단 엑셀 파일 선택 또는 드래그앤드롭 (.xlsx / .csv)
                 </span>
                 <span className="text-[11px] text-slate-400 font-medium">
-                  '수련생이름', '학년', '성별' 열이 포함된 엑셀 파일
+                  '수련생이름', '학년', '성별', '반'(선택) 열이 포함된 엑셀 파일
                 </span>
               </label>
             </div>
@@ -1364,6 +1382,14 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                       {parsedRosterRows.filter((r) => !students.some((s) => s.name.trim() === r.name.trim())).length}명 신규 등록 예정
                     </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                      {
+                        parsedRosterRows.filter((r) => {
+                          const existing = students.find((s) => s.name.trim() === r.name.trim());
+                          return !!existing && !!r.classLabel && r.classLabel !== existing.classLabel;
+                        }).length
+                      }명 반 정보 갱신 예정
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1393,26 +1419,33 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                         <th className="p-2.5">수련생 이름</th>
                         <th className="p-2.5">학년 / 부서</th>
                         <th className="p-2.5">성별</th>
+                        <th className="p-2.5">반</th>
                         <th className="p-2.5 text-right">상태</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 font-medium">
                       {parsedRosterRows.map((row, idx) => {
-                        const isExisting = students.some((s) => s.name.trim() === row.name.trim());
+                        const existing = students.find((s) => s.name.trim() === row.name.trim());
+                        const willUpdateClass = !!existing && !!row.classLabel && row.classLabel !== existing.classLabel;
                         return (
-                          <tr key={idx} className={isExisting ? 'bg-slate-50/80' : 'hover:bg-slate-50'}>
+                          <tr key={idx} className={existing && !willUpdateClass ? 'bg-slate-50/80' : 'hover:bg-slate-50'}>
                             <td className="p-2.5 text-center text-slate-400 font-mono text-[11px]">{idx + 1}</td>
                             <td className="p-2.5 font-bold text-slate-900">{row.name}</td>
                             <td className="p-2.5 text-slate-600">{row.grade}</td>
                             <td className="p-2.5 text-slate-600">{row.gender === 'M' ? '남학생' : '여학생'}</td>
+                            <td className="p-2.5 text-slate-600">{row.classLabel || '-'}</td>
                             <td className="p-2.5 text-right">
-                              {isExisting ? (
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                                  기존 수련생 (중복제외)
-                                </span>
-                              ) : (
+                              {!existing ? (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                                   신규 추가
+                                </span>
+                              ) : willUpdateClass ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                                  반 정보 갱신
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                                  기존 수련생 (변경없음)
                                 </span>
                               )}
                             </td>

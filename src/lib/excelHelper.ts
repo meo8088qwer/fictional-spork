@@ -206,23 +206,23 @@ export function downloadStudentRosterTemplate(gymName: string, students: Student
   const studentRosterData =
     students.length > 0
       ? [
-          ['수련생이름', '학년', '성별'],
-          ...students.map((s) => [s.name, s.grade, GENDER_LABEL[s.gender]]),
+          ['수련생이름', '학년', '성별', '반(선택, 예: 1부)'],
+          ...students.map((s) => [s.name, s.grade, GENDER_LABEL[s.gender], s.classLabel ?? '']),
         ]
       : [
-          ['수련생이름', '학년', '성별'],
-          ['강도현', '초등 3학년', '남'],
-          ['김지후', '초등 2학년', '여'],
-          ['박준우', '초등 4학년', '남'],
-          ['이서아', '유치부 6세', '여'],
-          ['최민준', '초등 6학년', '남'],
-          ['한소율', '초등 1학년', '여'],
-          ['김도윤', '초등 5학년', '남'],
-          ['박하은', '중학생', '여'],
+          ['수련생이름', '학년', '성별', '반(선택, 예: 1부)'],
+          ['강도현', '초등 3학년', '남', '1부'],
+          ['김지후', '초등 2학년', '여', '1부'],
+          ['박준우', '초등 4학년', '남', '2부'],
+          ['이서아', '유치부 6세', '여', '2부'],
+          ['최민준', '초등 6학년', '남', ''],
+          ['한소율', '초등 1학년', '여', ''],
+          ['김도윤', '초등 5학년', '남', ''],
+          ['박하은', '중학생', '여', ''],
         ];
 
   const ws = XLSX.utils.aoa_to_sheet(studentRosterData);
-  ws['!cols'] = [{ wch: 16 }, { wch: 16 }, { wch: 12 }];
+  ws['!cols'] = [{ wch: 16 }, { wch: 16 }, { wch: 12 }, { wch: 16 }];
 
   XLSX.utils.book_append_sheet(wb, ws, '수련생_명단');
   XLSX.writeFile(wb, `${gymName}_수련생명단_양식_${todayStr}.xlsx`);
@@ -232,6 +232,7 @@ export interface ParsedStudentRow {
   name: string;
   grade: GradeGroup;
   gender: 'M' | 'F';
+  classLabel?: string;
 }
 
 // Parse Student Roster Excel File
@@ -284,10 +285,18 @@ export async function parseStudentRosterExcelFile(file: File): Promise<ParsedStu
             gender = 'F';
           }
 
+          // Matches our own template header ("반(선택, 예: 1부)") as well as
+          // a plain "반" / "수업시간" / "분반" column someone typed by hand.
+          const classKey = Object.keys(normalizedRow).find(
+            (k) => k.startsWith('반') || k === '수업시간' || k === '분반' || k === '클래스'
+          );
+          const classLabel = classKey ? String(normalizedRow[classKey] ?? '').trim() : '';
+
           parsedStudents.push({
             name: String(studentName).trim(),
             grade: resolvedGrade,
             gender,
+            classLabel: classLabel || undefined,
           });
         });
 
