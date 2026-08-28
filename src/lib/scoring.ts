@@ -53,16 +53,18 @@ export function getLeaderboardData(
   activeTab: DisplayTab,
   gradeFilter: GradeCategoryFilter,
   searchQuery: string,
-  eventsMap: Record<string, EventMeta>
+  eventsMap: Record<string, EventMeta>,
+  classFilter: string = 'ALL'
 ): StudentLeaderboardItem[] {
   const searchLower = searchQuery.trim().toLowerCase();
   const eligibleStudents = students.filter((student) => {
     const matchesGrade = matchesGradeCategory(student.grade, gradeFilter);
+    const matchesClass = classFilter === 'ALL' || student.classLabel === classFilter;
     const matchesSearch =
       !searchLower ||
       student.name.toLowerCase().includes(searchLower) ||
       student.studentNo.toLowerCase().includes(searchLower);
-    return matchesGrade && matchesSearch;
+    return matchesGrade && matchesClass && matchesSearch;
   });
 
   const items: StudentLeaderboardItem[] = eligibleStudents.map((student) => {

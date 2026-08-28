@@ -31,11 +31,18 @@ export function useStudents() {
     },
   });
 
+  const updateStudentClass = useMutation({
+    mutationFn: ({ studentId, classLabel }: { studentId: string; classLabel: string | null }) =>
+      studentsApi.updateStudentClass(studentId, classLabel),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students', gymId] }),
+  });
+
   return {
     students: query.data ?? [],
     isLoading: query.isLoading,
     addStudent: addStudent.mutateAsync,
     deleteStudent: deleteStudent.mutateAsync,
+    updateStudentClass: updateStudentClass.mutateAsync,
   };
 }
 

@@ -12,7 +12,7 @@ function mapStudentRow(row: any): Student {
     avatarColor: row.avatar_color,
     joinDate: row.join_date,
     notes: row.notes ?? undefined,
-    branchName: row.branch_name ?? undefined,
+    classLabel: row.branch_name ?? undefined,
   };
 }
 
@@ -38,7 +38,7 @@ export async function createStudent(gymId: string, student: Omit<Student, 'id'>)
       avatar_color: student.avatarColor,
       join_date: student.joinDate,
       notes: student.notes ?? null,
-      branch_name: student.branchName ?? null,
+      branch_name: student.classLabel ?? null,
     })
     .select('*')
     .single();
@@ -49,4 +49,15 @@ export async function createStudent(gymId: string, student: Omit<Student, 'id'>)
 export async function deleteStudent(studentId: string): Promise<void> {
   const { error } = await supabase.from('students').delete().eq('id', studentId);
   if (error) throw error;
+}
+
+export async function updateStudentClass(studentId: string, classLabel: string | null): Promise<Student> {
+  const { data, error } = await supabase
+    .from('students')
+    .update({ branch_name: classLabel })
+    .eq('id', studentId)
+    .select('*')
+    .single();
+  throwOnDbError(error);
+  return mapStudentRow(data);
 }

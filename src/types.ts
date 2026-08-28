@@ -47,7 +47,9 @@ export interface Student {
   avatarColor: string;
   joinDate: string;
   notes?: string;
-  branchName?: string;
+  // Optional 반/수업시간 grouping (e.g. "1부", "2부") the gym assigns per
+  // student -- reuses the pre-existing branch_name DB column.
+  classLabel?: string;
 }
 
 export interface JumpRecord {

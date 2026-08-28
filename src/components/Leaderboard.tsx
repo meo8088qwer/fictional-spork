@@ -11,6 +11,9 @@ interface LeaderboardProps {
   activeTab: DisplayTab;
   gradeFilter: GradeCategoryFilter;
   setGradeFilter: (filter: GradeCategoryFilter) => void;
+  classFilter?: string;
+  setClassFilter?: (filter: string) => void;
+  classOptions?: string[];
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   onSelectStudent: (studentId: string) => void;
@@ -23,6 +26,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   activeTab,
   gradeFilter,
   setGradeFilter,
+  classFilter = 'ALL',
+  setClassFilter,
+  classOptions = [],
   searchQuery,
   setSearchQuery,
   onSelectStudent,
@@ -97,6 +103,35 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   }`}
                 >
                   {grade}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* 반/수업시간 filter -- only shown once the gym actually assigns one */}
+          {setClassFilter && classOptions.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] font-bold w-full min-w-0">
+              <button
+                onClick={() => setClassFilter('ALL')}
+                className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
+                  classFilter === 'ALL'
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                전체 반
+              </button>
+              {classOptions.map((cls) => (
+                <button
+                  key={cls}
+                  onClick={() => setClassFilter(cls)}
+                  className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
+                    classFilter === cls
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {cls}
                 </button>
               ))}
             </div>

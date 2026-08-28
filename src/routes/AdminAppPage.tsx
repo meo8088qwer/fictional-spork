@@ -26,7 +26,13 @@ export default function AdminAppPage() {
     document.title = `${gymName} 관리자 | 줄넘기 실시간 랭킹보드`;
   }, [gymName]);
 
-  const { students, isLoading: studentsLoading, addStudent, deleteStudent } = useStudents();
+  const {
+    students,
+    isLoading: studentsLoading,
+    addStudent,
+    deleteStudent,
+    updateStudentClass,
+  } = useStudents();
   const {
     events,
     isLoading: eventsLoading,
@@ -59,7 +65,12 @@ export default function AdminAppPage() {
   const [activeTab, setActiveTab] = useState<DisplayTab>('30s_basic');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
   const [gradeFilter, setGradeFilter] = useState<GradeCategoryFilter>('ALL');
+  const [classFilter, setClassFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  // Only gyms that actually assign 반/수업시간 to students see the filter.
+  const classOptions = Array.from(
+    new Set(students.map((s) => s.classLabel).filter((c): c is string => !!c))
+  ).sort();
 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [certificateStudent, setCertificateStudent] = useState<Student | null>(null);
@@ -99,7 +110,15 @@ export default function AdminAppPage() {
     );
   }
 
-  const leaderboardItems = getLeaderboardData(students, records, activeTab, gradeFilter, searchQuery, events);
+  const leaderboardItems = getLeaderboardData(
+    students,
+    records,
+    activeTab,
+    gradeFilter,
+    searchQuery,
+    events,
+    classFilter
+  );
   const topThree = leaderboardItems.slice(0, 3);
 
   const handleDeleteStudent = async (studentId: string) => {
@@ -142,6 +161,7 @@ export default function AdminAppPage() {
             onBatchSaveRecords={batchSaveRecords}
             onAddStudent={addStudent}
             onDeleteStudent={handleDeleteStudent}
+            onUpdateStudentClass={updateStudentClass}
             onAddCustomEvent={addCustomEvent}
             onDeleteCustomEvent={deleteCustomEvent}
             onResetDefaultEvents={resetDefaultEvents}
@@ -199,6 +219,9 @@ export default function AdminAppPage() {
                   activeTab={activeTab}
                   gradeFilter={gradeFilter}
                   setGradeFilter={setGradeFilter}
+                  classFilter={classFilter}
+                  setClassFilter={setClassFilter}
+                  classOptions={classOptions}
                   searchQuery={searchQuery}
                   setSearchQuery={setSearchQuery}
                   onSelectStudent={(studentId) => {

@@ -56,6 +56,8 @@ import {
   ArrowDown,
   ArrowUpDown,
   Lock,
+  Pencil,
+  Check,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
@@ -70,6 +72,7 @@ interface AdminBatchEntryProps {
   ) => Promise<JumpRecord[]>;
   onAddStudent: (newStudent: Omit<Student, 'id'>) => Promise<Student>;
   onDeleteStudent: (studentId: string) => Promise<void>;
+  onUpdateStudentClass: (args: { studentId: string; classLabel: string | null }) => Promise<Student>;
   onAddCustomEvent: (eventMeta: EventMeta) => Promise<EventMeta>;
   onDeleteCustomEvent: (eventKey: string) => Promise<void>;
   onResetDefaultEvents: () => Promise<Record<string, EventMeta>>;
@@ -89,6 +92,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   onBatchSaveRecords,
   onAddStudent,
   onDeleteStudent,
+  onUpdateStudentClass,
   onAddCustomEvent,
   onDeleteCustomEvent,
   onResetDefaultEvents,
@@ -120,7 +124,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     : [...defaultEventKeys, selectedEventKey];
   const [measurementDate, setMeasurementDate] = useState<string>(todayLocalDate());
   const [gradeFilter, setGradeFilter] = useState<string>('ALL');
+  const [classFilter, setClassFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const classOptions = Array.from(
+    new Set(students.map((s) => s.classLabel).filter((c): c is string => !!c))
+  ).sort();
 
   // Map of eventKey -> studentId -> entered jump count. Nested by event so
   // the table can take input for several events per student in one pass
@@ -146,12 +154,17 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const [rosterSuccessMsg, setRosterSuccessMsg] = useState<string>('');
   const [studentRosterSearch, setStudentRosterSearch] = useState<string>('');
   const [studentRosterGrade, setStudentRosterGrade] = useState<string>('ALL');
+  const [studentRosterClass, setStudentRosterClass] = useState<string>('ALL');
+  // Click a roster card's 반 badge to edit it inline -- studentId being edited.
+  const [editingClassStudentId, setEditingClassStudentId] = useState<string | null>(null);
+  const [classDraft, setClassDraft] = useState<string>('');
 
   // New Student Modal state
   const [showAddStudentModal, setShowAddStudentModal] = useState<boolean>(false);
   const [newStudentName, setNewStudentName] = useState<string>('');
   const [newStudentGrade, setNewStudentGrade] = useState<GradeGroup>('초등 3학년');
   const [newStudentGender, setNewStudentGender] = useState<'M' | 'F'>('M');
+  const [newStudentClassLabel, setNewStudentClassLabel] = useState<string>('');
 
   // New Event Modal state
   const [showAddEventModal, setShowAddEventModal] = useState<boolean>(false);
@@ -172,11 +185,12 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const filteredStudents = students
     .filter((student) => {
       const matchesGrade = gradeFilter === 'ALL' || student.grade === gradeFilter;
+      const matchesClass = classFilter === 'ALL' || student.classLabel === classFilter;
       const matchesSearch =
         !searchQuery ||
         student.name.includes(searchQuery) ||
         student.studentNo.includes(searchQuery);
-      return matchesGrade && matchesSearch;
+      return matchesGrade && matchesClass && matchesSearch;
     })
     .sort((a, b) => a.studentNo.localeCompare(b.studentNo));
 
@@ -539,8 +553,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         gender: newStudentGender,
         avatarColor: randomColor,
         joinDate: todayLocalDate(),
+        classLabel: newStudentClassLabel.trim() || undefined,
       });
       setNewStudentName('');
+      setNewStudentClassLabel('');
       setShowAddStudentModal(false);
       alert('신규 수련생이 등록되었습니다!');
     } catch (err) {
@@ -551,6 +567,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         setActionError('수련생 등록 중 오류가 발생했습니다.');
       }
     }
+  };
+
+  const handleSaveClassLabel = async (studentId: string) => {
+    await onUpdateStudentClass({ studentId, classLabel: classDraft.trim() || null });
+    setEditingClassStudentId(null);
   };
 
   return (
@@ -961,6 +982,22 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   </option>
                 ))}
               </select>
+
+              {/* Class/Session Filter -- only shown once the gym assigns one */}
+              {classOptions.length > 0 && (
+                <select
+                  value={classFilter}
+                  onChange={(e) => setClassFilter(e.target.value)}
+                  className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none shadow-xs font-semibold"
+                >
+                  <option value="ALL">전체 반</option>
+                  {classOptions.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </select>
+              )}
 
               {/* Search */}
               <div className="relative flex-1">
@@ -1443,6 +1480,21 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   </option>
                 ))}
               </select>
+
+              {classOptions.length > 0 && (
+                <select
+                  value={studentRosterClass}
+                  onChange={(e) => setStudentRosterClass(e.target.value)}
+                  className="w-full sm:w-36 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none"
+                >
+                  <option value="ALL">전체 반</option>
+                  {classOptions.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Students Grid */}
@@ -1451,31 +1503,69 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 .filter((student) => {
                   const matchesSearch = student.name.toLowerCase().includes(studentRosterSearch.toLowerCase());
                   const matchesGrade = studentRosterGrade === 'ALL' || student.grade === studentRosterGrade;
-                  return matchesSearch && matchesGrade;
+                  const matchesClass = studentRosterClass === 'ALL' || student.classLabel === studentRosterClass;
+                  return matchesSearch && matchesGrade && matchesClass;
                 })
                 .map((student) => (
                   <div
                     key={student.id}
                     className="bg-slate-50/80 border border-slate-200/80 p-3 rounded-xl flex items-center justify-between gap-3 hover:bg-slate-100/80 transition-colors"
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <div
                         className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${student.avatarColor} text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-xs`}
                       >
                         {student.name.substring(0, 1)}
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <div className="font-bold text-slate-900 text-xs">{student.name}</div>
                         <div className="text-[10px] text-slate-500 font-medium">
                           {student.grade} • {student.studentNo}
                         </div>
+                        {editingClassStudentId === student.id ? (
+                          <div className="flex items-center gap-1 mt-1">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={classDraft}
+                              placeholder="예: 1부"
+                              onChange={(e) => setClassDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveClassLabel(student.id);
+                                if (e.key === 'Escape') setEditingClassStudentId(null);
+                              }}
+                              className="w-16 px-1.5 py-0.5 bg-white border border-[#66BB6A] rounded-lg text-[10px] font-bold text-slate-900 focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveClassLabel(student.id)}
+                              className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md cursor-pointer"
+                              title="저장"
+                            >
+                              <Check className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingClassStudentId(student.id);
+                              setClassDraft(student.classLabel ?? '');
+                            }}
+                            className="mt-1 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-bold text-slate-500 hover:border-[#66BB6A] hover:text-slate-700 cursor-pointer"
+                            title="반/수업시간 지정"
+                          >
+                            <Pencil className="w-2.5 h-2.5" />
+                            <span>{student.classLabel || '반 지정'}</span>
+                          </button>
+                        )}
                       </div>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => setStudentToDelete(student)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer shrink-0"
                       title="수련생 삭제"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -1685,6 +1775,19 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     <span>여학생</span>
                   </label>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-bold mb-1">
+                  반 / 수업시간 <span className="text-slate-400 font-medium">(선택, 예: 1부)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="예: 1부"
+                  value={newStudentClassLabel}
+                  onChange={(e) => setNewStudentClassLabel(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"
+                />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
