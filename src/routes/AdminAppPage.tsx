@@ -9,6 +9,7 @@ import { Leaderboard } from '../components/Leaderboard';
 import { RightRail } from '../components/RightRail';
 import { AdminBatchEntry } from '../components/AdminBatchEntry';
 import { PricingPage } from '../components/PricingPage';
+import { UserGuidePage } from '../components/UserGuidePage';
 import { GlobalLeaderboard } from '../components/GlobalLeaderboard';
 import { MyPage } from '../components/MyPage';
 import { BroadcastTVMode } from '../components/BroadcastTVMode';
@@ -50,6 +51,7 @@ export default function AdminAppPage() {
     | 'TV_MODE'
     | 'GLOBAL_RANKING'
     | 'PRICING'
+    | 'GUIDE'
     | 'MYPAGE';
 
   // Tab switches go through the URL (?view=...) instead of plain useState so
@@ -179,6 +181,8 @@ export default function AdminAppPage() {
         )}
 
         {activeView === 'PRICING' && <PricingPage gym={gym} />}
+
+        {activeView === 'GUIDE' && <UserGuidePage />}
 
         {activeView === 'MYPAGE' && (
           <MyPage

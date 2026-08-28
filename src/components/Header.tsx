@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Tv, ClipboardEdit, LogOut, Share2, UserCog, Menu, X, Sparkles, Globe, Users, ListChecks } from 'lucide-react';
+import { Trophy, Tv, ClipboardEdit, LogOut, Share2, UserCog, Menu, X, Sparkles, Globe, Users, ListChecks, BookOpen } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 type AdminView =
@@ -11,6 +11,7 @@ type AdminView =
   | 'TV_MODE'
   | 'GLOBAL_RANKING'
   | 'PRICING'
+  | 'GUIDE'
   | 'MYPAGE';
 
 interface HeaderProps {
@@ -150,6 +151,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>요금제</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => goTo('GUIDE')}
+            className={`w-full px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeView === 'GUIDE'
+                ? 'bg-[#1B5E20] text-white'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>사용가이드</span>
           </button>
           <button
             type="button"
