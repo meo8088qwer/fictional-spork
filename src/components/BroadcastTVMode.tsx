@@ -29,7 +29,7 @@ const RankRow: React.FC<{
       animationDelay: `${index * rowStaggerStep}s`,
     }}
   >
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 min-w-0">
       {/* Rank Number */}
       <div className="w-10 h-10 rounded-xl font-bold text-lg flex items-center justify-center shrink-0">
         {index === 0 ? (
@@ -55,14 +55,14 @@ const RankRow: React.FC<{
       </div>
 
       {/* Info */}
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-slate-900">{item.student.name}</span>
-          <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-lg font-bold text-slate-900 truncate">{item.student.name}</span>
+          <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold shrink-0">
             {item.student.grade}
           </span>
         </div>
-        <div className="text-xs text-slate-400 font-medium mt-0.5 font-mono">측정일: {item.recordDate}</div>
+        <div className="text-xs text-slate-400 font-medium mt-0.5 font-mono truncate">측정일: {item.recordDate}</div>
       </div>
     </div>
 
@@ -332,37 +332,22 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
                       animationDelay: `${panelIndex * (rowStaggerStep / 2)}s`,
                     }}
                   >
-                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-100">
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
                       <span className="text-sm font-bold text-slate-900">{meta?.shortTitle ?? meta?.title}</span>
                       <span className="text-[10px] font-mono font-bold text-slate-400">{meta?.timeSeconds}s</span>
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="space-y-2 max-h-[46vh] overflow-y-auto pr-1">
                       {items.length === 0 ? (
-                        <div className="text-[11px] text-slate-300 text-center py-3">기록 없음</div>
+                        <div className="text-xs text-slate-300 text-center py-6">기록 없음</div>
                       ) : (
                         items.map((item, idx) => (
-                          <div key={item.student.id} className="flex items-center justify-between gap-2 text-xs">
-                            <span className="flex items-center gap-1.5 min-w-0">
-                              <span
-                                className={`w-5 h-5 rounded-md font-bold text-[10px] flex items-center justify-center shrink-0 ${
-                                  idx === 0
-                                    ? 'bg-[#1B5E20] text-white'
-                                    : idx === 1
-                                    ? 'bg-slate-200 text-slate-700'
-                                    : idx === 2
-                                    ? 'bg-slate-300 text-slate-700'
-                                    : 'text-slate-400'
-                                }`}
-                              >
-                                {idx + 1}
-                              </span>
-                              <span className="font-semibold text-slate-800 truncate">{item.student.name}</span>
-                            </span>
-                            <span className="font-bold text-slate-900 shrink-0">
-                              {item.personalBestCount}
-                              <span className="text-[9px] text-slate-400 font-bold ml-0.5">회</span>
-                            </span>
-                          </div>
+                          <RankRow
+                            key={item.student.id}
+                            item={item}
+                            index={idx}
+                            rowAnimDuration={rowAnimDuration}
+                            rowStaggerStep={rowStaggerStep / 2}
+                          />
                         ))
                       )}
                     </div>
