@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
-import { GRADE_GROUPS } from '../data/constants';
+import { GRADE_GROUPS, EVENT_KEYS } from '../data/constants';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { todayLocalDate } from '../lib/dateHelper';
 import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
@@ -98,6 +98,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   initialSubTab = 'BATCH',
 }) => {
   const eventKeys = Object.keys(events);
+  // The 6 default events are always enterable together; a custom event
+  // picked from the dropdown below is appended as one extra column.
+  const defaultEventKeys = EVENT_KEYS.filter((key) => events[key]);
   const studentLimit = gym.plan === 'pro' ? 500 : gym.plan === 'basic' ? 150 : 50;
   const eventLimit = gym.plan === 'free' ? 6 : Infinity;
   const [actionError, setActionError] = useState<string>('');
@@ -112,12 +115,17 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
   // Batch entry state
   const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_basic');
+  const visibleEventKeys = defaultEventKeys.includes(selectedEventKey)
+    ? defaultEventKeys
+    : [...defaultEventKeys, selectedEventKey];
   const [measurementDate, setMeasurementDate] = useState<string>(todayLocalDate());
   const [gradeFilter, setGradeFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Map of studentId -> entered jump count
-  const [countsMap, setCountsMap] = useState<Record<string, string>>({});
+  // Map of eventKey -> studentId -> entered jump count. Nested by event so
+  // the table can take input for several events per student in one pass
+  // instead of forcing a dropdown switch + re-save per event.
+  const [countsMap, setCountsMap] = useState<Record<string, Record<string, string>>>({});
   const [savedSuccessAlert, setSavedSuccessAlert] = useState<boolean>(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState<boolean>(false);
 
@@ -202,17 +210,21 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     });
   }
 
-  const handleInputChange = (studentId: string, value: string) => {
-    setCountsMap((prev) => ({ ...prev, [studentId]: value }));
+  const handleInputChange = (eventKey: EventKey, studentId: string, value: string) => {
+    setCountsMap((prev) => ({ ...prev, [eventKey]: { ...prev[eventKey], [studentId]: value } }));
   };
 
   const handleQuickAutoFillPBs = () => {
-    const newMap: Record<string, string> = { ...countsMap };
-    filteredStudents.forEach((student) => {
-      const pb = getStudentPersonalBest(records, student.id, selectedEventKey);
-      if (pb) {
-        newMap[student.id] = String(pb.count);
-      }
+    const newMap: Record<string, Record<string, string>> = { ...countsMap };
+    visibleEventKeys.forEach((eventKey) => {
+      const eventMap = { ...newMap[eventKey] };
+      filteredStudents.forEach((student) => {
+        const pb = getStudentPersonalBest(records, student.id, eventKey);
+        if (pb) {
+          eventMap[student.id] = String(pb.count);
+        }
+      });
+      newMap[eventKey] = eventMap;
     });
     setCountsMap(newMap);
   };
@@ -230,20 +242,22 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       date: string;
     }> = [];
 
-    Object.entries(countsMap).forEach(([studentId, valStr]) => {
-      const count = Number(valStr);
-      if (valStr && !isNaN(count) && count > 0) {
-        const student = students.find((s) => s.id === studentId);
-        if (student) {
-          entriesToSave.push({
-            studentId,
-            studentName: student.name,
-            eventKey: selectedEventKey,
-            count,
-            date: measurementDate,
-          });
+    Object.entries(countsMap).forEach(([eventKey, studentCounts]) => {
+      Object.entries(studentCounts).forEach(([studentId, valStr]) => {
+        const count = Number(valStr);
+        if (valStr && !isNaN(count) && count > 0) {
+          const student = students.find((s) => s.id === studentId);
+          if (student) {
+            entriesToSave.push({
+              studentId,
+              studentName: student.name,
+              eventKey,
+              count,
+              date: measurementDate,
+            });
+          }
         }
-      }
+      });
     });
 
     return entriesToSave;
@@ -896,16 +910,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             {/* Event Selector */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                1. 측정 종목 선택 ({eventKeys.length}개 종목)
+                1. 추가 측정 종목 선택 (기본 6종목은 아래 표에 항상 표시됩니다)
               </label>
               <select
                 value={selectedEventKey}
-                onChange={(e) => {
-                  // Counts typed for the previous event must not silently
-                  // get saved against whatever event is selected next.
-                  setSelectedEventKey(e.target.value as EventKey);
-                  setCountsMap({});
-                }}
+                onChange={(e) => setSelectedEventKey(e.target.value as EventKey)}
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 font-semibold focus:outline-none focus:border-[#66BB6A] shadow-xs"
               >
                 {eventKeys.map((key) => {
@@ -977,6 +986,22 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               </button>
               <button
                 type="button"
+                onClick={() => toggleSort('pb')}
+                className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all font-bold flex items-center gap-1"
+              >
+                <span>최고기록순 정렬 ({events[selectedEventKey]?.shortTitle ?? selectedEventKey})</span>
+                {sortKey === 'pb' ? (
+                  sortDir === 'asc' ? (
+                    <ArrowUp className="w-3 h-3" />
+                  ) : (
+                    <ArrowDown className="w-3 h-3" />
+                  )
+                ) : (
+                  <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                )}
+              </button>
+              <button
+                type="button"
                 onClick={handleClearAllInputs}
                 className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 transition-all font-semibold"
               >
@@ -985,7 +1010,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             </div>
           </div>
 
-          {/* Student Grid Table */}
+          {/* Student Grid Table -- one input column per visible event, so
+              the 6 default events (and one extra custom event, if picked
+              above) can all be entered in the same pass. */}
           <div className="bg-white border border-slate-200 rounded-xl mb-6 max-h-96 overflow-auto shadow-xs">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-slate-100/80 sticky top-0 border-b border-slate-200 text-slate-500 font-bold uppercase">
@@ -1027,39 +1054,25 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                       )}
                     </button>
                   </th>
-                  <th className="p-3">
-                    <button
-                      type="button"
-                      onClick={() => toggleSort('pb')}
-                      className="flex items-center gap-1 uppercase font-bold cursor-pointer hover:text-slate-800"
-                    >
-                      <span>기존 최고기록</span>
-                      {sortKey === 'pb' ? (
-                        sortDir === 'asc' ? (
-                          <ArrowUp className="w-3 h-3" />
-                        ) : (
-                          <ArrowDown className="w-3 h-3" />
-                        )
-                      ) : (
-                        <ArrowUpDown className="w-3 h-3 text-slate-300" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="p-3 text-right">오늘 측정 기록 (회)</th>
+                  {visibleEventKeys.map((eventKey) => (
+                    <th key={eventKey} className="p-2 text-center whitespace-nowrap">
+                      {events[eventKey]?.shortTitle ?? events[eventKey]?.title ?? eventKey}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {sortedRows.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-slate-400">
+                    <td colSpan={3 + visibleEventKeys.length} className="p-8 text-center text-slate-400">
                       해당 조건의 수련생이 없습니다.
                     </td>
                   </tr>
                 ) : (
-                  sortedRows.map(({ student, pb }) => {
-                    const currentVal = countsMap[student.id] || '';
-
-                    const isDone = currentVal !== '';
+                  sortedRows.map(({ student }) => {
+                    const isDone = visibleEventKeys.some(
+                      (eventKey) => (countsMap[eventKey]?.[student.id] || '') !== ''
+                    );
 
                     return (
                       <tr
@@ -1077,31 +1090,37 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                           {isDone && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                         </td>
                         <td className="p-3 text-slate-500 font-medium">{student.grade}</td>
-                        <td className="p-3 text-slate-600 font-bold">
-                          {pb ? `${pb.count}회 (${pb.date})` : '기록 없음'}
-                        </td>
-                        <td className="p-3 text-right">
-                          <input
-                            type="number"
-                            inputMode="numeric"
-                            min="0"
-                            placeholder="0"
-                            value={currentVal}
-                            onChange={(e) => handleInputChange(student.id, e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                const inputs = Array.from(
-                                  document.querySelectorAll<HTMLInputElement>('input[type="number"]')
-                                );
-                                const idx = inputs.indexOf(e.currentTarget);
-                                if (idx !== -1 && idx + 1 < inputs.length) {
-                                  inputs[idx + 1].focus();
-                                }
-                              }
-                            }}
-                            className="w-28 text-right px-3 py-1.5 bg-slate-50 border border-slate-200 focus:border-[#66BB6A] rounded-lg text-sm text-slate-900 font-bold focus:outline-none shadow-xs"
-                          />
-                        </td>
+                        {visibleEventKeys.map((eventKey) => {
+                          const pb = getStudentPersonalBest(records, student.id, eventKey);
+                          const currentVal = countsMap[eventKey]?.[student.id] || '';
+                          return (
+                            <td key={eventKey} className="p-2 text-center align-top">
+                              <div className="text-[10px] text-slate-400 font-semibold mb-1 whitespace-nowrap">
+                                {pb ? `PB ${pb.count}` : '기록없음'}
+                              </div>
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                min="0"
+                                placeholder="0"
+                                value={currentVal}
+                                onChange={(e) => handleInputChange(eventKey, student.id, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    const inputs = Array.from(
+                                      document.querySelectorAll<HTMLInputElement>('input[type="number"]')
+                                    );
+                                    const idx = inputs.indexOf(e.currentTarget);
+                                    if (idx !== -1 && idx + 1 < inputs.length) {
+                                      inputs[idx + 1].focus();
+                                    }
+                                  }
+                                }}
+                                className="w-16 text-right px-2 py-1.5 bg-slate-50 border border-slate-200 focus:border-[#66BB6A] rounded-lg text-sm text-slate-900 font-bold focus:outline-none shadow-xs"
+                              />
+                            </td>
+                          );
+                        })}
                       </tr>
                     );
                   })
@@ -1692,7 +1711,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       <ConfirmModal
         isOpen={showSaveConfirm}
         title="기록 저장"
-        message={`[${events[selectedEventKey]?.title ?? selectedEventKey}] 종목으로 오늘(${measurementDate}) 입력한 기록을 저장할까요?`}
+        message={(() => {
+          const pending = buildBatchEntries();
+          const titles = Array.from(new Set(pending.map((e) => events[e.eventKey]?.title ?? e.eventKey)));
+          return `${measurementDate} 날짜로 [${titles.join(', ')}] 종목에 총 ${pending.length}건의 기록을 저장할까요?`;
+        })()}
         confirmText="저장하기"
         variant="primary"
         onConfirm={handleSaveBatch}
