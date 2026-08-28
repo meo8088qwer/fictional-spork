@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
 import { GRADE_GROUPS } from '../data/constants';
 import { getStudentPersonalBest } from '../lib/scoring';
@@ -120,10 +120,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const [countsMap, setCountsMap] = useState<Record<string, string>>({});
   const [savedSuccessAlert, setSavedSuccessAlert] = useState<boolean>(false);
   const [showSaveConfirm, setShowSaveConfirm] = useState<boolean>(false);
-  // This page's own recent-saves log for a quick undo -- intentionally
-  // component-local (not persisted), so it only exists while you're on the
-  // 기록관리 page, matching what was asked for.
-  const [recentSaves, setRecentSaves] = useState<JumpRecord[]>([]);
 
   // Excel Upload state
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -253,6 +249,18 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     return entriesToSave;
   };
 
+  // Undo list for this page: today's records, most recent first. Derived
+  // straight from `records` (not a separate local log) so it's already
+  // populated on page load and stays in sync after save/delete for free.
+  const recentSaves = useMemo(
+    () =>
+      records
+        .filter((r) => r.date === measurementDate)
+        .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))
+        .slice(0, 20),
+    [records, measurementDate]
+  );
+
   // Coaches kept saving to the wrong event by mis-clicking the dropdown, so
   // this only opens a confirm naming the event -- the actual save happens
   // in handleSaveBatch once they confirm.
@@ -270,9 +278,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
     setActionError('');
     try {
-      const saved = await onBatchSaveRecords(entriesToSave);
+      await onBatchSaveRecords(entriesToSave);
       setSavedSuccessAlert(true);
-      setRecentSaves((prev) => [...saved, ...prev].slice(0, 20));
       setCountsMap({});
       setTimeout(() => setSavedSuccessAlert(false), 1200);
       // Stay on the 기록관리 page instead of bouncing to the leaderboard --
@@ -284,7 +291,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
   const handleUndoSave = async (record: JumpRecord) => {
     await onDeleteRecord(record.id);
-    setRecentSaves((prev) => prev.filter((r) => r.id !== record.id));
   };
 
   // Excel File Upload Handler
@@ -843,18 +849,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
           {/* Direct manual entry (previously its own tab) */}
           <div>
-          {/* Recent Saves + Undo -- local to this page only, resets on navigation */}
+          {/* Recent Saves + Undo -- today's records for this gym, shown only on this page */}
           {recentSaves.length > 0 && (
             <div className="mb-6 bg-white border border-slate-200/80 rounded-2xl p-3.5">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-700">최근 저장 내역 (이 페이지에서만 표시)</span>
-                <button
-                  type="button"
-                  onClick={() => setRecentSaves([])}
-                  className="text-[11px] text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  목록 지우기
-                </button>
+              <div className="mb-2">
+                <span className="text-xs font-bold text-slate-700">오늘 저장된 기록 (되돌리기)</span>
               </div>
               <div className="space-y-1.5 max-h-40 overflow-auto">
                 {recentSaves.map((r) => (
