@@ -2,18 +2,6 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import logoMark from '../assets/logo-mark.webp';
 
-// Fields the gym-owner/operator has to fill in with real business info --
-// I don't have (and shouldn't guess) their business registration details,
-// address, or DPO contact. Rendered with a visible "채워야 함" flag so it's
-// obvious this page isn't finished yet, instead of silently publishing
-// fabricated legal claims.
-const Placeholder: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 border border-dashed border-amber-400 text-amber-800 font-bold">
-    {children}
-    <span className="text-[10px] uppercase tracking-wide">채워야 함</span>
-  </span>
-);
-
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="mb-8">
     <h2 className="text-base font-bold text-slate-900 mb-3">{title}</h2>
@@ -75,19 +63,17 @@ export default function PrivacyPolicyPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 lg:px-8 py-10">
-        <div className="mb-8 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-800 font-bold leading-relaxed">
-          이 페이지는 초안입니다. 노란색으로 표시된 부분을 실제 사업자 정보로 채워야 정식 게시할 수 있어요.
-        </div>
-
         <h1 className="text-xl font-bold text-slate-900 mb-1">개인정보처리방침</h1>
-        <p className="text-xs text-slate-400 font-medium mb-8">
-          시행일: <Placeholder>시행일자 입력</Placeholder>
-        </p>
+        <p className="text-xs text-slate-400 font-medium mb-8">시행일: 2026.08.28</p>
 
         <p className="text-sm text-slate-700 leading-relaxed mb-8">
-          <Placeholder>회사(운영자)명</Placeholder>(이하 "회사")는 「개인정보보호법」 등 관련 법령을 준수하며,
-          이용자의 개인정보를 안전하게 처리하기 위해 다음과 같이 개인정보처리방침을 수립·공개합니다.
+          ROPERANK(이하 "회사")는 「개인정보보호법」 등 관련 법령을 준수하며, 이용자의 개인정보를 안전하게
+          처리하기 위해 다음과 같이 개인정보처리방침을 수립·공개합니다.
         </p>
+
+        <div className="mb-8 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium">
+          상호: ROPERANK &nbsp;·&nbsp; 소재지: 대한민국 &nbsp;·&nbsp; 대표: 정승현
+        </div>
 
         <Section title="1. 수집하는 개인정보 항목">
           <h3 className="text-xs font-bold text-slate-800">1) 체육관 관장님(서비스 가입자) 정보</h3>
@@ -139,6 +125,13 @@ export default function PrivacyPolicyPage() {
             입력해 주세요. '메모' 항목에는 자유 텍스트를 입력할 수 있으니, 학부모 연락처 등 민감할 수 있는
             정보는 가급적 적지 않는 것을 권장합니다.
           </p>
+          <p className="text-xs text-slate-500 font-medium bg-slate-50 border border-slate-200 rounded-xl p-3">
+            수련생 삭제 시 이름, 수련생 번호 등 개인을 식별할 수 있는 정보는 즉시 파기됩니다. 다만 학년, 성별,
+            측정 종목·기록·측정일 등 통계적으로 의미 있는 값은 개인을 알아볼 수 없도록 완전히 비식별화(이름·
+            소속 체육관과의 연결 정보 삭제)한 뒤 통계 분석 및 신규 서비스 개발 목적으로 별도 보관할 수
+            있습니다. 비식별화된 정보는 더 이상 개인정보에 해당하지 않아 개인정보보호법상 보유기간 제한을
+            받지 않습니다.
+          </p>
 
           <h3 className="text-xs font-bold text-slate-800 pt-2">4) 자동 수집 정보</h3>
           <DataTable
@@ -155,12 +148,24 @@ export default function PrivacyPolicyPage() {
             <li>서비스(줄넘기 기록 관리, 랭킹보드, TV 전광판, 공개 링크) 제공</li>
             <li>요금제 결제 및 결제 내역 관리</li>
             <li>서비스 개선 및 고객 문의 대응</li>
+            <li>
+              (비식별화된 정보에 한함) 통계 분석 및 신규 서비스·기능 개발 -- 특정 개인을 알아볼 수 없도록
+              처리한 정보만 이 목적으로 활용됩니다
+            </li>
           </ul>
         </Section>
 
         <Section title="3. 개인정보의 보유 및 이용 기간">
           <ul className="list-disc pl-5 space-y-1.5">
-            <li>회원 탈퇴 시: 지체 없이 파기 (단, 관계 법령에 따라 보존이 필요한 경우 예외)</li>
+            <li>
+              회원/수련생 탈퇴 시: 이름 등 개인 식별 정보는 지체 없이 파기 (단, 관계 법령에 따라 보존이
+              필요한 경우 예외)
+            </li>
+            <li>
+              측정 기록 등 통계적 가치가 있는 정보는 개인을 식별할 수 없도록 비식별화한 후 통계 분석 및
+              신규 서비스 개발 목적으로 <strong>기간 제한 없이</strong> 보관될 수 있습니다 (비식별화된 정보는
+              개인정보에 해당하지 않음)
+            </li>
             <li>
               계약 또는 청약철회, 대금결제 및 재화 등의 공급에 관한 기록: 5년
               (전자상거래 등에서의 소비자보호에 관한 법률 시행령 제6조)
@@ -199,8 +204,8 @@ export default function PrivacyPolicyPage() {
           />
           <p className="text-xs text-slate-400 font-medium">
             위 목록은 서비스가 실제로 데이터를 주고받는 외부 업체를 기준으로 작성했습니다. 이메일 발송,
-            분석도구 등을 새로 연동하면 이 표에도 추가해야 합니다. 서버가 해외에 있는 경우 국외 이전에 해당할
-            수 있어 <Placeholder>서버 소재지 확인 후 국외 이전 문구 추가 여부 결정</Placeholder> 이 필요합니다.
+            분석도구 등을 새로 연동하면 이 표에도 추가해야 합니다. Supabase, Vercel 등 이용 중인 클라우드
+            인프라는 해외에 서버를 둘 수 있어, 이용자의 개인정보는 국외로 이전되어 처리·보관될 수 있습니다.
           </p>
         </Section>
 
@@ -220,22 +225,14 @@ export default function PrivacyPolicyPage() {
 
         <Section title="8. 개인정보 보호책임자">
           <ul className="space-y-1">
-            <li>
-              성명: <Placeholder>이름 입력</Placeholder>
-            </li>
-            <li>
-              직책: <Placeholder>직책 입력</Placeholder>
-            </li>
-            <li>
-              연락처: <Placeholder>이메일 또는 전화번호 입력</Placeholder>
-            </li>
+            <li>성명: 정승현</li>
+            <li>직책: 대표</li>
+            <li>연락처: meo8088@naver.com</li>
           </ul>
         </Section>
 
         <Section title="9. 고지의 의무">
-          <p>
-            이 개인정보처리방침은 <Placeholder>시행일자 입력</Placeholder>부터 적용됩니다.
-          </p>
+          <p>이 개인정보처리방침은 2026.08.28부터 적용됩니다.</p>
         </Section>
       </main>
     </div>
