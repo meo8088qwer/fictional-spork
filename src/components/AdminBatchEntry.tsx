@@ -593,19 +593,17 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 sm:p-6 mb-8">
-      {/* Header Bar */}
+      {/* Header Bar -- title matches whichever of the 3 subtabs is active,
+          instead of one long generic sentence repeated on all of them */}
       <div className="border-b border-slate-100 pb-4 mb-6">
         <div className="flex items-center gap-2">
           <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
             <ClipboardEdit className="w-5 h-5" />
           </span>
           <h2 className="text-lg font-bold text-slate-900">
-            관리자 전용 기록 일괄 & 엑셀 등록 대시보드
+            {activeSubTab === 'EVENTS' ? '종목 관리' : activeSubTab === 'STUDENTS' ? '수련생 관리' : '기록 관리'}
           </h2>
         </div>
-        <p className="text-xs text-slate-500 mt-1 font-medium">
-          체육관 수련생들의 측정 종목 기록을 화면 직접 입력 또는 엑셀파일(.xlsx)로 손쉽게 등록하세요.
-        </p>
       </div>
 
       {savedSuccessAlert && (
