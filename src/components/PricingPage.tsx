@@ -4,7 +4,7 @@ import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useGymData';
 import { useTossRedirect } from '../hooks/useTossRedirect';
-import { requestOneTimePayment } from '../lib/tossPayments';
+import { requestOneTimePayment, getTossClientKeyDebugInfo } from '../lib/tossPayments';
 import { planAmount } from '../data/pricing';
 
 type BillingCycle = 'monthly' | 'yearly';
@@ -121,6 +121,12 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
         <h1 className="text-xl font-bold text-slate-900 mb-2">요금제</h1>
         <p className="text-sm text-slate-500 font-medium">
           체육관 규모에 맞는 플랜을 선택하세요.
+        </p>
+        {/* ponytail: temporary debug line to confirm which client key this
+            deployment actually has baked in -- remove once the Toss
+            key-mismatch issue is confirmed fixed. */}
+        <p className="mt-2 text-[10px] text-slate-300 font-mono">
+          [디버그] 클라이언트 키: {getTossClientKeyDebugInfo()}
         </p>
       </div>
 

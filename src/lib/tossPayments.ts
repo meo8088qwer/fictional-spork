@@ -32,6 +32,14 @@ declare global {
 
 const TOSS_CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY as string | undefined;
 
+// ponytail: temporary export so PricingPage can show which client key is
+// actually baked into this build -- delete once the key-mismatch issue is
+// confirmed fixed.
+export function getTossClientKeyDebugInfo(): string {
+  if (!TOSS_CLIENT_KEY) return '(설정 안 됨)';
+  return `${TOSS_CLIENT_KEY.slice(0, 14)}...${TOSS_CLIENT_KEY.slice(-4)} (길이 ${TOSS_CLIENT_KEY.length})`;
+}
+
 let scriptPromise: Promise<void> | null = null;
 
 function loadTossScript(): Promise<void> {
