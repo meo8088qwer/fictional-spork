@@ -241,6 +241,7 @@ export default function AdminAppPage() {
                 students={students}
                 records={records}
                 onOpenBatchEntry={() => setActiveView('ADMIN_BATCH')}
+                onOpenStudentManage={() => setActiveView('STUDENT_MANAGE')}
               />
             </div>
           </div>

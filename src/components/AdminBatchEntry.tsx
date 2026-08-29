@@ -1108,7 +1108,20 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 {sortedRows.length === 0 ? (
                   <tr>
                     <td colSpan={3 + visibleEventKeys.length} className="p-8 text-center text-slate-400">
-                      해당 조건의 수련생이 없습니다.
+                      {students.length === 0 ? (
+                        <div>
+                          <p className="mb-2">아직 등록된 수련생이 없습니다.</p>
+                          <button
+                            type="button"
+                            onClick={() => setActiveSubTab('STUDENTS')}
+                            className="text-[#1B5E20] font-bold hover:underline cursor-pointer"
+                          >
+                            수련생 관리 탭에서 먼저 추가해 주세요 →
+                          </button>
+                        </div>
+                      ) : (
+                        '해당 조건의 수련생이 없습니다.'
+                      )}
                     </td>
                   </tr>
                 ) : (

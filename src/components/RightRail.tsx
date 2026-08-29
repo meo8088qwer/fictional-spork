@@ -6,11 +6,12 @@ interface RightRailProps {
   students: Student[];
   records: JumpRecord[];
   onOpenBatchEntry: () => void;
+  onOpenStudentManage: () => void;
 }
 
 const MISSING_LIST_LIMIT = 10;
 
-export const RightRail: React.FC<RightRailProps> = ({ students, records, onOpenBatchEntry }) => {
+export const RightRail: React.FC<RightRailProps> = ({ students, records, onOpenBatchEntry, onOpenStudentManage }) => {
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
@@ -32,7 +33,18 @@ export const RightRail: React.FC<RightRailProps> = ({ students, records, onOpenB
             <span className="text-slate-400 font-medium">({missingThisMonth.length}명)</span>
           )}
         </h3>
-        {missingThisMonth.length === 0 ? (
+        {students.length === 0 ? (
+          <div className="py-4 text-center">
+            <p className="text-xs text-slate-400 mb-2">등록된 수련생이 없습니다.</p>
+            <button
+              type="button"
+              onClick={onOpenStudentManage}
+              className="text-xs font-bold text-[#1B5E20] hover:underline cursor-pointer"
+            >
+              수련생 추가하러 가기 →
+            </button>
+          </div>
+        ) : missingThisMonth.length === 0 ? (
           <p className="text-xs text-slate-400 py-4 text-center">이번 달 전원 측정 완료했습니다!</p>
         ) : (
           <>
