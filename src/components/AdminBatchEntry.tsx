@@ -928,19 +928,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             </div>
           )}
 
-          {/* Personal Best Reassurance Banner */}
-          <div className="mb-6 bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-slate-600 font-medium">
-            <ShieldCheck className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-bold text-slate-900 block mb-0.5">
-                최고 기록(PB) 안전 보존 시스템 안내
-              </span>
-              <span>
-                오늘 입력한 측정 기록이 이전 최고기록보다 낮더라도 (예: 기존 최고 70회, 오늘 측정 65회), 수련생의 최고 기록 70회와 랭킹순위는 안전하게 유지되며 오늘 측정된 65회는 수련생의 성장 이력 그래프에만 기록됩니다.
-              </span>
-            </div>
-          </div>
-
           {/* Controls: Event Selection & Measurement Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-slate-50/80 p-4 rounded-xl border border-slate-200/80">
             {/* Event Selector */}
