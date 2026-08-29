@@ -174,21 +174,38 @@ Deno.serve(async (req) => {
   // Interim manual-renewal path (see billing-issue/index.ts's doc comment):
   // subscriptions with no billing_key are never picked up by the
   // auto-charge query above, so if their paid period lapses without the
-  // gym owner manually paying again, downgrade them back to free here.
-  const { data: expired } = await admin
+  // gym owner manually paying again, mark it past_due -- then, after a
+  // grace period, actually downgrade the plan back to free.
+  const GRACE_DAYS = 3;
+  const graceCutoff = new Date();
+  graceCutoff.setDate(graceCutoff.getDate() - GRACE_DAYS);
+  const graceCutoffStr = graceCutoff.toISOString().slice(0, 10);
+
+  const { data: pastDue } = await admin
     .from('gym_subscriptions')
     .select('gym_id')
     .eq('status', 'active')
     .is('billing_key', null)
     .lte('next_billing_date', today);
 
-  for (const sub of expired ?? []) {
+  for (const sub of pastDue ?? []) {
     await admin
       .from('gym_subscriptions')
       .update({ status: 'past_due', updated_at: new Date().toISOString() })
       .eq('gym_id', sub.gym_id);
+    results.push({ gym_id: sub.gym_id, ok: true, error: `past_due, ${GRACE_DAYS}-day grace period started` });
+  }
+
+  const { data: graceExpired } = await admin
+    .from('gym_subscriptions')
+    .select('gym_id')
+    .eq('status', 'past_due')
+    .is('billing_key', null)
+    .lte('next_billing_date', graceCutoffStr);
+
+  for (const sub of graceExpired ?? []) {
     await admin.from('gyms').update({ plan: 'free' }).eq('id', sub.gym_id);
-    results.push({ gym_id: sub.gym_id, ok: true, error: 'expired, downgraded to free' });
+    results.push({ gym_id: sub.gym_id, ok: true, error: 'grace period over, downgraded to free' });
   }
 
   return jsonResponse({ processed: results.length, results });

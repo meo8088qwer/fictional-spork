@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Building2, AlertCircle, CheckCircle2, CreditCard, XCircle, Receipt } from 'lucide-react';
+import { Mail, Lock, Building2, AlertCircle, CheckCircle2, CreditCard, XCircle, Receipt, FileText, HelpCircle } from 'lucide-react';
 import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription, usePayments } from '../hooks/useGymData';
 import { useTossRedirect } from '../hooks/useTossRedirect';
 import { requestOneTimePayment } from '../lib/tossPayments';
 import { planAmount, BillingCycle } from '../data/pricing';
+import { PaymentRecord } from '../data/api/billing';
 import { ConfirmModal } from './ConfirmModal';
+import { ReceiptModal } from './ReceiptModal';
+
+const SUPPORT_EMAIL = 'meo8088@naver.com';
 
 interface MyPageProps {
   email: string | undefined;
@@ -54,6 +58,10 @@ export const MyPage: React.FC<MyPageProps> = ({
   const [isPaying, setIsPaying] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  const [receiptPayment, setReceiptPayment] = useState<PaymentRecord | null>(null);
+
+  const paidPayments = payments.filter((p) => p.status === 'paid');
+  const firstPaidAt = paidPayments.length > 0 ? paidPayments[paidPayments.length - 1].paidAt : null;
 
   const handleRepay = async () => {
     if (!subscription) return;
@@ -207,25 +215,62 @@ export const MyPage: React.FC<MyPageProps> = ({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 flex items-center justify-between gap-2 text-xs flex-wrap">
-              <span className="flex items-center gap-2 font-bold text-slate-700">
-                {subscription.cardCompany ?? '카드'}{' '}
-                {subscription.cardLast4 ? `**** ${subscription.cardLast4}` : ''}
-              </span>
-              <span className="text-slate-500 font-medium">
-                {subscription.status === 'active' && subscription.nextBillingDate
-                  ? `다음 결제 예정일 ${subscription.nextBillingDate}`
-                  : subscription.status === 'past_due'
-                  ? '결제 기한이 지났어요'
-                  : subscription.status === 'canceled'
-                  ? '구독 해지됨'
-                  : ''}
-              </span>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-bold text-slate-900">
+                  {subscription.desiredPlan.toUpperCase()} 플랜
+                </span>
+                <span
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    subscription.status === 'active'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : subscription.status === 'past_due'
+                      ? 'bg-amber-100 text-amber-700'
+                      : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {subscription.status === 'active'
+                    ? '이용중'
+                    : subscription.status === 'past_due'
+                    ? '결제 기한 지남'
+                    : '구독 해지됨'}
+                </span>
+              </div>
+              <div className="space-y-1.5 text-xs">
+                {firstPaidAt && (
+                  <div className="flex justify-between py-1 border-b border-slate-200/70">
+                    <span className="text-slate-500 font-medium">최초 결제일</span>
+                    <span className="font-bold text-slate-800">
+                      {new Date(firstPaidAt).toLocaleDateString('ko-KR')}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between py-1 border-b border-slate-200/70">
+                  <span className="text-slate-500 font-medium">결제 정보</span>
+                  <span className="font-bold text-slate-800">
+                    {subscription.cardCompany ?? '카드'}
+                    {subscription.cardLast4 ? ` **** ${subscription.cardLast4}` : ''}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-slate-500 font-medium">다음 결제 예정일</span>
+                  <span className="font-bold text-slate-800">
+                    {subscription.status === 'active' && subscription.nextBillingDate
+                      ? `${subscription.nextBillingDate} (${planAmount(
+                          subscription.desiredPlan,
+                          subscription.billingCycle
+                        ).toLocaleString()}원)`
+                      : subscription.status === 'past_due'
+                      ? '결제 기한이 지났어요'
+                      : '-'}
+                  </span>
+                </div>
+              </div>
               {subscription.status === 'active' && (
                 <button
                   type="button"
                   onClick={() => setShowCancelConfirm(true)}
-                  className="text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+                  className="mt-3 text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer text-xs"
                 >
                   <XCircle className="w-3.5 h-3.5" />
                   <span>구독 해지</span>
@@ -267,10 +312,23 @@ export const MyPage: React.FC<MyPageProps> = ({
 
             {payments.length > 0 && (
               <div>
-                <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5 mb-2">
-                  <Receipt className="w-3.5 h-3.5 text-slate-400" />
-                  결제 내역
-                </h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Receipt className="w-3.5 h-3.5 text-slate-400" />
+                    결제 내역
+                  </h3>
+                  <a
+                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+                      '[ROPERANK] 환불 요청'
+                    )}&body=${encodeURIComponent(
+                      `체육관: ${gym.name}\n이메일: ${email ?? ''}\n환불 요청 내용을 적어주세요.`
+                    )}`}
+                    className="text-[11px] font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                    <span>환불 문의</span>
+                  </a>
+                </div>
                 <div className="border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
                   {payments.map((p) => (
                     <div key={p.id} className="px-3.5 py-2.5 flex items-center justify-between gap-3 text-xs">
@@ -285,15 +343,27 @@ export const MyPage: React.FC<MyPageProps> = ({
                           <div className="text-rose-500 font-medium mt-0.5">{p.failureReason}</div>
                         )}
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
                         <div className="font-bold text-slate-900">{p.amount.toLocaleString()}원</div>
-                        <span
-                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                            p.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
-                          }`}
-                        >
-                          {p.status === 'paid' ? '결제완료' : '결제실패'}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              p.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
+                            }`}
+                          >
+                            {p.status === 'paid' ? '결제완료' : '결제실패'}
+                          </span>
+                          {p.status === 'paid' && (
+                            <button
+                              type="button"
+                              onClick={() => setReceiptPayment(p)}
+                              className="text-[10px] font-bold text-slate-500 hover:text-slate-800 underline underline-offset-2 cursor-pointer flex items-center gap-0.5"
+                            >
+                              <FileText className="w-3 h-3" />
+                              영수증
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -303,6 +373,15 @@ export const MyPage: React.FC<MyPageProps> = ({
           </div>
         )}
       </div>
+
+      {receiptPayment && (
+        <ReceiptModal
+          payment={receiptPayment}
+          gymName={gym.name}
+          payerEmail={email}
+          onClose={() => setReceiptPayment(null)}
+        />
+      )}
 
       <ConfirmModal
         isOpen={showCancelConfirm}
