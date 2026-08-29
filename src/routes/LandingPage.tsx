@@ -120,11 +120,11 @@ const FAQS = [
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-slate-200/80 py-4">
+    <div className="border-b border-slate-200/80">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-4 text-left cursor-pointer"
+        className="w-full flex items-center justify-between gap-4 text-left cursor-pointer py-3.5"
       >
         <span className="text-sm font-bold text-slate-900">{q}</span>
         {open ? (
@@ -133,7 +133,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
           <Plus className="w-4 h-4 text-slate-400 shrink-0" />
         )}
       </button>
-      {open && <p className="text-xs text-slate-500 font-medium leading-relaxed mt-2.5 pr-8">{a}</p>}
+      {open && <p className="text-xs text-slate-500 font-medium leading-relaxed pb-4 pr-8">{a}</p>}
     </div>
   );
 }
@@ -265,6 +265,7 @@ export default function LandingPage() {
                 <img
                   src={ropeStickers}
                   alt="줄넘기 손잡이에 최고기록을 하나씩 붙여둔 스티커"
+                  loading="lazy"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
@@ -425,6 +426,7 @@ export default function LandingPage() {
             <img
               src={shotLeaderboard}
               alt="ROPERANK 랭킹보드 화면 — TOP 3 시상대와 종목별 순위 리스트"
+              loading="lazy"
               className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60"
             />
           </div>
@@ -434,11 +436,13 @@ export default function LandingPage() {
               <img
                 src={shotProfileStats}
                 alt="ROPERANK 학생 기록 카드 — 종목별 최고 기록 현황"
+                loading="lazy"
                 className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60"
               />
               <img
                 src={shotProfileGrowth}
                 alt="ROPERANK 성장 그래프 — 월별 기록 변화와 성장률"
+                loading="lazy"
                 className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60"
               />
             </div>
@@ -469,6 +473,7 @@ export default function LandingPage() {
             <img
               src={shotEntry}
               alt="ROPERANK 기록 일괄 입력 화면 — 종목 선택, 측정일자, 학생별 기존 최고기록"
+              loading="lazy"
               className="w-full rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/60"
             />
           </div>
@@ -491,6 +496,7 @@ export default function LandingPage() {
             <img
               src={shotTv}
               alt="ROPERANK TV 랭킹 전광판 화면 — 종목별 순위가 자동으로 전환되며 표시된다"
+              loading="lazy"
               className="w-full rounded-2xl border border-white/10 shadow-2xl"
             />
           </div>
