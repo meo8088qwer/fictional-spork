@@ -899,12 +899,16 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
           {/* Direct manual entry (previously its own tab) */}
           <div>
-          {/* Recent Saves + Undo -- today's records for this gym, shown only on this page */}
-          {recentSaves.length > 0 && (
-            <div className="mb-6 bg-white border border-slate-200/80 rounded-2xl p-3.5">
-              <div className="mb-2">
-                <span className="text-xs font-bold text-slate-700">오늘 저장된 기록 (되돌리기)</span>
-              </div>
+          {/* Recent Saves + Undo -- today's records for this gym, shown only
+              on this page. Always rendered (not just after a save) so
+              coaches always know where to find it. */}
+          <div className="mb-6 bg-white border border-slate-200/80 rounded-2xl p-3.5">
+            <div className="mb-2">
+              <span className="text-xs font-bold text-slate-700">오늘 저장된 기록 (되돌리기)</span>
+            </div>
+            {recentSaves.length === 0 ? (
+              <p className="text-xs text-slate-400 font-medium py-1">오늘 저장된 기록이 없습니다.</p>
+            ) : (
               <div className="space-y-1.5 max-h-40 overflow-auto">
                 {recentSaves.map((r) => (
                   <div
@@ -925,8 +929,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Controls: Event Selection & Measurement Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-slate-50/80 p-4 rounded-xl border border-slate-200/80">
