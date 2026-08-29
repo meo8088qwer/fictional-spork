@@ -73,7 +73,13 @@ interface PricingPageProps {
 export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
   const { user } = useAuth();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
-  const { ensureSubscription } = useSubscription();
+  const { subscription, ensureSubscription } = useSubscription();
+  // gym.plan alone isn't proof of a real subscription -- a plan can be set
+  // (e.g. manually, or from a past state) with no gym_subscriptions record
+  // behind it. Only treat a paid tier as "current" when there's an actual
+  // active subscription, otherwise the pay button would stay hidden forever
+  // with no way to ever register real billing for it.
+  const hasActiveSubscription = subscription?.status === 'active';
   const { banner, setBanner } = useTossRedirect();
   const [subscribingKey, setSubscribingKey] = useState<Tier['key'] | null>(null);
 
@@ -172,7 +178,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-stretch">
         {TIERS.map((tier) => {
-          const isCurrent = gym.plan === tier.key;
+          const isCurrent = tier.key === 'free' ? gym.plan === 'free' : gym.plan === tier.key && hasActiveSubscription;
           const isBasicHighlight = tier.key === 'basic';
           const price =
             tier.monthlyPrice === 0
