@@ -64,7 +64,7 @@ const TIERS = [
     name: 'FREE',
     price: '0원',
     limit: '학생 최대 50명',
-    features: ['랭킹보드', '기록관리 (최근 3개월)', '성장그래프', '공개 링크', 'TV 전광판'],
+    features: ['랭킹보드', '기록관리 (최근 3개월)', '성장그래프', '공개 링크', 'TV 전광판', '전체랭킹 열람'],
     highlight: false,
   },
   {
@@ -72,17 +72,16 @@ const TIERS = [
     name: 'BASIC',
     price: '월 4,900원',
     limit: '학생 최대 150명',
-    features: ['추가 종목 등록', '기록관리 (전체 이력)', '엑셀 대량 등록', '기록 인증 상장 발급', '광고 없음'],
+    features: ['커스텀 종목 +5개 추가', '기록관리 (전체 이력)', '엑셀 대량 등록', '전체랭킹 참가', '광고 없음'],
     highlight: true,
   },
   {
     key: 'pro',
     name: 'PRO',
     price: '월 9,900원',
-    limit: '학생 최대 500명',
-    features: ['체육관 계정 2개', '체육관 로고 사용', '고급 통계 (업데이트 예정)'],
+    limit: '학생 수 무제한',
+    features: ['기록 인증 상장 발급', '커스텀 종목 무제한', '체육관 로고 사용', '전체랭킹 지역별·전국 확산 참가 (예정)'],
     highlight: false,
-    comingSoon: true,
   },
 ];
 
@@ -97,7 +96,7 @@ const FAQS = [
   },
   {
     q: '50명이 넘으면 어떻게 되나요?',
-    a: 'BASIC 요금제로 업그레이드하면 학생을 150명까지, PRO는 500명까지 등록할 수 있습니다.',
+    a: 'BASIC 요금제로 업그레이드하면 학생을 150명까지 등록할 수 있고, PRO는 학생 수 제한이 없습니다.',
   },
   {
     q: '모바일에서도 사용할 수 있나요?',
@@ -708,11 +707,6 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                {plan.comingSoon && (
-                  <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold self-start">
-                    추후 오픈 예정
-                  </span>
-                )}
               </div>
             ))}
           </div>

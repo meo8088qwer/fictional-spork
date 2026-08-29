@@ -12,9 +12,9 @@ export interface GlobalLeaderboardEntry {
 
 /**
  * Cross-gym personal bests via the get_global_leaderboard SECURITY DEFINER
- * RPC (supabase/migrations/0007_global_leaderboard_rpc.sql). Login required
- * (granted to `authenticated` only); free-plan gyms' students are excluded
- * server-side, not filtered here.
+ * RPC (supabase/migrations/0007_global_leaderboard_rpc.sql). Granted to both
+ * `authenticated` and `anon` -- viewing is public, no login required;
+ * free-plan gyms' students are excluded server-side, not filtered here.
  */
 export async function fetchGlobalLeaderboard(): Promise<GlobalLeaderboardEntry[]> {
   const { data, error } = await supabase.rpc('get_global_leaderboard');

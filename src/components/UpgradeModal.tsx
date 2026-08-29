@@ -27,7 +27,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ code, onUpgrade, onC
             <Sparkles className="w-6 h-6" />
           </div>
 
-          <h3 className="text-base font-bold text-slate-900 mb-1.5">무료 플랜 한도에 도달했어요</h3>
+          <h3 className="text-base font-bold text-slate-900 mb-1.5">플랜 한도에 도달했어요</h3>
           <p className="text-xs text-slate-600 font-medium leading-relaxed mb-6">
             {planLimitMessage(code)}
           </p>

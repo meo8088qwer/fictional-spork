@@ -48,9 +48,11 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   );
   const [showStudentDeleteConfirm, setShowStudentDeleteConfirm] = useState<boolean>(false);
   const [recordToDelete, setRecordToDelete] = useState<JumpRecord | null>(null);
-  const [showUpgradePopup, setShowUpgradePopup] = useState<boolean>(false);
+  const [upgradeReason, setUpgradeReason] = useState<'BASIC_FEATURE_LOCKED' | 'PRO_FEATURE_LOCKED' | null>(null);
 
   const isFreePlan = gymPlan === 'free';
+  // Certificate issuance is PRO-only (moved up from "basic and above").
+  const canIssueCertificate = gymPlan === 'pro';
 
   const visibleCutoff = (() => {
     const d = new Date();
@@ -155,19 +157,19 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  if (isFreePlan) {
-                    setShowUpgradePopup(true);
+                  if (!canIssueCertificate) {
+                    setUpgradeReason('PRO_FEATURE_LOCKED');
                   } else {
                     onOpenCertificate(student);
                   }
                 }}
                 className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                  isFreePlan
+                  !canIssueCertificate
                     ? 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                     : 'bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white'
                 }`}
               >
-                {isFreePlan ? <Lock className="w-3.5 h-3.5" /> : <Printer className="w-4 h-4" />}
+                {!canIssueCertificate ? <Lock className="w-3.5 h-3.5" /> : <Printer className="w-4 h-4" />}
                 <span>기록 인증 상장 발급</span>
               </button>
             )}
@@ -236,7 +238,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
             {isFreePlan && (
               <button
                 type="button"
-                onClick={() => setShowUpgradePopup(true)}
+                onClick={() => setUpgradeReason('BASIC_FEATURE_LOCKED')}
                 className="shrink-0 text-[#1B5E20] underline cursor-pointer"
               >
                 업그레이드
@@ -308,7 +310,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   (isFreePlan ? (
                     <button
                       type="button"
-                      onClick={() => setShowUpgradePopup(true)}
+                      onClick={() => setUpgradeReason('BASIC_FEATURE_LOCKED')}
                       title="베이직 플랜부터 볼 수 있어요"
                       className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-400 flex items-center gap-1 cursor-pointer"
                     >
@@ -431,12 +433,12 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
 
       {/* Plan Limit Upgrade Prompt */}
       <UpgradeModal
-        code={showUpgradePopup ? 'BASIC_FEATURE_LOCKED' : null}
+        code={upgradeReason}
         onUpgrade={() => {
-          setShowUpgradePopup(false);
+          setUpgradeReason(null);
           onUpgradeRequired?.();
         }}
-        onClose={() => setShowUpgradePopup(false)}
+        onClose={() => setUpgradeReason(null)}
       />
     </div>
   );

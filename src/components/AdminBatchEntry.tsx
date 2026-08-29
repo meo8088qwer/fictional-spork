@@ -105,8 +105,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   // The 6 default events are always enterable together; a custom event
   // picked from the dropdown below is appended as one extra column.
   const defaultEventKeys = EVENT_KEYS.filter((key) => events[key]);
-  const studentLimit = gym.plan === 'pro' ? 500 : gym.plan === 'basic' ? 150 : 50;
-  const eventLimit = gym.plan === 'free' ? 6 : Infinity;
+  const studentLimit = gym.plan === 'pro' ? Infinity : gym.plan === 'basic' ? 150 : 50;
+  // Basic can add up to 5 custom events on top of the 6 defaults (11 total);
+  // pro is uncapped.
+  const eventLimit = gym.plan === 'pro' ? Infinity : gym.plan === 'basic' ? 11 : 6;
   const [actionError, setActionError] = useState<string>('');
   const [planLimitPopup, setPlanLimitPopup] = useState<PlanLimitCode | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EVENTS' | 'STUDENTS'>(initialSubTab);
@@ -1485,7 +1487,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   className="px-3.5 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
-                  <span>개별 수련생 직접 추가 ({students.length}/{studentLimit})</span>
+                  <span>
+                    개별 수련생 직접 추가{studentLimit !== Infinity ? ` (${students.length}/${studentLimit})` : ''}
+                  </span>
                 </button>
               </div>
             </div>

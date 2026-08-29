@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Lock, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Check, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useGymData';
@@ -15,7 +15,6 @@ interface Tier {
   monthlyPrice: number;
   studentLimit: number;
   features: string[];
-  comingSoon?: boolean;
 }
 
 const TIERS: Tier[] = [
@@ -30,7 +29,8 @@ const TIERS: Tier[] = [
       '성장그래프',
       '공개 링크',
       'TV 전광판',
-      '광고 표시됨',
+      '전체랭킹 열람',
+      '광고 표시 예정',
     ],
   },
   {
@@ -39,10 +39,10 @@ const TIERS: Tier[] = [
     monthlyPrice: 4900,
     studentLimit: 150,
     features: [
-      '추가 종목 등록 가능',
+      '커스텀 종목 +5개 추가',
       '기록관리 (전체 이력)',
       '엑셀 대량 등록',
-      '기록 인증 상장 발급',
+      '전체랭킹 참가',
       '광고 없음',
     ],
   },
@@ -50,14 +50,13 @@ const TIERS: Tier[] = [
     key: 'pro',
     name: 'PRO',
     monthlyPrice: 9900,
-    studentLimit: 500,
-    comingSoon: true,
+    studentLimit: Infinity,
     features: [
-      '체육관 계정 2개 이용',
-      '광고 없음',
+      '기록 인증 상장 발급',
+      '커스텀 종목 무제한',
+      '학생 수 무제한',
       '체육관 로고 사용',
-      '고급 통계 (업데이트 예정)',
-      '대회 모드 참가 (업데이트 예정)',
+      '전체랭킹 지역별·전국 확산 참가 (예정)',
     ],
   },
 ];
@@ -203,11 +202,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
                     추천
                   </span>
                 )}
-                {tier.comingSoon && (
-                  <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-bold">
-                    추후 오픈 예정
-                  </span>
-                )}
               </div>
 
               <div className="mb-1">
@@ -219,7 +213,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium mb-5">
-                최대 {tier.studentLimit}명
+                {tier.studentLimit === Infinity ? '학생 수 무제한' : `최대 ${tier.studentLimit}명`}
               </p>
 
               <ul className="space-y-2 mb-6 flex-1">
@@ -231,16 +225,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
                 ))}
               </ul>
 
-              {tier.comingSoon ? (
-                <button
-                  type="button"
-                  disabled
-                  className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>추후 오픈 예정</span>
-                </button>
-              ) : isCurrent ? (
+              {isCurrent ? (
                 <button
                   type="button"
                   disabled
@@ -248,11 +233,11 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
                 >
                   현재 이용중
                 </button>
-              ) : tier.key === 'basic' ? (
+              ) : tier.key === 'basic' || tier.key === 'pro' ? (
                 <button
                   type="button"
                   disabled={subscribingKey === tier.key}
-                  onClick={() => handleSubscribe(tier.key as 'basic')}
+                  onClick={() => handleSubscribe(tier.key as 'basic' | 'pro')}
                   className="w-full py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-60 text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <CreditCard className="w-3.5 h-3.5" />
