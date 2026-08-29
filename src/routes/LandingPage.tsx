@@ -763,6 +763,7 @@ export default function LandingPage() {
               <a href="#pricing" onClick={scrollToId('pricing')} className="hover:text-slate-600 transition-colors">요금제</a>
               <Link to="/login" className="hover:text-slate-600 transition-colors">로그인</Link>
               <Link to="/signup" className="hover:text-slate-600 transition-colors">회원가입</Link>
+              <Link to="/privacy" className="hover:text-slate-600 transition-colors">개인정보처리방침</Link>
             </div>
           </div>
         </footer>
