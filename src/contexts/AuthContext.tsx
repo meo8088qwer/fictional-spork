@@ -29,6 +29,7 @@ interface AuthContextValue {
   ) => Promise<{ needsEmailConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   refreshGym: () => Promise<void>;
   updateGymName: (name: string) => Promise<void>;
   updateGymSlug: (slug: string) => Promise<void>;
@@ -111,6 +112,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await supabase.auth.signOut();
   }, []);
 
+  const sendPasswordReset = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw error;
+  }, []);
+
   const refreshGym = useCallback(async () => {
     await loadGymForSession(session);
   }, [session, loadGymForSession]);
@@ -148,6 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signIn,
     signOut,
+    sendPasswordReset,
     refreshGym,
     updateGymName,
     updateGymSlug,

@@ -1,26 +1,42 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Trophy, Mail, Lock, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Trophy, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
-export default function LoginPage() {
-  const { signIn } = useAuth();
+// Reached via the link in the password-reset email
+// (redirectTo: `${origin}/reset-password` in sendPasswordReset). Supabase's
+// client auto-detects the recovery token in the URL and establishes a
+// temporary session before this page ever renders, so submitting here just
+// calls the normal updateUser -- no token handling needed in this component.
+export default function ResetPasswordPage() {
+  const { updatePassword, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (password.length < 6) {
+      setError('비밀번호는 6자 이상이어야 합니다.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await signIn(email, password);
+      await updatePassword(password);
       navigate('/admin');
     } catch (err: any) {
-      setError('이메일 또는 비밀번호가 일치하지 않습니다.');
+      setError(
+        err?.message ||
+          '비밀번호 변경에 실패했습니다. 재설정 링크가 만료됐을 수 있어요, 다시 요청해 주세요.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -33,20 +49,18 @@ export default function LoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-[#1B5E20] flex items-center justify-center mb-4">
             <Trophy className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-lg font-bold text-slate-900">관장님 로그인</h1>
-          <p className="text-xs text-slate-500 font-medium mt-1">
-            줄넘기 실시간 랭킹보드 관리자 화면으로 이동합니다.
-          </p>
+          <h1 className="text-lg font-bold text-slate-900">새 비밀번호 설정</h1>
+          <p className="text-xs text-slate-500 font-medium mt-1">사용하실 새 비밀번호를 입력해 주세요.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="새 비밀번호 (6자 이상)"
               required
               autoFocus
               className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#66BB6A] focus:bg-white transition-all"
@@ -57,18 +71,12 @@ export default function LoginPage() {
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="비밀번호"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="새 비밀번호 확인"
               required
               className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#66BB6A] focus:bg-white transition-all"
             />
-          </div>
-
-          <div className="text-right -mt-1">
-            <Link to="/forgot-password" className="text-[11px] text-slate-400 font-bold hover:text-slate-600">
-              비밀번호를 잊으셨나요?
-            </Link>
           </div>
 
           {error && (
@@ -83,16 +91,20 @@ export default function LoginPage() {
             disabled={isSubmitting}
             className="w-full py-3.5 rounded-2xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-60 text-white font-bold text-sm transition-all"
           >
-            {isSubmitting ? '로그인 중...' : '로그인'}
+            {isSubmitting ? '변경 중...' : '비밀번호 변경'}
           </button>
         </form>
 
-        <p className="text-center text-xs text-slate-500 font-medium mt-5">
-          아직 계정이 없으신가요?{' '}
-          <Link to="/signup" className="text-[#1B5E20] font-bold hover:underline">
-            무료로 시작하기
-          </Link>
-        </p>
+        <button
+          type="button"
+          onClick={() => {
+            signOut();
+            navigate('/login');
+          }}
+          className="block w-full text-center text-xs text-slate-400 font-medium mt-5 hover:text-slate-600 cursor-pointer"
+        >
+          취소하고 로그인 화면으로
+        </button>
       </div>
     </div>
   );
