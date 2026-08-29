@@ -1,0 +1,14 @@
+-- my_subscription was created `with (security_invoker = true)`, which makes
+-- Postgres run the view using the *querying* user's own privileges -- but
+-- gym_subscriptions intentionally has zero grants/RLS policies for the
+-- authenticated role (it's meant to be touched only by service_role /
+-- security definer functions, to keep billing_key server-only). The result:
+-- every read of my_subscription by a real logged-in gym owner silently
+-- failed with a permission error, which useSubscription() swallowed and
+-- rendered as "no subscription" -- even right after a real payment had
+-- already written the row.
+--
+-- The view's own `where gym_id = auth_gym_id()` clause already scopes each
+-- caller to their own row, which is exactly what security_invoker=false
+-- (the default, "run as view owner") is for -- flip it back.
+alter view public.my_subscription set (security_invoker = false);
