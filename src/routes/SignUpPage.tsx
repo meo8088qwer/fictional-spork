@@ -13,6 +13,7 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +25,10 @@ export default function SignUpPage() {
     }
     if (password.length < 6) {
       setError('비밀번호는 6자 이상이어야 합니다.');
+      return;
+    }
+    if (!agreed) {
+      setError('이용약관 및 개인정보처리방침에 동의해 주세요.');
       return;
     }
 
@@ -112,6 +117,25 @@ export default function SignUpPage() {
               className="w-full pl-10 pr-3 py-3 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm font-bold placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#66BB6A] focus:bg-white transition-all"
             />
           </div>
+
+          <label className="flex items-start gap-2 text-xs text-slate-500 font-medium cursor-pointer pl-0.5">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-0.5 w-4 h-4 shrink-0 accent-[#1B5E20] cursor-pointer"
+            />
+            <span>
+              <Link to="/terms" target="_blank" className="font-bold text-slate-700 hover:underline">
+                이용약관
+              </Link>{' '}
+              및{' '}
+              <Link to="/privacy" target="_blank" className="font-bold text-slate-700 hover:underline">
+                개인정보처리방침
+              </Link>
+              에 동의합니다. (필수)
+            </span>
+          </label>
 
           {error && (
             <div className="bg-rose-50 border border-rose-200 text-rose-600 p-2.5 rounded-xl text-xs font-bold flex items-center gap-2">

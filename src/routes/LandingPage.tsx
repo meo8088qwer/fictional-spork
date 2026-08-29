@@ -770,6 +770,7 @@ export default function LandingPage() {
               <Link to="/login" className="hover:text-slate-600 transition-colors">로그인</Link>
               <Link to="/signup" className="hover:text-slate-600 transition-colors">회원가입</Link>
               <Link to="/privacy" className="hover:text-slate-600 transition-colors">개인정보처리방침</Link>
+              <Link to="/terms" className="hover:text-slate-600 transition-colors">이용약관</Link>
             </div>
           </div>
         </footer>

@@ -10,6 +10,7 @@ import PublicBoardPage from './routes/PublicBoardPage';
 import PublicTvPage from './routes/PublicTvPage';
 import PublicGlobalRankingPage from './routes/PublicGlobalRankingPage';
 import PrivacyPolicyPage from './routes/PrivacyPolicyPage';
+import TermsOfServicePage from './routes/TermsOfServicePage';
 
 function RootRedirect() {
   const { session, loading } = useAuth();
@@ -29,6 +30,7 @@ export default function App() {
       <Route path="/g/:slug/tv" element={<PublicTvPage />} />
       <Route path="/g/:slug/global-ranking" element={<PublicGlobalRankingPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms" element={<TermsOfServicePage />} />
       <Route
         path="/admin/*"
         element={
