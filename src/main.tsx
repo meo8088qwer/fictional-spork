@@ -4,6 +4,7 @@ import {BrowserRouter} from 'react-router-dom';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import App from './App.tsx';
 import {AuthProvider} from './contexts/AuthContext';
 import './index.css';
@@ -47,6 +48,7 @@ createRoot(document.getElementById('root')!).render(
         {/* No-op off Vercel (e.g. local dev) -- only actually sends beacons
             when served from a Vercel deployment. */}
         <Analytics />
+        <SpeedInsights />
       </QueryClientProvider>
     </Sentry.ErrorBoundary>
   </StrictMode>,
