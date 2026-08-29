@@ -162,10 +162,12 @@ export default function PrivacyPolicyPage() {
           <ul className="list-disc pl-5 space-y-1.5">
             <li>회원 탈퇴 시: 지체 없이 파기 (단, 관계 법령에 따라 보존이 필요한 경우 예외)</li>
             <li>
-              결제 관련 기록: <Placeholder>보유기간 확인 필요 (전자상거래법 등 관련 법령 확인)</Placeholder>
+              계약 또는 청약철회, 대금결제 및 재화 등의 공급에 관한 기록: 5년
+              (전자상거래 등에서의 소비자보호에 관한 법률 시행령 제6조)
             </li>
             <li>
-              소비자 불만 또는 분쟁 처리 기록: <Placeholder>보유기간 확인 필요</Placeholder>
+              소비자 불만 또는 분쟁 처리에 관한 기록: 3년
+              (전자상거래 등에서의 소비자보호에 관한 법률 시행령 제6조)
             </li>
           </ul>
         </Section>
