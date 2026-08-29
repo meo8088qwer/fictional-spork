@@ -106,6 +106,20 @@ Deno.serve(async (req) => {
       .single();
     if (!gym) return jsonResponse({ error: '체육관을 찾을 수 없습니다.' }, 404);
 
+    // Idempotency check -- if this orderId was already confirmed (e.g. a
+    // duplicate request from a client-side re-render race, or the success
+    // redirect getting replayed), don't call Toss's confirm API again: it
+    // rejects a reused paymentKey/orderId with ALREADY_PROCESSED_PAYMENT,
+    // which would otherwise surface as a false "결제 실패" to a user whose
+    // payment already went through.
+    const { data: existingPayment } = await admin
+      .from('gym_payments')
+      .select('id')
+      .eq('gym_id', gym.id)
+      .eq('order_id', orderId)
+      .maybeSingle();
+    if (existingPayment) return jsonResponse({ ok: true });
+
     const { data: sub } = await admin
       .from('gym_subscriptions')
       .select('customer_key')
