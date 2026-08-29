@@ -201,18 +201,32 @@ export const MyPage: React.FC<MyPageProps> = ({
         )}
 
         {!subscription || subscription.status === 'none' ? (
-          <div className="text-center py-4">
-            <p className="text-xs text-slate-500 font-medium mb-3">
-              아직 구독 중인 플랜이 없어요. (현재 {gym.plan.toUpperCase()} 플랜)
-            </p>
-            <button
-              type="button"
-              onClick={onNavigateToPricing}
-              className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all cursor-pointer"
-            >
-              요금제 보러 가기
-            </button>
-          </div>
+          gym.plan === 'free' ? (
+            <div className="text-center py-4">
+              <p className="text-xs text-slate-500 font-medium mb-3">아직 구독 중인 플랜이 없어요. (현재 FREE 플랜)</p>
+              <button
+                type="button"
+                onClick={onNavigateToPricing}
+                className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all cursor-pointer"
+              >
+                요금제 보러 가기
+              </button>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center">
+              <p className="text-xs text-amber-800 font-bold mb-1">현재 {gym.plan.toUpperCase()} 플랜 이용중</p>
+              <p className="text-[11px] text-amber-700 font-medium mb-3">
+                연결된 결제 정보가 없어요. 결제를 진행하면 결제 수단, 다음 결제일, 결제 내역이 여기에 표시돼요.
+              </p>
+              <button
+                type="button"
+                onClick={onNavigateToPricing}
+                className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all cursor-pointer"
+              >
+                결제 정보 등록하기
+              </button>
+            </div>
+          )
         ) : (
           <div className="space-y-4">
             <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
