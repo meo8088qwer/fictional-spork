@@ -1,7 +1,7 @@
 {
   "name": "ROPERANK",
   "short_name": "ROPERANK",
-  "description": "줄넘기 체육관을 위한 기록 관리 & 랭킹보드 서비스",
+  "description": "로프랭크 - 줄넘기 체육관을 위한 기록 관리 & 랭킹보드 서비스",
   "icons": [
     { "src": "/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
