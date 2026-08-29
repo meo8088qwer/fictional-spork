@@ -1184,20 +1184,20 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <button
               onClick={() => onClose(selectedEventKey)}
-              className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-all border border-slate-200/80"
+              className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold hover:bg-slate-200 transition-all border border-slate-200/80 whitespace-nowrap"
             >
-              닫기 / 랭킹보드로 돌아가기
+              닫기 / 랭킹보드로
             </button>
 
             <button
               onClick={handleSaveBatchClick}
-              className="px-6 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-sm transition-all flex items-center gap-2"
+              className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-1.5 whitespace-nowrap"
             >
-              <Save className="w-4 h-4" />
-              <span>일괄 기록 저장하기</span>
+              <Save className="w-3.5 h-3.5" />
+              <span>일괄 기록 저장</span>
             </button>
           </div>
           </div>
