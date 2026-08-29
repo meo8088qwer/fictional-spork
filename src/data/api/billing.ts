@@ -68,7 +68,7 @@ export interface PaymentRecord {
   plan: string;
   billingCycle: string;
   amount: number;
-  status: 'paid' | 'failed';
+  status: 'paid' | 'failed' | 'canceled';
   failureReason: string | null;
   paidAt: string;
 }

@@ -362,10 +362,14 @@ export const MyPage: React.FC<MyPageProps> = ({
                         <div className="flex items-center gap-1.5">
                           <span
                             className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                              p.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
+                              p.status === 'paid'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : p.status === 'canceled'
+                                ? 'bg-slate-200 text-slate-600'
+                                : 'bg-rose-100 text-rose-600'
                             }`}
                           >
-                            {p.status === 'paid' ? '결제완료' : '결제실패'}
+                            {p.status === 'paid' ? '결제완료' : p.status === 'canceled' ? '환불/취소' : '결제실패'}
                           </span>
                           {p.status === 'paid' && (
                             <button
