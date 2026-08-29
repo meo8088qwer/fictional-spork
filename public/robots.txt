@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /g/
+Disallow: /reset-password
+Disallow: /forgot-password
+
+Sitemap: https://roperank.com/sitemap.xml
