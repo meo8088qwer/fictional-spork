@@ -772,6 +772,11 @@ export default function LandingPage() {
               <Link to="/terms" className="hover:text-slate-600 transition-colors">이용약관</Link>
             </div>
           </div>
+          <div className="max-w-5xl mx-auto px-4 lg:px-8 pb-10">
+            <p className="text-[11px] text-slate-400 font-medium leading-relaxed text-center sm:text-left">
+              줄프로(JULPRO) · 대표 정승현 · 사업자등록번호 172-48-01397 · 경기도 파주시 초롱꽃로 117-36 · meo8088@naver.com
+            </p>
+          </div>
         </footer>
       </main>
     </div>

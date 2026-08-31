@@ -34,6 +34,12 @@ export default function TermsOfServicePage() {
         <h1 className="text-xl font-bold text-slate-900 mb-1">이용약관</h1>
         <p className="text-xs text-slate-400 font-medium mb-8">시행일: 2026.08.29</p>
 
+        <div className="mb-8 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium leading-relaxed">
+          상호: 줄프로(JULPRO) (서비스명: ROPERANK) &nbsp;·&nbsp; 대표: 정승현 &nbsp;·&nbsp; 사업자등록번호: 172-48-01397
+          <br />
+          소재지: 경기도 파주시 초롱꽃로 117-36 &nbsp;·&nbsp; 연락처: meo8088@naver.com
+        </div>
+
         <Section title="제1조 (목적)">
           <p>
             이 약관은 ROPERANK(이하 "회사")가 제공하는 줄넘기 기록 관리 및 랭킹보드 서비스(이하 "서비스")의
