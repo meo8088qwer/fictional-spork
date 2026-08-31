@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Trophy, Mail, Lock, Building2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function SignUpPage() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  // Referral program isn't publicly announced yet -- no UI here reveals or
+  // explains this, it only ever does anything when someone arrives via a
+  // ?ref=<gym-slug> link handed out directly.
+  const [searchParams] = useSearchParams();
+  const referralSlug = searchParams.get('ref') || undefined;
 
   const [gymName, setGymName] = useState('');
   const [email, setEmail] = useState('');
@@ -34,7 +39,7 @@ export default function SignUpPage() {
 
     setIsSubmitting(true);
     try {
-      const { needsEmailConfirmation: needsConfirm } = await signUp(email, password, gymName.trim());
+      const { needsEmailConfirmation: needsConfirm } = await signUp(email, password, gymName.trim(), referralSlug);
       if (needsConfirm) {
         setNeedsEmailConfirmation(true);
       } else {
