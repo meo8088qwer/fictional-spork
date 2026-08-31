@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Tv, Trophy, Globe } from 'lucide-react';
-import { fetchPublicBoard } from '../data/api/publicBoard';
+import { fetchPublicBoard, fetchPublicStudentHistory } from '../data/api/publicBoard';
 import { getLeaderboardData } from '../lib/scoring';
 import { EventSelector } from '../components/EventSelector';
 import { Podium } from '../components/Podium';
@@ -24,6 +24,15 @@ export default function PublicBoardPage() {
     queryFn: () => fetchPublicBoard(slug!),
     enabled: !!slug,
     refetchInterval: 15000,
+  });
+
+  // Full history for the profile modal's growth graph -- fetched only when
+  // a student is actually selected, not on every 15s board poll (that poll
+  // only carries current-bests, see fetchPublicBoard's doc comment).
+  const historyQuery = useQuery({
+    queryKey: ['publicStudentHistory', slug, selectedStudent?.id],
+    queryFn: () => fetchPublicStudentHistory(slug!, selectedStudent!.id, selectedStudent!.name),
+    enabled: !!slug && !!selectedStudent,
   });
 
   useEffect(() => {
@@ -139,7 +148,7 @@ export default function PublicBoardPage() {
       {selectedStudent && (
         <StudentProfileModal
           student={selectedStudent}
-          records={board.records}
+          records={historyQuery.data ?? []}
           events={board.events}
           initialEventKey={activeTab !== 'OVERALL' ? activeTab : undefined}
           onClose={() => setSelectedStudent(null)}

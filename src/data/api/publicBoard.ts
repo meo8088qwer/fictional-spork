@@ -60,3 +60,33 @@ export async function fetchPublicBoard(gymSlug: string): Promise<PublicBoard> {
     records,
   };
 }
+
+/**
+ * Fetches one student's full record history via get_public_student_history
+ * (see supabase/migrations/0015_public_student_history_rpc.sql) -- used only
+ * when a parent opens that student's profile modal, since get_public_board's
+ * `records` is trimmed to current-bests only (it's what's re-fetched every
+ * 15s by the board/TV poll, and the leaderboard never needed more than
+ * that -- see 0014's migration comment).
+ */
+export async function fetchPublicStudentHistory(
+  gymSlug: string,
+  studentId: string,
+  studentName: string
+): Promise<JumpRecord[]> {
+  const { data, error } = await supabase.rpc('get_public_student_history', {
+    p_gym_slug: gymSlug,
+    p_student_id: studentId,
+  });
+  if (error) throw error;
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    studentId: row.student_id,
+    studentName,
+    eventKey: row.event_key,
+    count: row.count,
+    date: row.record_date,
+    isPersonalBest: row.is_personal_best,
+  }));
+}
