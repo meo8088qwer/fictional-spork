@@ -74,7 +74,7 @@ export default function PrivacyPolicyPage() {
         <div className="mb-8 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium leading-relaxed">
           상호: 줄프로(JULPRO) (서비스명: ROPERANK) &nbsp;·&nbsp; 대표: 정승현 &nbsp;·&nbsp; 사업자등록번호: 172-48-01397
           <br />
-          소재지: 경기도 파주시 초롱꽃로 117-36 &nbsp;·&nbsp; 연락처: meo8088@naver.com
+          소재지: 경기도 파주시 초롱꽃로 117-36 &nbsp;·&nbsp; 전화: 031-945-6778 &nbsp;·&nbsp; 이메일: meo8088@naver.com
         </div>
 
         <Section title="1. 수집하는 개인정보 항목">
@@ -229,7 +229,7 @@ export default function PrivacyPolicyPage() {
           <ul className="space-y-1">
             <li>성명: 정승현</li>
             <li>직책: 대표</li>
-            <li>연락처: meo8088@naver.com</li>
+            <li>연락처: 031-945-6778 / meo8088@naver.com</li>
           </ul>
         </Section>
 

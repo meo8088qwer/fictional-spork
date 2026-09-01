@@ -80,8 +80,13 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
   const hasActiveSubscription = subscription?.status === 'active';
   const { banner, setBanner } = useTossRedirect();
   const [subscribingKey, setSubscribingKey] = useState<Tier['key'] | null>(null);
+  // Required pre-payment consent, shown just above the plan cards -- Toss's
+  // card-company review expects an explicit "주문내용 확인 및 결제진행 동의"
+  // step captured right before the pay button, not a silent click-to-pay.
+  const [agreedToPayment, setAgreedToPayment] = useState(false);
 
   const handleSubscribe = async (tierKey: 'basic' | 'pro') => {
+    if (!agreedToPayment) return;
     setBanner(null);
     setSubscribingKey(tierKey);
     try {
@@ -174,6 +179,18 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
         )}
       </div>
 
+      <label className="flex items-start gap-2 max-w-xl mx-auto mb-6 text-xs text-slate-600 font-medium cursor-pointer px-2">
+        <input
+          type="checkbox"
+          checked={agreedToPayment}
+          onChange={(e) => setAgreedToPayment(e.target.checked)}
+          className="mt-0.5 w-4 h-4 shrink-0 accent-[#1B5E20] cursor-pointer"
+        />
+        <span>
+          선택한 요금제의 금액과 결제 주기를 확인했으며, 결제 진행에 동의합니다. (필수)
+        </span>
+      </label>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-stretch">
         {TIERS.map((tier) => {
           const isCurrent = tier.key === 'free' ? gym.plan === 'free' : gym.plan === tier.key && hasActiveSubscription;
@@ -235,9 +252,9 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
               ) : tier.key === 'basic' || tier.key === 'pro' ? (
                 <button
                   type="button"
-                  disabled={subscribingKey === tier.key}
+                  disabled={subscribingKey === tier.key || !agreedToPayment}
                   onClick={() => handleSubscribe(tier.key as 'basic' | 'pro')}
-                  className="w-full py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-60 text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="w-full py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <CreditCard className="w-3.5 h-3.5" />
                   <span>{subscribingKey === tier.key ? '결제 화면으로 이동 중...' : '카드로 결제하고 구독하기'}</span>

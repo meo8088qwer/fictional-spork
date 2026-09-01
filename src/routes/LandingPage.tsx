@@ -774,7 +774,7 @@ export default function LandingPage() {
           </div>
           <div className="max-w-5xl mx-auto px-4 lg:px-8 pb-10">
             <p className="text-[11px] text-slate-400 font-medium leading-relaxed text-center sm:text-left">
-              줄프로(JULPRO) · 대표 정승현 · 사업자등록번호 172-48-01397 · 경기도 파주시 초롱꽃로 117-36 · meo8088@naver.com
+              줄프로(JULPRO) · 대표 정승현 · 사업자등록번호 172-48-01397 · 경기도 파주시 초롱꽃로 117-36 · 031-945-6778 · meo8088@naver.com
             </p>
           </div>
         </footer>
