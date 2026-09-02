@@ -645,17 +645,14 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           now instead of behind a separate tab */}
       {activeSubTab === 'BATCH' && (
         <div className="space-y-8">
-          {/* Excel bulk record upload (merged in from the old separate tab) --
-              collapsed by default so it doesn't crowd out the manual entry
-              table below, which is the page's main job. */}
-          <details className="group">
-            <summary className="flex items-center gap-2 cursor-pointer list-none py-2 px-3 -mx-3 rounded-xl hover:bg-slate-50">
+          {/* Excel bulk record upload (merged in from the old separate tab) */}
+          <div>
+            <div className="flex items-center gap-2 py-2">
               <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs">
                 엑셀 기록 일괄 등록
               </span>
               <h3 className="text-sm font-bold text-slate-900 flex-1">엑셀 파일로 여러 명 기록 한 번에 올리기</h3>
-              <ChevronDown className="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180" />
-            </summary>
+            </div>
 
             <div className="space-y-6 pt-4">
 
@@ -856,7 +853,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             </div>
           )}
             </div>
-          </details>
+          </div>
 
           {/* Direct manual entry (previously its own tab) */}
           <div>
