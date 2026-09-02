@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Radio, Copy, Check, Save, Wifi, X } from 'lucide-react';
+import { Radio, Copy, Check, Save, Wifi, X, Users } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { Gym } from '../data/api/gyms';
 import { Student, EventMeta, JumpRecord } from '../types';
@@ -41,19 +41,41 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
 
   const [pickedClass, setPickedClass] = useState(ALL_CLASSES);
   const [pickedEvent, setPickedEvent] = useState(eventList[0]?.key ?? '');
+  // Kids who showed up on a fixed schedule are the common case, so default
+  // to everyone in the class checked -- coaches uncheck the few who are
+  // out today rather than checking everyone who's in.
+  const [absentIds, setAbsentIds] = useState<Set<string>>(new Set());
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [linkCopied, setLinkCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
 
+  const pickedClassRoster = useMemo(
+    () => students.filter((s) => pickedClass === ALL_CLASSES || studentInClass(s.classLabel, pickedClass)),
+    [students, pickedClass]
+  );
+  const presentCount = pickedClassRoster.filter((s) => !absentIds.has(s.id)).length;
+
+  const toggleAttendance = (studentId: string) => {
+    setAbsentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(studentId)) next.delete(studentId);
+      else next.add(studentId);
+      return next;
+    });
+  };
+
   const startSession = () => {
     if (!pickedEvent) return;
+    const presentIds = pickedClassRoster.filter((s) => !absentIds.has(s.id)).map((s) => s.id);
+    if (presentIds.length === 0) return;
     setSearchParams({
       view: 'LIVE_COUNT',
       session: randomSessionId(),
       class: pickedClass,
       event: pickedEvent,
+      present: presentIds.join(','),
     });
   };
 
@@ -98,7 +120,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
           </button>
         </div>
 
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-md">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg">
           <p className="text-xs text-slate-500 font-medium mb-5 leading-relaxed">
             반과 종목을 선택하고 측정을 시작하면, 같은 계정으로 로그인한 다른 기기(모바일 등)에서 접속 링크로
             들어와 함께 실시간으로 기록을 입력할 수 있어요.
@@ -107,7 +129,10 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
           <label className="block text-xs font-bold text-slate-700 mb-1.5">반 선택</label>
           <select
             value={pickedClass}
-            onChange={(e) => setPickedClass(e.target.value)}
+            onChange={(e) => {
+              setPickedClass(e.target.value);
+              setAbsentIds(new Set());
+            }}
             className="w-full mb-4 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#66BB6A]"
           >
             <option value={ALL_CLASSES}>전체 (반 구분 없음)</option>
@@ -122,7 +147,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
           <select
             value={pickedEvent}
             onChange={(e) => setPickedEvent(e.target.value)}
-            className="w-full mb-5 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#66BB6A]"
+            className="w-full mb-4 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#66BB6A]"
           >
             {eventList.map((ev) => (
               <option key={ev.key} value={ev.key}>
@@ -131,25 +156,68 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
             ))}
           </select>
 
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+              <Users className="w-3.5 h-3.5 text-slate-400" />
+              <span>출석 확인 ({presentCount}/{pickedClassRoster.length}명 참여)</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => setAbsentIds(absentIds.size === 0 ? new Set(pickedClassRoster.map((s) => s.id)) : new Set())}
+              className="text-[11px] font-bold text-[#1B5E20] hover:underline cursor-pointer"
+            >
+              {absentIds.size === 0 ? '전체 해제' : '전체 선택'}
+            </button>
+          </div>
+          <div className="mb-5 border border-slate-200 rounded-xl divide-y divide-slate-100 max-h-64 overflow-y-auto">
+            {pickedClassRoster.map((s) => (
+              <label
+                key={s.id}
+                className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-slate-800 cursor-pointer hover:bg-slate-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={!absentIds.has(s.id)}
+                  onChange={() => toggleAttendance(s.id)}
+                  className="w-4 h-4 shrink-0 accent-[#1B5E20] cursor-pointer"
+                />
+                <span className="truncate">{s.name}</span>
+                <span className="text-[11px] text-slate-400 font-medium ml-auto shrink-0">{s.grade}</span>
+              </label>
+            ))}
+            {pickedClassRoster.length === 0 && (
+              <p className="px-3 py-4 text-center text-xs text-slate-400 font-medium">
+                선택한 반에 등록된 수련생이 없어요.
+              </p>
+            )}
+          </div>
+
           <button
             type="button"
-            disabled={!pickedEvent}
+            disabled={!pickedEvent || presentCount === 0}
             onClick={startSession}
             className="w-full py-3 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer"
           >
             <Radio className="w-4 h-4" />
-            <span>실시간 측정 시작</span>
+            <span>실시간 측정 시작 ({presentCount}명)</span>
           </button>
         </div>
       </div>
     );
   }
 
-  const roster = students.filter((s) => classParam === ALL_CLASSES || studentInClass(s.classLabel, classParam));
+  // present=<id,id,...> is who was checked in at session start -- kept in
+  // the URL (not just local state) so a device joining via the link sees
+  // the same attendance-trimmed roster, not the whole class.
+  const presentParam = searchParams.get('present');
+  const presentIds = presentParam ? new Set(presentParam.split(',')) : null;
+  const roster = students
+    .filter((s) => classParam === ALL_CLASSES || studentInClass(s.classLabel, classParam))
+    .filter((s) => !presentIds || presentIds.has(s.id));
   const eventTitle = events[eventParam]?.title ?? eventParam;
   const joinUrl = `${window.location.origin}/admin?view=LIVE_COUNT&session=${sessionId}&class=${encodeURIComponent(
     classParam
-  )}&event=${eventParam}`;
+  )}&event=${eventParam}${presentParam ? `&present=${presentParam}` : ''}`;
 
   const submitCount = (studentId: string, count: number) => {
     setCounts((prev) => ({ ...prev, [studentId]: count }));
