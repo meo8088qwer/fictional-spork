@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Student, DisplayTab, TimeFilter, GradeCategoryFilter } from '../types';
 import { getLeaderboardData } from '../lib/scoring';
+import { parseClassLabels } from '../lib/classLabels';
 import { Header } from '../components/Header';
 import { EventSelector } from '../components/EventSelector';
 import { Podium } from '../components/Podium';
@@ -73,7 +74,7 @@ export default function AdminAppPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   // Only gyms that actually assign 반/수업시간 to students see the filter.
   const classOptions = Array.from(
-    new Set(students.map((s) => s.classLabel).filter((c): c is string => !!c))
+    new Set(students.flatMap((s) => parseClassLabels(s.classLabel)))
   ).sort();
 
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);

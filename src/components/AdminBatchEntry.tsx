@@ -3,6 +3,7 @@ import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
 import { GRADE_GROUPS } from '../data/constants';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { todayLocalDate } from '../lib/dateHelper';
+import { parseClassLabels, studentInClass, normalizeClassLabels } from '../lib/classLabels';
 import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
 import { Gym } from '../data/api/gyms';
 
@@ -137,7 +138,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const [classFilter, setClassFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const classOptions = Array.from(
-    new Set(students.map((s) => s.classLabel).filter((c): c is string => !!c))
+    new Set(students.flatMap((s) => parseClassLabels(s.classLabel)))
   ).sort();
 
   // Map of eventKey -> studentId -> entered jump count. Nested by event so
@@ -199,7 +200,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const filteredStudents = students
     .filter((student) => {
       const matchesGrade = gradeFilter === 'ALL' || student.grade === gradeFilter;
-      const matchesClass = classFilter === 'ALL' || student.classLabel === classFilter;
+      const matchesClass = classFilter === 'ALL' || studentInClass(student.classLabel, classFilter);
       const matchesSearch =
         !searchQuery ||
         student.name.includes(searchQuery) ||
@@ -509,9 +510,9 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       if (existing) {
         // Existing student: only touch their 반 if the sheet gives one and
         // it's actually different -- name/grade/gender aren't re-imported.
-        if (row.classLabel && row.classLabel !== existing.classLabel) {
+        if (row.classLabel && normalizeClassLabels(row.classLabel) !== normalizeClassLabels(existing.classLabel)) {
           try {
-            await onUpdateStudentClass({ studentId: existing.id, classLabel: row.classLabel });
+            await onUpdateStudentClass({ studentId: existing.id, classLabel: normalizeClassLabels(row.classLabel) });
             updatedClassCount++;
           } catch {
             // best-effort; keep going with the rest of the sheet
@@ -584,7 +585,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         gender: newStudentGender,
         avatarColor: randomColor,
         joinDate: todayLocalDate(),
-        classLabel: newStudentClassLabel.trim() || undefined,
+        classLabel: normalizeClassLabels(newStudentClassLabel) || undefined,
       });
       setNewStudentName('');
       setNewStudentClassLabel('');
@@ -601,7 +602,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   };
 
   const handleSaveClassLabel = async (studentId: string) => {
-    await onUpdateStudentClass({ studentId, classLabel: classDraft.trim() || null });
+    const normalized = normalizeClassLabels(classDraft);
+    await onUpdateStudentClass({ studentId, classLabel: normalized || null });
     setEditingClassStudentId(null);
   };
 
@@ -1352,7 +1354,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
               <p className="text-xs text-slate-600 font-medium">
                 처음 이용 시 80명 이상의 수련생 명단을 일일이 입력할 필요 없이, 엑셀 파일 하나로 빠르게 일괄 등록할 수 있습니다. 이미
-                등록된 수련생은 '반' 열만 채워서 다시 올리면 반 정보만 갱신됩니다.
+                등록된 수련생은 '반' 열만 채워서 다시 올리면 반 정보만 갱신됩니다. 여러 반을 다니는 수련생은 '반' 열에 콤마(,)로
+                구분해서 입력하세요 (예: 월1부, 화2부).
               </p>
 
               <button
@@ -1426,7 +1429,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                       {
                         parsedRosterRows.filter((r) => {
                           const existing = students.find((s) => s.name.trim() === r.name.trim());
-                          return !!existing && !!r.classLabel && r.classLabel !== existing.classLabel;
+                          return (
+                            !!existing &&
+                            !!r.classLabel &&
+                            normalizeClassLabels(r.classLabel) !== normalizeClassLabels(existing.classLabel)
+                          );
                         }).length
                       }명 반 정보 갱신 예정
                     </span>
@@ -1466,7 +1473,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     <tbody className="divide-y divide-slate-100 font-medium">
                       {parsedRosterRows.map((row, idx) => {
                         const existing = students.find((s) => s.name.trim() === row.name.trim());
-                        const willUpdateClass = !!existing && !!row.classLabel && row.classLabel !== existing.classLabel;
+                        const willUpdateClass =
+                          !!existing &&
+                          !!row.classLabel &&
+                          normalizeClassLabels(row.classLabel) !== normalizeClassLabels(existing.classLabel);
                         return (
                           <tr key={idx} className={existing && !willUpdateClass ? 'bg-slate-50/80' : 'hover:bg-slate-50'}>
                             <td className="p-2.5 text-center text-slate-400 font-mono text-[11px]">{idx + 1}</td>
@@ -1579,7 +1589,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 .filter((student) => {
                   const matchesSearch = student.name.toLowerCase().includes(studentRosterSearch.toLowerCase());
                   const matchesGrade = studentRosterGrade === 'ALL' || student.grade === studentRosterGrade;
-                  const matchesClass = studentRosterClass === 'ALL' || student.classLabel === studentRosterClass;
+                  const matchesClass = studentRosterClass === 'ALL' || studentInClass(student.classLabel, studentRosterClass);
                   return matchesSearch && matchesGrade && matchesClass;
                 })
                 .map((student) => (
@@ -1604,14 +1614,15 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                               type="text"
                               autoFocus
                               value={classDraft}
-                              placeholder="예: 1부"
+                              placeholder="예: 월1부, 화2부"
+                              title="여러 반을 다니면 콤마(,)로 구분해서 입력하세요"
                               onChange={(e) => setClassDraft(e.target.value)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') handleSaveClassLabel(student.id);
                                 if (e.key === 'Escape') handleCancelClassEdit();
                               }}
                               onBlur={() => handleClassInputBlur(student.id)}
-                              className="w-16 px-1.5 py-0.5 bg-white border border-[#66BB6A] rounded-lg text-[10px] font-bold text-slate-900 focus:outline-none"
+                              className="w-32 px-1.5 py-0.5 bg-white border border-[#66BB6A] rounded-lg text-[10px] font-bold text-slate-900 focus:outline-none"
                             />
                             <button
                               type="button"
@@ -1857,11 +1868,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
               <div>
                 <label className="block text-slate-700 font-bold mb-1">
-                  반 / 수업시간 <span className="text-slate-400 font-medium">(선택, 예: 1부)</span>
+                  반 / 수업시간 <span className="text-slate-400 font-medium">(선택, 여러 개면 콤마로 구분. 예: 월1부, 화2부)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="예: 1부"
+                  placeholder="예: 월1부, 화2부"
                   value={newStudentClassLabel}
                   onChange={(e) => setNewStudentClassLabel(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"

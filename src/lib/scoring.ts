@@ -8,6 +8,7 @@ import {
   StudentLeaderboardItem,
 } from '../types';
 import { matchesGradeCategory } from '../data/constants';
+import { studentInClass } from './classLabels';
 
 // Pure computation over students/records/events -- no persistence here.
 // Callers (Supabase-backed hooks, the public-board RPC mapper) are
@@ -59,7 +60,7 @@ export function getLeaderboardData(
   const searchLower = searchQuery.trim().toLowerCase();
   const eligibleStudents = students.filter((student) => {
     const matchesGrade = matchesGradeCategory(student.grade, gradeFilter);
-    const matchesClass = classFilter === 'ALL' || student.classLabel === classFilter;
+    const matchesClass = classFilter === 'ALL' || studentInClass(student.classLabel, classFilter);
     const matchesSearch =
       !searchLower ||
       student.name.toLowerCase().includes(searchLower) ||

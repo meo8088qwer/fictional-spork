@@ -48,7 +48,9 @@ export interface Student {
   joinDate: string;
   notes?: string;
   // Optional 반/수업시간 grouping (e.g. "1부", "2부") the gym assigns per
-  // student -- reuses the pre-existing branch_name DB column.
+  // student -- reuses the pre-existing branch_name DB column. A student in
+  // several classes (e.g. rotating through the week) stores them as one
+  // comma-separated string; use src/lib/classLabels.ts to read/write it.
   classLabel?: string;
 }
 

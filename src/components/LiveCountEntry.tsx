@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 import { Gym } from '../data/api/gyms';
 import { Student, EventMeta, JumpRecord } from '../types';
 import { BatchRecordEntry } from '../data/api/records';
+import { parseClassLabels, studentInClass } from '../lib/classLabels';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface LiveCountEntryProps {
@@ -34,7 +35,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
   const eventParam = searchParams.get('event');
 
   const classOptions = Array.from(
-    new Set(students.map((s) => s.classLabel).filter((c): c is string => !!c))
+    new Set(students.flatMap((s) => parseClassLabels(s.classLabel)))
   ).sort();
   const eventList = Object.values(events);
 
@@ -144,7 +145,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
     );
   }
 
-  const roster = students.filter((s) => classParam === ALL_CLASSES || s.classLabel === classParam);
+  const roster = students.filter((s) => classParam === ALL_CLASSES || studentInClass(s.classLabel, classParam));
   const eventTitle = events[eventParam]?.title ?? eventParam;
   const joinUrl = `${window.location.origin}/admin?view=LIVE_COUNT&session=${sessionId}&class=${encodeURIComponent(
     classParam
