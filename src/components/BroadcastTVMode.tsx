@@ -11,17 +11,30 @@ const FIXED_RANK_COUNT = 20;
 const OVERALL_DEFAULTS = 'OVERALL_DEFAULTS';
 const ALL_SIX = 'ALL_SIX';
 const ALL_SIX_ROWS_PER_EVENT = 7;
+// How many rows the auto-rotating page shows per "page" within one event --
+// low-ranked kids never got to see their own name before because the old
+// behavior only ever showed the top 10 for an event and then moved on.
+// Now it pages through the whole roster (11-20, 21-30, ...) before
+// advancing to the next event.
+const ROTATE_PAGE_SIZE = 10;
 
 // Shared row card -- same look everywhere on the TV screen (auto-rotate,
 // fixed rankings, and the 6-event grid), just smaller via `compact` where
 // space is tight, so a single visual language covers all of it.
 const RankRow: React.FC<{
   item: StudentLeaderboardItem;
+  // Local render position -- only drives the entrance-animation stagger.
   index: number;
+  // 1-based rank to actually display/color. Defaults to index+1 for the
+  // fixed/all-six views (which never paginate), but the auto-rotate page
+  // passes the true overall rank so page 2+ shows "11, 12, ..." instead of
+  // restarting at 1 and wrongly re-coloring row 1 gold on every page.
+  rank?: number;
   rowAnimDuration: number;
   rowStaggerStep: number;
   compact?: boolean;
-}> = ({ item, index, rowAnimDuration, rowStaggerStep, compact = false }) => {
+}> = ({ item, index, rank, rowAnimDuration, rowStaggerStep, compact = false }) => {
+  const displayRank = rank ?? index + 1;
   const badgeSize = compact ? 'w-7 h-7 text-xs' : 'w-10 h-10 text-lg';
   const avatarSize = compact ? 'w-8 h-8 text-xs' : 'w-12 h-12 text-base';
   const nameSize = compact ? 'text-sm' : 'text-lg';
@@ -29,18 +42,18 @@ const RankRow: React.FC<{
   const dateSize = compact ? 'text-[10px]' : 'text-xs';
   const countSize = compact ? 'text-lg' : 'text-3xl';
   const rankColor =
-    index === 0
+    displayRank === 1
       ? 'bg-[#1B5E20] text-white'
-      : index === 1
+      : displayRank === 2
       ? 'bg-slate-200 text-slate-800'
-      : index === 2
+      : displayRank === 3
       ? 'bg-slate-300 text-slate-800'
       : 'text-slate-400';
 
   return (
     <div
       className={`${compact ? 'p-2.5 gap-2' : 'p-4 gap-4'} rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
-        index === 0 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
+        displayRank === 1 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
       }`}
       style={{
         animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
@@ -50,12 +63,12 @@ const RankRow: React.FC<{
       <div className={`flex items-center min-w-0 ${compact ? 'gap-2' : 'gap-4'}`}>
         {/* Rank Number */}
         <div className={`${badgeSize} rounded-xl font-bold flex items-center justify-center shrink-0`}>
-          {index <= 2 ? (
+          {displayRank <= 3 ? (
             <span className={`${badgeSize} rounded-xl ${rankColor} flex items-center justify-center`}>
-              {index + 1}
+              {displayRank}
             </span>
           ) : (
-            <span className={rankColor}>{index + 1}</span>
+            <span className={rankColor}>{displayRank}</span>
           )}
         </div>
 
@@ -105,7 +118,11 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   onClose,
 }) => {
   const eventKeys = Object.keys(events);
-  const [currentEventIndex, setCurrentEventIndex] = useState<number>(0);
+  // eventIndex = which event is showing; page = which chunk of ROTATE_PAGE_SIZE
+  // ranks within that event (0 = 1-10, 1 = 11-20, ...) -- kept together so
+  // they always advance in step (see the self-rescheduling effect below).
+  const [cursor, setCursor] = useState<{ eventIndex: number; page: number }>({ eventIndex: 0, page: 0 });
+  const currentEventIndex = cursor.eventIndex;
   const [isAutoPlay, setIsAutoPlay] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [autoPlaySeconds, setAutoPlaySeconds] = useState<number>(5);
@@ -156,6 +173,14 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   const eventMeta = events[currentEventKey] || events[eventKeys[0]];
 
   const leaderboardItems = getLeaderboardData(students, records, currentEventKey, 'ALL', '', events);
+  const totalPagesForEvent = Math.max(1, Math.ceil(leaderboardItems.length / ROTATE_PAGE_SIZE));
+  // Clamp defensively -- if records changed underneath a running rotation
+  // and shrank this event's list, don't render past the end of it.
+  const currentPage = Math.min(cursor.page, totalPagesForEvent - 1);
+  const pagedLeaderboardItems = leaderboardItems.slice(
+    currentPage * ROTATE_PAGE_SIZE,
+    currentPage * ROTATE_PAGE_SIZE + ROTATE_PAGE_SIZE
+  );
 
   // Ticker tape is computed from real records, not placeholder names.
   const overallChampion = getLeaderboardData(students, records, 'OVERALL', 'ALL', '', events)[0];
@@ -166,13 +191,26 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
     })
     .filter((entry): entry is { key: string; meta: EventMeta; student: Student; count: number } => entry !== null);
 
+  // Self-rescheduling timeout (not setInterval) -- `cursor` is in the deps,
+  // so every advance re-runs this effect and arms a fresh full-length timer
+  // for whatever's showing next, and the callback always sees fresh
+  // students/records/events instead of a stale closure from when the
+  // interval was first created.
   useEffect(() => {
     if (displayMode !== 'ROTATE' || !isAutoPlay || eventKeys.length === 0) return;
-    const timer = setInterval(() => {
-      setCurrentEventIndex((prev) => (prev + 1) % eventKeys.length);
+    const timer = setTimeout(() => {
+      setCursor((prev) => {
+        const key = eventKeys[prev.eventIndex] || eventKeys[0];
+        const itemCount = getLeaderboardData(students, records, key, 'ALL', '', events).length;
+        const totalPages = Math.max(1, Math.ceil(itemCount / ROTATE_PAGE_SIZE));
+        if (prev.page + 1 < totalPages) {
+          return { eventIndex: prev.eventIndex, page: prev.page + 1 };
+        }
+        return { eventIndex: (prev.eventIndex + 1) % eventKeys.length, page: 0 };
+      });
     }, autoPlaySeconds * 1000);
-    return () => clearInterval(timer);
-  }, [displayMode, isAutoPlay, autoPlaySeconds, eventKeys.length]);
+    return () => clearTimeout(timer);
+  }, [displayMode, isAutoPlay, autoPlaySeconds, cursor, eventKeys, students, records, events]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -301,7 +339,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
         <div className="relative z-10 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
           {isAutoPlay && (
             <div
-              key={`${currentEventIndex}-${autoPlaySeconds}`}
+              key={`${currentEventIndex}-${currentPage}-${autoPlaySeconds}`}
               className="h-full bg-[#1B5E20] rounded-full"
               style={{ animation: `tv-progress ${autoPlaySeconds}s linear` }}
             />
@@ -398,7 +436,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       {/* Main Discipline Banner & Rankings */}
       {displayMode === 'ROTATE' && (
       <div
-        key={currentEventKey}
+        key={`${currentEventKey}-${currentPage}`}
         className="relative z-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-tv-transition"
       >
         {/* Left: Active Discipline Spotlight (4 cols) */}
@@ -410,8 +448,16 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
             <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
               {eventMeta.title}
             </h1>
-            <div className="inline-block mt-3 px-3 py-1 rounded-full bg-white/10 text-white font-bold text-xs">
-              측정 시간: {eventMeta.timeSeconds}초
+            <div className="inline-flex flex-wrap items-center gap-1.5 mt-3">
+              <span className="px-3 py-1 rounded-full bg-white/10 text-white font-bold text-xs">
+                측정 시간: {eventMeta.timeSeconds}초
+              </span>
+              {leaderboardItems.length > 0 && (
+                <span className="px-3 py-1 rounded-full bg-white/10 text-white font-bold text-xs">
+                  {currentPage * ROTATE_PAGE_SIZE + 1}~{currentPage * ROTATE_PAGE_SIZE + pagedLeaderboardItems.length}위
+                  {totalPagesForEvent > 1 ? ` (${currentPage + 1}/${totalPagesForEvent})` : ''}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400 mt-4 leading-relaxed font-medium">
               {eventMeta.description}
@@ -421,7 +467,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
           <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-bold">
             <span>종목 {eventKeys.length}개 중 {currentEventIndex + 1}번째</span>
             <button
-              onClick={() => setCurrentEventIndex((prev) => (prev + 1) % eventKeys.length)}
+              onClick={() => setCursor((prev) => ({ eventIndex: (prev.eventIndex + 1) % eventKeys.length, page: 0 }))}
               className="text-white hover:text-slate-300 flex items-center gap-1 font-bold cursor-pointer"
             >
               <span>다음 종목</span>
@@ -430,19 +476,24 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
           </div>
         </div>
 
-        {/* Right: Top 10 Live Rankings (8 cols) -- same card size as before,
-            just more of them, so it scrolls if the viewport is too short
-            to show all 10 at once. */}
+        {/* Right: Live Rankings (8 cols) -- pages through the whole roster
+            for this event (1-10, 11-20, ...) instead of stopping at the
+            top 10, so kids ranked lower still get their turn on screen. */}
         <div className="lg:col-span-8 space-y-3 max-h-[80vh] overflow-y-auto pr-1">
-          {leaderboardItems.slice(0, 10).map((item, index) => (
-            <RankRow
-              key={item.student.id}
-              item={item}
-              index={index}
-              rowAnimDuration={rowAnimDuration}
-              rowStaggerStep={rowStaggerStep}
-            />
-          ))}
+          {pagedLeaderboardItems.length === 0 ? (
+            <div className="text-center text-slate-400 font-bold py-16">아직 이 종목 기록이 없습니다.</div>
+          ) : (
+            pagedLeaderboardItems.map((item, index) => (
+              <RankRow
+                key={item.student.id}
+                item={item}
+                index={index}
+                rank={currentPage * ROTATE_PAGE_SIZE + index + 1}
+                rowAnimDuration={rowAnimDuration}
+                rowStaggerStep={rowStaggerStep}
+              />
+            ))
+          )}
         </div>
       </div>
       )}
