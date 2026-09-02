@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta, StudentLeaderboardItem } from '../types';
 import { getLeaderboardData } from '../lib/scoring';
+import { parseClassLabels, studentInClass } from '../lib/classLabels';
 import { EVENT_KEYS } from '../data/constants';
-import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight, LayoutGrid } from 'lucide-react';
+import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight, LayoutGrid, Users } from 'lucide-react';
 
-// Rows shown on the fixed (non-rotating) page -- laid out 2 columns x 10
+// Rows shown per "page" of a fixed/paged ranking -- laid out 2 columns x 10
 // rows so all 20 fit on one screen with no scrolling (a TV has no way to
-// scroll it into view).
+// scroll it into view). Pages beyond the first keep the same shape.
 const FIXED_RANK_COUNT = 20;
 const OVERALL_DEFAULTS = 'OVERALL_DEFAULTS';
 const ALL_SIX = 'ALL_SIX';
 const ALL_SIX_ROWS_PER_EVENT = 7;
-// How many rows the auto-rotating page shows per "page" within one event --
+// How many rows a page shows within one event on the auto-rotate page --
 // low-ranked kids never got to see their own name before because the old
 // behavior only ever showed the top 10 for an event and then moved on.
 // Now it pages through the whole roster (11-20, 21-30, ...) before
 // advancing to the next event.
 const ROTATE_PAGE_SIZE = 10;
+const AUTO_PLAY_SECONDS_OPTIONS = [3, 4, 5, 6, 7, 8, 9, 10];
 
 // Shared row card -- same look everywhere on the TV screen (auto-rotate,
 // fixed rankings, and the 6-event grid), just smaller via `compact` where
@@ -25,10 +27,10 @@ const RankRow: React.FC<{
   item: StudentLeaderboardItem;
   // Local render position -- only drives the entrance-animation stagger.
   index: number;
-  // 1-based rank to actually display/color. Defaults to index+1 for the
-  // fixed/all-six views (which never paginate), but the auto-rotate page
-  // passes the true overall rank so page 2+ shows "11, 12, ..." instead of
-  // restarting at 1 and wrongly re-coloring row 1 gold on every page.
+  // 1-based rank to actually display/color. Defaults to index+1, but every
+  // paginated view passes the true overall rank so page 2+ shows
+  // "11, 12, ..." instead of restarting at 1 and wrongly re-coloring row 1
+  // gold on every page.
   rank?: number;
   rowAnimDuration: number;
   rowStaggerStep: number;
@@ -102,6 +104,61 @@ const RankRow: React.FC<{
   );
 };
 
+interface EventPanel {
+  eventKey: string;
+  meta?: EventMeta;
+  items: StudentLeaderboardItem[];
+  page: number;
+  totalPages: number;
+}
+
+// Grid of small per-event ranking panels -- used both by the FIXED page's
+// "종목별 한눈에 보기" view and the new BY_CLASS ("부별") view, which are
+// the same layout over a different student subset. Each panel pages
+// through its own event's full list independently (a panel with fewer
+// students just loops on a shorter cycle), so `page` is per-panel, not
+// shared.
+const EventPanelsGrid: React.FC<{
+  panels: EventPanel[];
+  rowAnimDuration: number;
+  rowStaggerStep: number;
+}> = ({ panels, rowAnimDuration, rowStaggerStep }) => (
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    {panels.map(({ eventKey, meta, items, page }, panelIndex) => (
+      <div
+        key={eventKey}
+        className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-xs"
+        style={{
+          animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
+          animationDelay: `${panelIndex * (rowStaggerStep / 2)}s`,
+        }}
+      >
+        <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+          <span className="text-sm font-bold text-slate-900">{meta?.shortTitle ?? meta?.title}</span>
+          <span className="text-[10px] font-mono font-bold text-slate-400">{meta?.timeSeconds}s</span>
+        </div>
+        <div className="space-y-2">
+          {items.length === 0 ? (
+            <div className="text-xs text-slate-300 text-center py-6">기록 없음</div>
+          ) : (
+            items.map((item, idx) => (
+              <RankRow
+                key={item.student.id}
+                item={item}
+                index={idx}
+                rank={page * ALL_SIX_ROWS_PER_EVENT + idx + 1}
+                rowAnimDuration={rowAnimDuration}
+                rowStaggerStep={rowStaggerStep / 2}
+                compact
+              />
+            ))
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 interface BroadcastTVModeProps {
   gymName: string;
   students: Student[];
@@ -118,60 +175,73 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   onClose,
 }) => {
   const eventKeys = Object.keys(events);
-  // eventIndex = which event is showing; page = which chunk of ROTATE_PAGE_SIZE
-  // ranks within that event (0 = 1-10, 1 = 11-20, ...) -- kept together so
-  // they always advance in step (see the self-rescheduling effect below).
-  const [cursor, setCursor] = useState<{ eventIndex: number; page: number }>({ eventIndex: 0, page: 0 });
-  const currentEventIndex = cursor.eventIndex;
-  const [isAutoPlay, setIsAutoPlay] = useState<boolean>(true);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [autoPlaySeconds, setAutoPlaySeconds] = useState<number>(5);
-
-  // Fixed (non-rotating) page -- shown instead of the auto-transitioning
-  // view above when the coach wants one ranking to just sit on screen.
-  const [displayMode, setDisplayMode] = useState<'ROTATE' | 'FIXED'>('ROTATE');
-  const [fixedView, setFixedView] = useState<string>(OVERALL_DEFAULTS);
-  const isOverallDefaultsView = fixedView === OVERALL_DEFAULTS;
-  const isAllSixView = fixedView === ALL_SIX;
   // Default 6 events only, in their canonical 30s x3 -> 10s x3 order --
-  // reused both for the defaults-only overall score and for the "all 6 at
-  // once" grid (which relies on this exact order to put 30s events on the
-  // top row and 10s events on the bottom row via a 3-col CSS grid).
+  // reused for the defaults-only overall score, the "all 6 at once" grid
+  // (relies on this exact order for 30s events on top / 10s on bottom via
+  // a 3-col CSS grid) and the by-class panels.
   const sixEventKeys = EVENT_KEYS.filter((k) => events[k]);
   // "모든 종목 순위" intentionally sums only the 6 default events (not
   // custom ones) so it stays a fair, universal comparison across gyms.
   const defaultEventsMap: Record<string, EventMeta> = Object.fromEntries(
     sixEventKeys.map((k) => [k, events[k]])
   );
-  const fixedLeaderboardItems = isAllSixView
-    ? []
-    : getLeaderboardData(
-        students,
-        records,
-        isOverallDefaultsView ? 'OVERALL' : (fixedView as EventKey),
-        'ALL',
-        '',
-        isOverallDefaultsView ? defaultEventsMap : events
-      ).slice(0, FIXED_RANK_COUNT);
+  // 반/수업시간 assigned via the roster (see src/lib/classLabels.ts) --
+  // empty when the gym never bothered assigning any.
+  const classOptions = Array.from(new Set(students.flatMap((s) => parseClassLabels(s.classLabel)))).sort();
+  const classCount = classOptions.length;
 
-  // Row entrance stagger scales with the auto-transition interval, so a
-  // fast 3s cycle feels snappy and a slow 8s cycle feels more deliberate.
-  const rowStaggerStep = autoPlaySeconds * 0.06;
-  const rowAnimDuration = 0.35 + autoPlaySeconds * 0.03;
+  const [displayMode, setDisplayMode] = useState<'ROTATE' | 'FIXED' | 'BY_CLASS'>('ROTATE');
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  // ROTATE (자동 전환): eventIndex = which event is showing; page = which
+  // chunk of ROTATE_PAGE_SIZE ranks within that event (0 = 1-10, 1 = 11-20,
+  // ...) -- kept together so they always advance in step.
+  const [cursor, setCursor] = useState<{ eventIndex: number; page: number }>({ eventIndex: 0, page: 0 });
+  const [isAutoPlay, setIsAutoPlay] = useState<boolean>(true);
+  const [autoPlaySeconds, setAutoPlaySeconds] = useState<number>(5);
+
+  // FIXED (고정 화면): the chosen ranking (종합/종목/종목별 한눈에) stays
+  // selected -- it doesn't rotate through events like ROTATE does -- but it
+  // now auto-pages through the whole roster (21-40, 41-60, ...) instead of
+  // stopping at the top 20 forever.
+  const [fixedView, setFixedView] = useState<string>(OVERALL_DEFAULTS);
+  const [fixedPage, setFixedPage] = useState<number>(0);
+  const [fixedAutoPlay, setFixedAutoPlay] = useState<boolean>(true);
+  const [fixedAutoPlaySeconds, setFixedAutoPlaySeconds] = useState<number>(5);
+  const isOverallDefaultsView = fixedView === OVERALL_DEFAULTS;
+  const isAllSixView = fixedView === ALL_SIX;
+
+  // BY_CLASS (부별): classIndex = which 반 is showing; page = which page of
+  // its per-event panels (same "one event per panel" layout as ALL_SIX,
+  // just scoped to that class's students).
+  const [classCursor, setClassCursor] = useState<{ classIndex: number; page: number }>({ classIndex: 0, page: 0 });
+  const [classAutoPlay, setClassAutoPlay] = useState<boolean>(true);
+  const [classAutoPlaySeconds, setClassAutoPlaySeconds] = useState<number>(5);
+
+  // Row entrance stagger scales with whichever mode is active's interval,
+  // so a fast 3s cycle feels snappy and a slow 10s cycle feels deliberate.
+  const activeAutoPlaySeconds =
+    displayMode === 'FIXED' ? fixedAutoPlaySeconds : displayMode === 'BY_CLASS' ? classAutoPlaySeconds : autoPlaySeconds;
+  const rowStaggerStep = activeAutoPlaySeconds * 0.06;
+  const rowAnimDuration = 0.35 + activeAutoPlaySeconds * 0.03;
 
   // Re-mounting the FIXED page's rows is what replays their entrance
   // animation (React reuses a DOM node -- and its already-finished
-  // animation -- whenever the key doesn't change, which is why only the
-  // very first visit used to animate). Bump this on every entry into FIXED
-  // mode and every view change so the stagger-in replays each time.
+  // animation -- whenever the key doesn't change). Bump this on every entry
+  // into FIXED mode and every view change; the actual render key also
+  // includes the current page so a page-advance replays it too (see below).
   const [fixedRenderKey, setFixedRenderKey] = useState<number>(0);
   useEffect(() => {
     if (displayMode === 'FIXED') setFixedRenderKey((k) => k + 1);
   }, [displayMode, fixedView]);
+  useEffect(() => {
+    setFixedPage(0);
+  }, [fixedView]);
 
+  // ----- ROTATE derived data -----
+  const currentEventIndex = cursor.eventIndex;
   const currentEventKey: EventKey = eventKeys[currentEventIndex] || eventKeys[0];
   const eventMeta = events[currentEventKey] || events[eventKeys[0]];
-
   const leaderboardItems = getLeaderboardData(students, records, currentEventKey, 'ALL', '', events);
   const totalPagesForEvent = Math.max(1, Math.ceil(leaderboardItems.length / ROTATE_PAGE_SIZE));
   // Clamp defensively -- if records changed underneath a running rotation
@@ -181,6 +251,51 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
     currentPage * ROTATE_PAGE_SIZE,
     currentPage * ROTATE_PAGE_SIZE + ROTATE_PAGE_SIZE
   );
+
+  // ----- FIXED derived data -----
+  const fixedFullItems = isAllSixView
+    ? []
+    : getLeaderboardData(
+        students,
+        records,
+        isOverallDefaultsView ? 'OVERALL' : (fixedView as EventKey),
+        'ALL',
+        '',
+        isOverallDefaultsView ? defaultEventsMap : events
+      );
+  const fixedSingleTotalPages = Math.max(1, Math.ceil(fixedFullItems.length / FIXED_RANK_COUNT));
+  const fixedSinglePage = fixedPage % fixedSingleTotalPages;
+  const fixedLeaderboardItems = fixedFullItems.slice(
+    fixedSinglePage * FIXED_RANK_COUNT,
+    fixedSinglePage * FIXED_RANK_COUNT + FIXED_RANK_COUNT
+  );
+  function buildEventPanels(panelStudents: Student[], page: number): EventPanel[] {
+    return sixEventKeys.map((eventKey) => {
+      const fullItems = getLeaderboardData(panelStudents, records, eventKey, 'ALL', '', events);
+      const totalPages = Math.max(1, Math.ceil(fullItems.length / ALL_SIX_ROWS_PER_EVENT));
+      const panelPage = page % totalPages;
+      return {
+        eventKey,
+        meta: events[eventKey],
+        page: panelPage,
+        totalPages,
+        items: fullItems.slice(
+          panelPage * ALL_SIX_ROWS_PER_EVENT,
+          panelPage * ALL_SIX_ROWS_PER_EVENT + ALL_SIX_ROWS_PER_EVENT
+        ),
+      };
+    });
+  }
+  const allSixPanels: EventPanel[] = isAllSixView ? buildEventPanels(students, fixedPage) : [];
+  const allSixTotalPages = allSixPanels.length > 0 ? Math.max(1, ...allSixPanels.map((p) => p.totalPages)) : 1;
+  const fixedTotalPages = isAllSixView ? allSixTotalPages : fixedSingleTotalPages;
+
+  // ----- BY_CLASS derived data -----
+  const currentClassIndex = classCount > 0 ? classCursor.classIndex % classCount : 0;
+  const currentClass = classOptions[currentClassIndex];
+  const classStudents = currentClass ? students.filter((s) => studentInClass(s.classLabel, currentClass)) : [];
+  const classPanels: EventPanel[] = currentClass ? buildEventPanels(classStudents, classCursor.page) : [];
+  const classTotalPages = classPanels.length > 0 ? Math.max(1, ...classPanels.map((p) => p.totalPages)) : 1;
 
   // Ticker tape is computed from real records, not placeholder names.
   const overallChampion = getLeaderboardData(students, records, 'OVERALL', 'ALL', '', events)[0];
@@ -193,24 +308,47 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
 
   // Self-rescheduling timeout (not setInterval) -- `cursor` is in the deps,
   // so every advance re-runs this effect and arms a fresh full-length timer
-  // for whatever's showing next, and the callback always sees fresh
-  // students/records/events instead of a stale closure from when the
-  // interval was first created.
+  // for whatever's showing next, always reading fresh totalPagesForEvent
+  // (computed above from current students/records/events) instead of a
+  // stale closure from when the timer was first created.
   useEffect(() => {
     if (displayMode !== 'ROTATE' || !isAutoPlay || eventKeys.length === 0) return;
     const timer = setTimeout(() => {
       setCursor((prev) => {
-        const key = eventKeys[prev.eventIndex] || eventKeys[0];
-        const itemCount = getLeaderboardData(students, records, key, 'ALL', '', events).length;
-        const totalPages = Math.max(1, Math.ceil(itemCount / ROTATE_PAGE_SIZE));
-        if (prev.page + 1 < totalPages) {
+        if (prev.page + 1 < totalPagesForEvent) {
           return { eventIndex: prev.eventIndex, page: prev.page + 1 };
         }
         return { eventIndex: (prev.eventIndex + 1) % eventKeys.length, page: 0 };
       });
     }, autoPlaySeconds * 1000);
     return () => clearTimeout(timer);
-  }, [displayMode, isAutoPlay, autoPlaySeconds, cursor, eventKeys, students, records, events]);
+  }, [displayMode, isAutoPlay, autoPlaySeconds, cursor, eventKeys.length, totalPagesForEvent]);
+
+  // FIXED auto-page: same self-rescheduling pattern, just advancing (and
+  // looping) the page within whichever view is selected instead of ever
+  // switching the view itself.
+  useEffect(() => {
+    if (displayMode !== 'FIXED' || !fixedAutoPlay) return;
+    const timer = setTimeout(() => {
+      setFixedPage((p) => (p + 1) % fixedTotalPages);
+    }, fixedAutoPlaySeconds * 1000);
+    return () => clearTimeout(timer);
+  }, [displayMode, fixedAutoPlay, fixedAutoPlaySeconds, fixedPage, fixedTotalPages]);
+
+  // BY_CLASS auto-advance: pages through the current class's panels, then
+  // moves to the next class once every panel has cycled through.
+  useEffect(() => {
+    if (displayMode !== 'BY_CLASS' || !classAutoPlay || classCount === 0) return;
+    const timer = setTimeout(() => {
+      setClassCursor((prev) => {
+        if (prev.page + 1 < classTotalPages) {
+          return { classIndex: prev.classIndex, page: prev.page + 1 };
+        }
+        return { classIndex: (prev.classIndex + 1) % classCount, page: 0 };
+      });
+    }, classAutoPlaySeconds * 1000);
+    return () => clearTimeout(timer);
+  }, [displayMode, classAutoPlay, classAutoPlaySeconds, classCursor, classCount, classTotalPages]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -221,6 +359,16 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       setIsFullscreen(false);
     }
   };
+
+  // Single progress bar reused across all 3 modes -- what it tracks
+  // (event+page, fixed page, or class+page) depends on which is active.
+  const activeIsAutoPlay = displayMode === 'FIXED' ? fixedAutoPlay : displayMode === 'BY_CLASS' ? classAutoPlay : isAutoPlay;
+  const progressKey =
+    displayMode === 'FIXED'
+      ? `fixed-${fixedView}-${isAllSixView ? fixedPage : fixedSinglePage}`
+      : displayMode === 'BY_CLASS'
+      ? `class-${currentClass}-${classCursor.page}`
+      : `rotate-${currentEventIndex}-${currentPage}`;
 
   return (
     <div className="fixed inset-0 z-50 bg-[#f4f5f8] text-slate-900 flex flex-col justify-between p-6 sm:p-10 select-none overflow-hidden">
@@ -248,7 +396,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Rotate vs Fixed Page Switch */}
+          {/* 3-way mode switch */}
           <div className="flex items-center gap-1 bg-slate-100 rounded-xl p-1 text-xs font-bold">
             <button
               onClick={() => setDisplayMode('ROTATE')}
@@ -267,6 +415,15 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               <span>고정 화면</span>
+            </button>
+            <button
+              onClick={() => setDisplayMode('BY_CLASS')}
+              className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                displayMode === 'BY_CLASS' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>부별 보기</span>
             </button>
           </div>
 
@@ -290,7 +447,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
                 title="전환 간격"
                 className="px-2 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer"
               >
-                {[3, 4, 5, 6, 7, 8].map((sec) => (
+                {AUTO_PLAY_SECONDS_OPTIONS.map((sec) => (
                   <option key={sec} value={sec}>
                     {sec}초
                   </option>
@@ -300,22 +457,79 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
           )}
 
           {displayMode === 'FIXED' && (
-            <select
-              value={fixedView}
-              onChange={(e) => setFixedView(e.target.value)}
-              title="고정 화면에 표시할 순위"
-              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer max-w-[220px]"
-            >
-              <option value={OVERALL_DEFAULTS}>종합 순위 (기본 6종목 합산)</option>
-              <option value={ALL_SIX}>종목별 한눈에 보기 (6종목)</option>
-              <optgroup label="종목별 순위">
-                {eventKeys.map((key) => (
-                  <option key={key} value={key}>
-                    {events[key]?.title ?? key}
+            <>
+              <select
+                value={fixedView}
+                onChange={(e) => setFixedView(e.target.value)}
+                title="고정 화면에 표시할 순위"
+                className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer max-w-[220px]"
+              >
+                <option value={OVERALL_DEFAULTS}>종합 순위 (기본 6종목 합산)</option>
+                <option value={ALL_SIX}>종목별 한눈에 보기 (6종목)</option>
+                <optgroup label="종목별 순위">
+                  {eventKeys.map((key) => (
+                    <option key={key} value={key}>
+                      {events[key]?.title ?? key}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+
+              <button
+                onClick={() => setFixedAutoPlay(!fixedAutoPlay)}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs ${
+                  fixedAutoPlay
+                    ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
+                    : 'bg-white border-slate-200 text-slate-600'
+                }`}
+              >
+                {fixedAutoPlay ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                <span>{fixedAutoPlay ? `자동 전환 중 (${fixedAutoPlaySeconds}초)` : '자동 전환 정지'}</span>
+              </button>
+
+              <select
+                value={fixedAutoPlaySeconds}
+                onChange={(e) => setFixedAutoPlaySeconds(Number(e.target.value))}
+                title="전환 간격"
+                className="px-2 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer"
+              >
+                {AUTO_PLAY_SECONDS_OPTIONS.map((sec) => (
+                  <option key={sec} value={sec}>
+                    {sec}초
                   </option>
                 ))}
-              </optgroup>
-            </select>
+              </select>
+            </>
+          )}
+
+          {displayMode === 'BY_CLASS' && (
+            <>
+              <button
+                onClick={() => setClassAutoPlay(!classAutoPlay)}
+                disabled={classCount === 0}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-50 ${
+                  classAutoPlay
+                    ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
+                    : 'bg-white border-slate-200 text-slate-600'
+                }`}
+              >
+                {classAutoPlay ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                <span>{classAutoPlay ? `자동 전환 중 (${classAutoPlaySeconds}초)` : '자동 전환 정지'}</span>
+              </button>
+
+              <select
+                value={classAutoPlaySeconds}
+                onChange={(e) => setClassAutoPlaySeconds(Number(e.target.value))}
+                title="전환 간격"
+                className="px-2 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer"
+              >
+                {AUTO_PLAY_SECONDS_OPTIONS.map((sec) => (
+                  <option key={sec} value={sec}>
+                    {sec}초
+                  </option>
+                ))}
+              </select>
+            </>
           )}
 
           <button
@@ -334,21 +548,22 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
         </div>
       </div>
 
-      {/* Auto-transition progress bar */}
-      {displayMode === 'ROTATE' && (
-        <div className="relative z-10 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
-          {isAutoPlay && (
-            <div
-              key={`${currentEventIndex}-${currentPage}-${autoPlaySeconds}`}
-              className="h-full bg-[#1B5E20] rounded-full"
-              style={{ animation: `tv-progress ${autoPlaySeconds}s linear` }}
-            />
-          )}
-        </div>
-      )}
+      {/* Auto-transition progress bar -- shared across all 3 modes */}
+      <div className="relative z-10 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+        {activeIsAutoPlay && (
+          <div
+            key={`${progressKey}-${activeAutoPlaySeconds}`}
+            className="h-full bg-[#1B5E20] rounded-full"
+            style={{ animation: `tv-progress ${activeAutoPlaySeconds}s linear` }}
+          />
+        )}
+      </div>
 
       {displayMode === 'FIXED' && (
-        <div key={fixedRenderKey} className="relative z-10 my-auto animate-tv-transition">
+        <div
+          key={`${fixedRenderKey}-${isAllSixView ? fixedPage : fixedSinglePage}`}
+          className="relative z-10 my-auto animate-tv-transition"
+        >
           <div className="text-center mb-5">
             <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
               {isOverallDefaultsView
@@ -365,70 +580,56 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
                 : events[fixedView]
                 ? `측정 시간 ${events[fixedView].timeSeconds}초 · ${events[fixedView].description}`
                 : ''}
+              {fixedTotalPages > 1 &&
+                ` · ${(isAllSixView ? fixedPage % allSixTotalPages : fixedSinglePage) + 1}/${fixedTotalPages} 페이지`}
             </p>
           </div>
 
           {isAllSixView ? (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {sixEventKeys.map((eventKey, panelIndex) => {
-                const meta = events[eventKey];
-                const items = getLeaderboardData(students, records, eventKey, 'ALL', '', events).slice(
-                  0,
-                  ALL_SIX_ROWS_PER_EVENT
-                );
-                return (
-                  <div
-                    key={eventKey}
-                    className="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-xs"
-                    style={{
-                      animation: `tv-row-in ${rowAnimDuration}s cubic-bezier(0.16, 1, 0.3, 1) both`,
-                      animationDelay: `${panelIndex * (rowStaggerStep / 2)}s`,
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                      <span className="text-sm font-bold text-slate-900">{meta?.shortTitle ?? meta?.title}</span>
-                      <span className="text-[10px] font-mono font-bold text-slate-400">{meta?.timeSeconds}s</span>
-                    </div>
-                    <div className="space-y-2">
-                      {items.length === 0 ? (
-                        <div className="text-xs text-slate-300 text-center py-6">기록 없음</div>
-                      ) : (
-                        items.map((item, idx) => (
-                          <RankRow
-                            key={item.student.id}
-                            item={item}
-                            index={idx}
-                            rowAnimDuration={rowAnimDuration}
-                            rowStaggerStep={rowStaggerStep / 2}
-                            compact
-                          />
-                        ))
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <EventPanelsGrid panels={allSixPanels} rowAnimDuration={rowAnimDuration} rowStaggerStep={rowStaggerStep} />
           ) : fixedLeaderboardItems.length === 0 ? (
             <div className="text-center text-slate-400 font-bold py-16">아직 등록된 기록이 없습니다.</div>
           ) : (
             // Same row card and size as the auto-rotating page, laid out
             // 2 columns x 10 rows (FIXED_RANK_COUNT / 2 -- keep the 10 in
-            // grid-rows in sync if that constant changes): ranks 1-10 fill
-            // the left column top-to-bottom before 11-20 start the right
-            // column (grid-flow-col + explicit row count), not zigzag. No
-            // scroll -- a TV has no way to scroll it into view.
+            // grid-rows in sync if that constant changes): ranks fill the
+            // left column top-to-bottom before the right column starts
+            // (grid-flow-col + explicit row count), not zigzag. No scroll --
+            // a TV has no way to scroll it into view.
             <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-flow-col lg:grid-rows-[repeat(10,auto)] gap-3">
               {fixedLeaderboardItems.map((item, index) => (
                 <RankRow
                   key={item.student.id}
                   item={item}
                   index={index}
+                  rank={fixedSinglePage * FIXED_RANK_COUNT + index + 1}
                   rowAnimDuration={rowAnimDuration}
                   rowStaggerStep={rowStaggerStep / 2}
                 />
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {displayMode === 'BY_CLASS' && (
+        <div key={`class-${currentClass}-${classCursor.page}`} className="relative z-10 my-auto animate-tv-transition">
+          {classCount === 0 ? (
+            <div className="text-center text-slate-400 font-bold py-16">
+              반 정보가 없습니다. 수련생 관리에서 학생들에게 반을 지정해 주세요.
+            </div>
+          ) : (
+            <>
+              <div className="text-center mb-5">
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">{currentClass} 순위</h1>
+                <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-1.5">
+                  {currentClass} 수련생 {classStudents.length}명 · 종목별 순위
+                  {classTotalPages > 1 ? ` · ${(classCursor.page % classTotalPages) + 1}/${classTotalPages} 페이지` : ''}
+                  {' · '}반 {currentClassIndex + 1}/{classCount}
+                </p>
+              </div>
+              <EventPanelsGrid panels={classPanels} rowAnimDuration={rowAnimDuration} rowStaggerStep={rowStaggerStep} />
+            </>
           )}
         </div>
       )}
