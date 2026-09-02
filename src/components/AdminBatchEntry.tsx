@@ -124,7 +124,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   }, [initialSubTab]);
 
   // Batch entry state
-  const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_basic');
+  const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(ALL_EVENTS_KEY);
   // Drop-down normally picks exactly one event column to enter at a time --
   // coaches asked for the table to only show the one event they're
   // currently measuring. "전체" (all events) is a sentinel value on the
