@@ -84,6 +84,15 @@ export const ClassLabelsField: React.FC<ClassLabelsFieldProps> = ({
           <span>{chip}</span>
           <button
             type="button"
+            // Without this, clicking x moves focus to this button and then
+            // removes it from the DOM in the same tick -- focus silently
+            // drops to <body> instead of firing a normal blur/focusout, so
+            // a later click elsewhere never triggers the auto-save (the
+            // container never "loses" focus from its own perspective).
+            // preventDefault on mousedown stops the button from taking
+            // focus in the first place, so the input stays focused and the
+            // container's real blur-away detection still works normally.
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => removeChip(chip)}
             className="text-[#1B5E20]/60 hover:text-rose-600 cursor-pointer"
           >
