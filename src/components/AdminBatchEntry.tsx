@@ -168,6 +168,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   // Click a roster card's 반 badge to edit it inline -- studentId being edited.
   const [editingClassStudentId, setEditingClassStudentId] = useState<string | null>(null);
   const [classDraft, setClassDraft] = useState<string>('');
+  // Escape sets this so the input's onBlur (which auto-saves on this render
+  // pass, since clicking anywhere else should also commit the edit) knows
+  // to skip saving that one time instead of persisting a cancelled edit.
+  const skipClassBlurSaveRef = useRef(false);
 
   // New Student Modal state
   const [showAddStudentModal, setShowAddStudentModal] = useState<boolean>(false);
@@ -599,6 +603,19 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const handleSaveClassLabel = async (studentId: string) => {
     await onUpdateStudentClass({ studentId, classLabel: classDraft.trim() || null });
     setEditingClassStudentId(null);
+  };
+
+  const handleCancelClassEdit = () => {
+    skipClassBlurSaveRef.current = true;
+    setEditingClassStudentId(null);
+  };
+
+  const handleClassInputBlur = (studentId: string) => {
+    if (skipClassBlurSaveRef.current) {
+      skipClassBlurSaveRef.current = false;
+      return;
+    }
+    handleSaveClassLabel(studentId);
   };
 
   return (
@@ -1591,12 +1608,14 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                               onChange={(e) => setClassDraft(e.target.value)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') handleSaveClassLabel(student.id);
-                                if (e.key === 'Escape') setEditingClassStudentId(null);
+                                if (e.key === 'Escape') handleCancelClassEdit();
                               }}
+                              onBlur={() => handleClassInputBlur(student.id)}
                               className="w-16 px-1.5 py-0.5 bg-white border border-[#66BB6A] rounded-lg text-[10px] font-bold text-slate-900 focus:outline-none"
                             />
                             <button
                               type="button"
+                              onMouseDown={(e) => e.preventDefault()}
                               onClick={() => handleSaveClassLabel(student.id)}
                               className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md cursor-pointer"
                               title="저장"
