@@ -6,6 +6,11 @@ import { todayLocalDate } from '../lib/dateHelper';
 import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
 import { Gym } from '../data/api/gyms';
 
+// Sentinel dropdown value for "show every event column at once" -- never a
+// real event key (those come from the events table), so it can share the
+// same <select> as the real event keys without colliding.
+const ALL_EVENTS_KEY = '__ALL__';
+
 // Next student_no for the current year, based on the highest existing
 // suffix rather than the current headcount -- headcount undercounts once
 // any student has ever been deleted, which collided with a still-existing
@@ -119,10 +124,14 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
   // Batch entry state
   const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_basic');
-  // Drop-down picks exactly one event column to enter at a time -- coaches
-  // asked for the table to only show the one event they're currently
-  // measuring, instead of always cramming in all 6 defaults.
-  const visibleEventKeys = [selectedEventKey];
+  // Drop-down normally picks exactly one event column to enter at a time --
+  // coaches asked for the table to only show the one event they're
+  // currently measuring. "전체" (all events) is a sentinel value on the
+  // same dropdown that restores the old side-by-side view of every event.
+  const visibleEventKeys = selectedEventKey === ALL_EVENTS_KEY ? eventKeys : [selectedEventKey];
+  // Sorting/labels that only make sense for one concrete event fall back to
+  // the first real event while "전체" is selected.
+  const pbSortEventKey = selectedEventKey === ALL_EVENTS_KEY ? eventKeys[0] : selectedEventKey;
   const [measurementDate, setMeasurementDate] = useState<string>(todayLocalDate());
   const [gradeFilter, setGradeFilter] = useState<string>('ALL');
   const [classFilter, setClassFilter] = useState<string>('ALL');
@@ -211,7 +220,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
   const sortedRows = filteredStudents.map((student) => ({
     student,
-    pb: getStudentPersonalBest(records, student.id, selectedEventKey),
+    pb: getStudentPersonalBest(records, student.id, pbSortEventKey),
   }));
   if (sortKey) {
     sortedRows.sort((a, b) => {
@@ -951,6 +960,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 onChange={(e) => setSelectedEventKey(e.target.value as EventKey)}
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 font-semibold focus:outline-none focus:border-[#66BB6A] shadow-xs"
               >
+                <option value={ALL_EVENTS_KEY}>전체 (모든 종목 한 번에 보기)</option>
                 {eventKeys.map((key) => {
                   const meta = events[key];
                   return (
@@ -1039,7 +1049,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 onClick={() => toggleSort('pb')}
                 className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all font-bold flex items-center gap-1"
               >
-                <span>최고기록순 정렬 ({events[selectedEventKey]?.shortTitle ?? selectedEventKey})</span>
+                <span>최고기록순 정렬 ({events[pbSortEventKey]?.shortTitle ?? pbSortEventKey})</span>
                 {sortKey === 'pb' ? (
                   sortDir === 'asc' ? (
                     <ArrowUp className="w-3 h-3" />
@@ -1195,7 +1205,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           {/* Action Buttons */}
           <div className="flex items-center justify-between gap-2">
             <button
-              onClick={() => onClose(selectedEventKey)}
+              onClick={() => onClose(selectedEventKey === ALL_EVENTS_KEY ? undefined : selectedEventKey)}
               className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold hover:bg-slate-200 transition-all border border-slate-200/80 whitespace-nowrap"
             >
               닫기 / 랭킹보드로
