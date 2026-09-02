@@ -63,7 +63,6 @@ import {
   ArrowUpDown,
   Lock,
   Pencil,
-  ChevronDown,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
@@ -1258,84 +1257,83 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       {/* STUDENT ROSTER MANAGEMENT SUB TAB */}
       {activeSubTab === 'STUDENTS' && (
         <div className="space-y-6">
-          {/* Top Banner & Excel Roster Upload Card -- collapsed by default,
-              same reasoning as the record-entry tab's excel section: it's an
-              occasional action, not the main job of this tab (the roster
-              list below is). */}
-          <details className="group bg-white border border-slate-200/90 rounded-2xl shadow-sm">
-            <summary className="flex items-center gap-2 cursor-pointer list-none p-4 sm:p-5">
+          {/* Top Banner & Excel Roster Upload -- always visible, condensed
+              to a 2-up row (download / upload) instead of a long paragraph
+              above a separate full-width drop zone, matching the record-
+              entry tab's excel section. */}
+          <div>
+            <div className="flex items-center gap-2 py-2">
               <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs">
                 엑셀 명단 일괄 등록
               </span>
               <h3 className="text-sm font-bold text-slate-900 flex-1">
                 전체 수련생 명단(80~100명+) 엑셀 한 번에 올리기
               </h3>
-              <ChevronDown className="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180 shrink-0" />
-            </summary>
-
-            <div className="px-4 sm:px-5 pb-4 sm:pb-5">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-              <p className="text-xs text-slate-600 font-medium">
-                처음 이용 시 80명 이상의 수련생 명단을 일일이 입력할 필요 없이, 엑셀 파일 하나로 빠르게 일괄 등록할 수 있습니다. 이미
-                등록된 수련생은 '반' 열만 채워서 다시 올리면 반 정보만 갱신됩니다. 여러 반을 다니는 수련생은 '반' 열에 콤마(,)로
-                구분해서 입력하세요 (예: 월1부, 화2부).
-              </p>
-
-              <button
-                type="button"
-                onClick={() => downloadStudentRosterTemplate(gym.name, students)}
-                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                <span>수련생 명단 엑셀 양식 다운로드</span>
-              </button>
             </div>
 
-            {/* Roster File Upload Area */}
-            <div className="bg-slate-50/80 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-xl p-4 text-center transition-colors">
-              <input
-                ref={rosterFileInputRef}
-                type="file"
-                accept=".xlsx, .xls, .csv"
-                onChange={handleRosterFileChange}
-                className="hidden"
-                id="roster-excel-input"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+              {/* 1. Template Download */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="p-2 rounded-xl bg-slate-100 text-slate-600 shrink-0">
+                    <Download className="w-4 h-4" />
+                  </span>
+                  <h4 className="text-xs font-bold text-slate-900">1. 명단 양식 다운로드</h4>
+                </div>
+                <p className="text-[11px] text-slate-500 font-medium mb-3 flex-1">
+                  이미 등록된 수련생은 '반' 열만 채워서 다시 올리면 반 정보만 갱신돼요. 여러 반이면 콤마(,)로 구분하세요
+                  (예: 월1부, 화2부).
+                </p>
+                <button
+                  type="button"
+                  onClick={() => downloadStudentRosterTemplate(gym.name, students)}
+                  className="w-full py-2 px-3 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-[11px] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>양식 다운로드</span>
+                </button>
+              </div>
 
-              <label
-                htmlFor="roster-excel-input"
-                className="cursor-pointer flex flex-col items-center justify-center gap-1.5"
-              >
-                <Upload className="w-7 h-7 text-slate-500" />
-                <span className="text-xs font-bold text-slate-800">
-                  수련생 명단 엑셀 파일 선택 또는 드래그앤드롭 (.xlsx / .csv)
-                </span>
-                <span className="text-[11px] text-slate-400 font-medium">
-                  '수련생이름', '학년', '성별', '반'(선택) 열이 포함된 엑셀 파일
-                </span>
-              </label>
+              {/* 2. Upload */}
+              <div className="bg-slate-50/80 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-4 text-center transition-all flex flex-col">
+                <input
+                  ref={rosterFileInputRef}
+                  type="file"
+                  accept=".xlsx, .xls, .csv"
+                  onChange={handleRosterFileChange}
+                  className="hidden"
+                  id="roster-excel-input"
+                />
+                <label
+                  htmlFor="roster-excel-input"
+                  className="cursor-pointer flex flex-col items-center justify-center gap-1.5 flex-1"
+                >
+                  <Upload className="w-5 h-5 text-slate-600" />
+                  <span className="text-xs font-bold text-slate-900">2. 엑셀 업로드</span>
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    이름·학년·성별·반 열이 포함된 파일을 선택하거나 드래그앤드롭하세요
+                  </span>
+                </label>
+
+                {isParsingRosterExcel && (
+                  <p className="text-[11px] text-slate-500 font-bold mt-2 animate-pulse">명단 분석 중...</p>
+                )}
+
+                {rosterExcelError && (
+                  <div className="mt-2 bg-rose-50 border border-rose-200 rounded-lg p-2 text-[11px] text-rose-700 font-bold flex items-center justify-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                    <span>{rosterExcelError}</span>
+                  </div>
+                )}
+
+                {rosterSuccessMsg && (
+                  <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg p-2 text-[11px] text-emerald-900 font-bold flex items-center justify-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>{rosterSuccessMsg}</span>
+                  </div>
+                )}
+              </div>
             </div>
-
-            {isParsingRosterExcel && (
-              <div className="mt-3 text-center text-xs text-slate-500 font-bold flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
-                <span>수련생 명단 엑셀 분석 중...</span>
-              </div>
-            )}
-
-            {rosterExcelError && (
-              <div className="mt-3 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{rosterExcelError}</span>
-              </div>
-            )}
-
-            {rosterSuccessMsg && (
-              <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2">
-                <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0" />
-                <span>{rosterSuccessMsg}</span>
-              </div>
-            )}
 
             {/* Parsed Roster Preview Table */}
             {parsedRosterRows.length > 0 && (
@@ -1430,8 +1428,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 </div>
               </div>
             )}
-            </div>
-          </details>
+          </div>
 
           {/* Existing Roster List Header & Controls */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3">
