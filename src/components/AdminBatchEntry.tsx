@@ -1308,23 +1308,27 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       {/* STUDENT ROSTER MANAGEMENT SUB TAB */}
       {activeSubTab === 'STUDENTS' && (
         <div className="space-y-6">
-          {/* Top Banner & Excel Roster Upload Card */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm">
+          {/* Top Banner & Excel Roster Upload Card -- collapsed by default,
+              same reasoning as the record-entry tab's excel section: it's an
+              occasional action, not the main job of this tab (the roster
+              list below is). */}
+          <details className="group bg-white border border-slate-200/90 rounded-2xl shadow-sm">
+            <summary className="flex items-center gap-2 cursor-pointer list-none p-4 sm:p-5">
+              <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs">
+                엑셀 명단 일괄 등록
+              </span>
+              <h3 className="text-sm font-bold text-slate-900 flex-1">
+                전체 수련생 명단(80~100명+) 엑셀 한 번에 올리기
+              </h3>
+              <ChevronDown className="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180 shrink-0" />
+            </summary>
+
+            <div className="px-4 sm:px-5 pb-4 sm:pb-5">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs">
-                    엑셀 명단 일괄 등록
-                  </span>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    전체 수련생 명단(80~100명+) 엑셀 한 번에 올리기
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-600 font-medium mt-1">
-                  처음 이용 시 80명 이상의 수련생 명단을 일일이 입력할 필요 없이, 엑셀 파일 하나로 빠르게 일괄 등록할 수 있습니다. 이미
-                  등록된 수련생은 '반' 열만 채워서 다시 올리면 반 정보만 갱신됩니다.
-                </p>
-              </div>
+              <p className="text-xs text-slate-600 font-medium">
+                처음 이용 시 80명 이상의 수련생 명단을 일일이 입력할 필요 없이, 엑셀 파일 하나로 빠르게 일괄 등록할 수 있습니다. 이미
+                등록된 수련생은 '반' 열만 채워서 다시 올리면 반 정보만 갱신됩니다.
+              </p>
 
               <button
                 type="button"
@@ -1468,7 +1472,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          </details>
 
           {/* Existing Roster List Header & Controls */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3">
@@ -1544,7 +1549,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             </div>
 
             {/* Students Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-96 overflow-y-auto pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-[720px] overflow-y-auto pt-2">
               {students
                 .filter((student) => {
                   const matchesSearch = student.name.toLowerCase().includes(studentRosterSearch.toLowerCase());
