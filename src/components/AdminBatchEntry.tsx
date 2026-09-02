@@ -58,6 +58,7 @@ import {
   Lock,
   Pencil,
   Check,
+  ChevronDown,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
@@ -634,14 +635,19 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           now instead of behind a separate tab */}
       {activeSubTab === 'BATCH' && (
         <div className="space-y-8">
-          {/* Excel bulk record upload (merged in from the old separate tab) */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2">
+          {/* Excel bulk record upload (merged in from the old separate tab) --
+              collapsed by default so it doesn't crowd out the manual entry
+              table below, which is the page's main job. */}
+          <details className="group">
+            <summary className="flex items-center gap-2 cursor-pointer list-none py-2 px-3 -mx-3 rounded-xl hover:bg-slate-50">
               <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs">
                 엑셀 기록 일괄 등록
               </span>
-              <h3 className="text-sm font-bold text-slate-900">엑셀 파일로 여러 명 기록 한 번에 올리기</h3>
-            </div>
+              <h3 className="text-sm font-bold text-slate-900 flex-1">엑셀 파일로 여러 명 기록 한 번에 올리기</h3>
+              <ChevronDown className="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180" />
+            </summary>
+
+            <div className="space-y-6 pt-4">
 
           {/* Step 1: Download Template & Instructions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -897,7 +903,8 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               </div>
             </div>
           )}
-          </div>
+            </div>
+          </details>
 
           {/* Direct manual entry (previously its own tab) */}
           <div>
@@ -1058,7 +1065,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
           {/* Student Grid Table -- one input column per visible event, so
               the 6 default events (and one extra custom event, if picked
               above) can all be entered in the same pass. */}
-          <div className="bg-white border border-slate-200 rounded-xl mb-6 max-h-96 overflow-auto shadow-xs">
+          <div className="bg-white border border-slate-200 rounded-xl mb-6 max-h-[720px] overflow-auto shadow-xs">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="bg-slate-100/80 sticky top-0 border-b border-slate-200 text-slate-500 font-bold uppercase">
                 <tr>
