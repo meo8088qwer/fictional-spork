@@ -646,14 +646,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
         <div className="space-y-8">
           {/* Excel bulk record upload (merged in from the old separate tab) */}
           <div>
-            <div className="flex items-center gap-2 py-2">
-              <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs">
-                엑셀 기록 일괄 등록
-              </span>
-              <h3 className="text-sm font-bold text-slate-900 flex-1">엑셀 파일로 여러 명 기록 한 번에 올리기</h3>
-            </div>
-
-            <div className="space-y-6 pt-4">
+            <div className="space-y-6">
 
           {/* 3 steps in one row: template download, PB rule, upload -- was a
               2-col grid of long-form cards above a separate full-width drop
