@@ -8,6 +8,7 @@ import { Podium } from '../components/Podium';
 import { Leaderboard } from '../components/Leaderboard';
 import { RightRail } from '../components/RightRail';
 import { AdminBatchEntry } from '../components/AdminBatchEntry';
+import { LiveCountEntry } from '../components/LiveCountEntry';
 import { PricingPage } from '../components/PricingPage';
 import { UserGuidePage } from '../components/UserGuidePage';
 import { GlobalLeaderboard } from '../components/GlobalLeaderboard';
@@ -46,6 +47,7 @@ export default function AdminAppPage() {
   type AdminView =
     | 'LEADERBOARD'
     | 'ADMIN_BATCH'
+    | 'LIVE_COUNT'
     | 'EVENT_MANAGE'
     | 'STUDENT_MANAGE'
     | 'TV_MODE'
@@ -173,6 +175,16 @@ export default function AdminAppPage() {
               setActiveView('LEADERBOARD');
             }}
             onNavigateToPricing={() => setActiveView('PRICING')}
+          />
+        )}
+
+        {activeView === 'LIVE_COUNT' && (
+          <LiveCountEntry
+            gym={gym}
+            students={students}
+            events={events}
+            onBatchSaveRecords={batchSaveRecords}
+            onClose={() => setActiveView('LEADERBOARD')}
           />
         )}
 
