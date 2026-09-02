@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
-import { GRADE_GROUPS, EVENT_KEYS } from '../data/constants';
+import { GRADE_GROUPS } from '../data/constants';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { todayLocalDate } from '../lib/dateHelper';
 import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
@@ -103,9 +103,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   initialSubTab = 'BATCH',
 }) => {
   const eventKeys = Object.keys(events);
-  // The 6 default events are always enterable together; a custom event
-  // picked from the dropdown below is appended as one extra column.
-  const defaultEventKeys = EVENT_KEYS.filter((key) => events[key]);
   const studentLimit = gym.plan === 'pro' ? Infinity : gym.plan === 'basic' ? 150 : 50;
   // Basic can add up to 5 custom events on top of the 6 defaults (11 total);
   // pro is uncapped.
@@ -122,9 +119,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
   // Batch entry state
   const [selectedEventKey, setSelectedEventKey] = useState<EventKey>(eventKeys[0] || '30s_basic');
-  const visibleEventKeys = defaultEventKeys.includes(selectedEventKey)
-    ? defaultEventKeys
-    : [...defaultEventKeys, selectedEventKey];
+  // Drop-down picks exactly one event column to enter at a time -- coaches
+  // asked for the table to only show the one event they're currently
+  // measuring, instead of always cramming in all 6 defaults.
+  const visibleEventKeys = [selectedEventKey];
   const [measurementDate, setMeasurementDate] = useState<string>(todayLocalDate());
   const [gradeFilter, setGradeFilter] = useState<string>('ALL');
   const [classFilter, setClassFilter] = useState<string>('ALL');
@@ -946,7 +944,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             {/* Event Selector */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                1. 추가 측정 종목 선택 (기본 6종목은 아래 표에 항상 표시됩니다)
+                1. 측정할 종목 선택
               </label>
               <select
                 value={selectedEventKey}
