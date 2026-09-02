@@ -11,7 +11,10 @@ import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight, LayoutGrid
 const FIXED_RANK_COUNT = 20;
 const OVERALL_DEFAULTS = 'OVERALL_DEFAULTS';
 const ALL_SIX = 'ALL_SIX';
-const ALL_SIX_ROWS_PER_EVENT = 7;
+// Fewer rows per panel than before (was 7) so each panel isn't tall enough
+// to spill past the bottom of the screen -- freed-up height goes into
+// slightly bigger rows instead (see RankRow's compact sizing below).
+const ALL_SIX_ROWS_PER_EVENT = 5;
 // Sentinel for "부별 보기" 반 selector -- cycles through every 반 in turn
 // instead of staying pinned on one.
 const ALL_CLASSES_AUTO = 'ALL_CLASSES_AUTO';
@@ -40,12 +43,14 @@ const RankRow: React.FC<{
   compact?: boolean;
 }> = ({ item, index, rank, rowAnimDuration, rowStaggerStep, compact = false }) => {
   const displayRank = rank ?? index + 1;
-  const badgeSize = compact ? 'w-7 h-7 text-xs' : 'w-10 h-10 text-lg';
-  const avatarSize = compact ? 'w-8 h-8 text-xs' : 'w-12 h-12 text-base';
-  const nameSize = compact ? 'text-sm' : 'text-lg';
-  const gradeSize = compact ? 'text-[10px] px-2 py-0.5' : 'text-xs px-2.5 py-0.5';
-  const dateSize = compact ? 'text-[10px]' : 'text-xs';
-  const countSize = compact ? 'text-lg' : 'text-3xl';
+  // Fewer rows per panel (5 instead of 7) freed up height, spent here on
+  // slightly bigger compact rows so names/counts stay legible on a TV.
+  const badgeSize = compact ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-lg';
+  const avatarSize = compact ? 'w-9 h-9 text-sm' : 'w-12 h-12 text-base';
+  const nameSize = compact ? 'text-base' : 'text-lg';
+  const gradeSize = compact ? 'text-[11px] px-2 py-0.5' : 'text-xs px-2.5 py-0.5';
+  const dateSize = compact ? 'text-[11px]' : 'text-xs';
+  const countSize = compact ? 'text-xl' : 'text-3xl';
   const rankColor =
     displayRank === 1
       ? 'bg-[#1B5E20] text-white'
@@ -57,7 +62,7 @@ const RankRow: React.FC<{
 
   return (
     <div
-      className={`${compact ? 'p-2.5 gap-2' : 'p-4 gap-4'} rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
+      className={`${compact ? 'p-3 gap-2.5' : 'p-4 gap-4'} rounded-2xl border transition-all flex items-center justify-between shadow-xs ${
         displayRank === 1 ? 'bg-white border-2 border-[#1B5E20]' : 'bg-white border-slate-200/80'
       }`}
       style={{
@@ -140,7 +145,7 @@ const EventPanelsGrid: React.FC<{
           <span className="text-sm font-bold text-slate-900">{meta?.shortTitle ?? meta?.title}</span>
           <span className="text-[10px] font-mono font-bold text-slate-400">{meta?.timeSeconds}s</span>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {items.length === 0 ? (
             <div className="text-xs text-slate-300 text-center py-6">기록 없음</div>
           ) : (
@@ -579,7 +584,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       </div>
 
       {/* Auto-transition progress bar -- shared across all 3 modes */}
-      <div className="relative z-10 h-2 w-full bg-slate-300 border border-slate-300 rounded-full overflow-hidden shadow-xs">
+      <div className="relative z-10 h-1 w-full bg-slate-300 rounded-full overflow-hidden">
         {activeIsAutoPlay && (
           <div
             key={`${progressKey}-${activeAutoPlaySeconds}`}
