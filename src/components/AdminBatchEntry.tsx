@@ -63,11 +63,11 @@ import {
   ArrowUpDown,
   Lock,
   Pencil,
-  Check,
   ChevronDown,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
+import { ClassLabelsField } from './ClassLabelsField';
 
 interface AdminBatchEntryProps {
   gym: Gym;
@@ -166,13 +166,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const [studentRosterSearch, setStudentRosterSearch] = useState<string>('');
   const [studentRosterGrade, setStudentRosterGrade] = useState<string>('ALL');
   const [studentRosterClass, setStudentRosterClass] = useState<string>('ALL');
-  // Click a roster card's 반 badge to edit it inline -- studentId being edited.
+  // Click a roster card's 반 badge to edit it inline -- studentId being
+  // edited, and the chip set being built up while that editor is open.
   const [editingClassStudentId, setEditingClassStudentId] = useState<string | null>(null);
   const [classDraft, setClassDraft] = useState<string>('');
-  // Escape sets this so the input's onBlur (which auto-saves on this render
-  // pass, since clicking anywhere else should also commit the edit) knows
-  // to skip saving that one time instead of persisting a cancelled edit.
-  const skipClassBlurSaveRef = useRef(false);
 
   // New Student Modal state
   const [showAddStudentModal, setShowAddStudentModal] = useState<boolean>(false);
@@ -601,23 +598,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     }
   };
 
-  const handleSaveClassLabel = async (studentId: string) => {
-    const normalized = normalizeClassLabels(classDraft);
+  const handleSaveClassLabel = async (studentId: string, rawValue: string) => {
+    const normalized = normalizeClassLabels(rawValue);
     await onUpdateStudentClass({ studentId, classLabel: normalized || null });
     setEditingClassStudentId(null);
-  };
-
-  const handleCancelClassEdit = () => {
-    skipClassBlurSaveRef.current = true;
-    setEditingClassStudentId(null);
-  };
-
-  const handleClassInputBlur = (studentId: string) => {
-    if (skipClassBlurSaveRef.current) {
-      skipClassBlurSaveRef.current = false;
-      return;
-    }
-    handleSaveClassLabel(studentId);
   };
 
   return (
@@ -1609,30 +1593,16 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                           {student.grade} • {student.studentNo}
                         </div>
                         {editingClassStudentId === student.id ? (
-                          <div className="flex items-center gap-1 mt-1">
-                            <input
-                              type="text"
-                              autoFocus
+                          <div className="mt-1">
+                            <ClassLabelsField
                               value={classDraft}
-                              placeholder="예: 월1부, 화2부"
-                              title="여러 반을 다니면 콤마(,)로 구분해서 입력하세요"
-                              onChange={(e) => setClassDraft(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveClassLabel(student.id);
-                                if (e.key === 'Escape') handleCancelClassEdit();
-                              }}
-                              onBlur={() => handleClassInputBlur(student.id)}
-                              className="w-32 px-1.5 py-0.5 bg-white border border-[#66BB6A] rounded-lg text-[10px] font-bold text-slate-900 focus:outline-none"
+                              onChange={setClassDraft}
+                              onBlurAway={(finalValue) => handleSaveClassLabel(student.id, finalValue)}
+                              onCancel={() => setEditingClassStudentId(null)}
+                              placeholder="예: 1부"
+                              autoFocus
+                              compact
                             />
-                            <button
-                              type="button"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => handleSaveClassLabel(student.id)}
-                              className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-md cursor-pointer"
-                              title="저장"
-                            >
-                              <Check className="w-3 h-3" />
-                            </button>
                           </div>
                         ) : (
                           <button
@@ -1868,14 +1838,12 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
 
               <div>
                 <label className="block text-slate-700 font-bold mb-1">
-                  반 / 수업시간 <span className="text-slate-400 font-medium">(선택, 여러 개면 콤마로 구분. 예: 월1부, 화2부)</span>
+                  반 / 수업시간 <span className="text-slate-400 font-medium">(선택, 여러 반이면 각각 입력 후 Enter)</span>
                 </label>
-                <input
-                  type="text"
-                  placeholder="예: 월1부, 화2부"
+                <ClassLabelsField
                   value={newStudentClassLabel}
-                  onChange={(e) => setNewStudentClassLabel(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"
+                  onChange={setNewStudentClassLabel}
+                  placeholder="예: 월1부"
                 />
               </div>
 
