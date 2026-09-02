@@ -579,7 +579,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       </div>
 
       {/* Auto-transition progress bar -- shared across all 3 modes */}
-      <div className="relative z-10 h-1 w-full bg-slate-200 rounded-full overflow-hidden">
+      <div className="relative z-10 h-2 w-full bg-slate-300 border border-slate-300 rounded-full overflow-hidden shadow-xs">
         {activeIsAutoPlay && (
           <div
             key={`${progressKey}-${activeAutoPlaySeconds}`}
