@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Trophy } from 'lucide-react';
 import { Student, DisplayTab, TimeFilter, GradeCategoryFilter } from '../types';
 import { getLeaderboardData } from '../lib/scoring';
 import { parseClassLabels } from '../lib/classLabels';
@@ -210,7 +211,12 @@ export default function AdminAppPage() {
 
         {activeView === 'LEADERBOARD' && (
           <div>
-            <h1 className="text-xl font-bold text-slate-900 mb-4">랭킹보드</h1>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
+                <Trophy className="w-5 h-5" />
+              </span>
+              <h1 className="text-xl font-bold text-slate-900">랭킹보드</h1>
+            </div>
 
             <div className="flex flex-col lg:flex-row gap-6 items-start">
               <div className="flex-1 min-w-0 w-full">

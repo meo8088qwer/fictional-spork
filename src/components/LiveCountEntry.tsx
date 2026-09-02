@@ -110,7 +110,12 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
     return (
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-slate-900">실시간 측정</h1>
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
+              <Radio className="w-5 h-5" />
+            </span>
+            <h1 className="text-xl font-bold text-slate-900">실시간 측정</h1>
+          </div>
           <button
             type="button"
             onClick={onClose}

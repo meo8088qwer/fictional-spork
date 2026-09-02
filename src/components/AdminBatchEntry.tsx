@@ -35,6 +35,8 @@ import {
 } from '../lib/excelHelper';
 import {
   ClipboardEdit,
+  ListChecks,
+  Users,
   Save,
   UserPlus,
   CheckCircle2,
@@ -610,7 +612,13 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       <div className="border-b border-slate-100 pb-4 mb-6">
         <div className="flex items-center gap-2">
           <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
-            <ClipboardEdit className="w-5 h-5" />
+            {activeSubTab === 'EVENTS' ? (
+              <ListChecks className="w-5 h-5" />
+            ) : activeSubTab === 'STUDENTS' ? (
+              <Users className="w-5 h-5" />
+            ) : (
+              <ClipboardEdit className="w-5 h-5" />
+            )}
           </span>
           <h2 className="text-lg font-bold text-slate-900">
             {activeSubTab === 'EVENTS' ? '종목 관리' : activeSubTab === 'STUDENTS' ? '수련생 관리' : '기록 관리'}
