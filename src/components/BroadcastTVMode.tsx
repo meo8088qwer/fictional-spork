@@ -12,6 +12,9 @@ const FIXED_RANK_COUNT = 20;
 const OVERALL_DEFAULTS = 'OVERALL_DEFAULTS';
 const ALL_SIX = 'ALL_SIX';
 const ALL_SIX_ROWS_PER_EVENT = 7;
+// Sentinel for "부별 보기" 반 selector -- cycles through every 반 in turn
+// instead of staying pinned on one.
+const ALL_CLASSES_AUTO = 'ALL_CLASSES_AUTO';
 // How many rows a page shows within one event on the auto-rotate page --
 // low-ranked kids never got to see their own name before because the old
 // behavior only ever showed the top 10 for an event and then moved on.
@@ -211,9 +214,13 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   const isOverallDefaultsView = fixedView === OVERALL_DEFAULTS;
   const isAllSixView = fixedView === ALL_SIX;
 
-  // BY_CLASS (부별): classIndex = which 반 is showing; page = which page of
-  // its per-event panels (same "one event per panel" layout as ALL_SIX,
-  // just scoped to that class's students).
+  // BY_CLASS (부별): byClassView picks a single 반 to stay pinned on, or
+  // ALL_CLASSES_AUTO to cycle through every 반 in turn. classCursor.page is
+  // which page of that 반's per-event panels is showing (same "one event
+  // per panel" layout as ALL_SIX, just scoped to that class's students);
+  // classIndex only matters while auto-cycling.
+  const [byClassView, setByClassView] = useState<string>(ALL_CLASSES_AUTO);
+  const isAllClassesAuto = byClassView === ALL_CLASSES_AUTO;
   const [classCursor, setClassCursor] = useState<{ classIndex: number; page: number }>({ classIndex: 0, page: 0 });
   const [classAutoPlay, setClassAutoPlay] = useState<boolean>(true);
   const [classAutoPlaySeconds, setClassAutoPlaySeconds] = useState<number>(5);
@@ -237,6 +244,9 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   useEffect(() => {
     setFixedPage(0);
   }, [fixedView]);
+  useEffect(() => {
+    setClassCursor({ classIndex: 0, page: 0 });
+  }, [byClassView]);
 
   // ----- ROTATE derived data -----
   const currentEventIndex = cursor.eventIndex;
@@ -292,7 +302,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
 
   // ----- BY_CLASS derived data -----
   const currentClassIndex = classCount > 0 ? classCursor.classIndex % classCount : 0;
-  const currentClass = classOptions[currentClassIndex];
+  const currentClass = isAllClassesAuto ? classOptions[currentClassIndex] : byClassView;
   const classStudents = currentClass ? students.filter((s) => studentInClass(s.classLabel, currentClass)) : [];
   const classPanels: EventPanel[] = currentClass ? buildEventPanels(classStudents, classCursor.page) : [];
   const classTotalPages = classPanels.length > 0 ? Math.max(1, ...classPanels.map((p) => p.totalPages)) : 1;
@@ -335,12 +345,17 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
     return () => clearTimeout(timer);
   }, [displayMode, fixedAutoPlay, fixedAutoPlaySeconds, fixedPage, fixedTotalPages]);
 
-  // BY_CLASS auto-advance: pages through the current class's panels, then
-  // moves to the next class once every panel has cycled through.
+  // BY_CLASS auto-advance: pages through the current class's panels. While
+  // auto-cycling every 반, it moves to the next class once every panel has
+  // cycled through; pinned to one 반, it just loops that class's own pages
+  // forever instead of ever switching class.
   useEffect(() => {
     if (displayMode !== 'BY_CLASS' || !classAutoPlay || classCount === 0) return;
     const timer = setTimeout(() => {
       setClassCursor((prev) => {
+        if (!isAllClassesAuto) {
+          return { classIndex: prev.classIndex, page: (prev.page + 1) % classTotalPages };
+        }
         if (prev.page + 1 < classTotalPages) {
           return { classIndex: prev.classIndex, page: prev.page + 1 };
         }
@@ -348,7 +363,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       });
     }, classAutoPlaySeconds * 1000);
     return () => clearTimeout(timer);
-  }, [displayMode, classAutoPlay, classAutoPlaySeconds, classCursor, classCount, classTotalPages]);
+  }, [displayMode, classAutoPlay, classAutoPlaySeconds, classCursor, classCount, classTotalPages, isAllClassesAuto]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -405,7 +420,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
               }`}
             >
               <ArrowRight className="w-3.5 h-3.5" />
-              <span>자동 전환</span>
+              <span>Version 1</span>
             </button>
             <button
               onClick={() => setDisplayMode('FIXED')}
@@ -414,7 +429,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>고정 화면</span>
+              <span>Version 2</span>
             </button>
             <button
               onClick={() => setDisplayMode('BY_CLASS')}
@@ -423,7 +438,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
               }`}
             >
               <Users className="w-3.5 h-3.5" />
-              <span>부별 보기</span>
+              <span>Version 3</span>
             </button>
           </div>
 
@@ -504,6 +519,21 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
 
           {displayMode === 'BY_CLASS' && (
             <>
+              <select
+                value={byClassView}
+                onChange={(e) => setByClassView(e.target.value)}
+                disabled={classCount === 0}
+                title="부별 보기에 표시할 반"
+                className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold focus:outline-none cursor-pointer disabled:opacity-50 max-w-[160px]"
+              >
+                <option value={ALL_CLASSES_AUTO}>전체 반 순차 표시</option>
+                {classOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+
               <button
                 onClick={() => setClassAutoPlay(!classAutoPlay)}
                 disabled={classCount === 0}
@@ -621,11 +651,11 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
           ) : (
             <>
               <div className="text-center mb-5">
-                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">{currentClass} 순위</h1>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">{currentClass} 반 순위</h1>
                 <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-1.5">
                   {currentClass} 수련생 {classStudents.length}명 · 종목별 순위
                   {classTotalPages > 1 ? ` · ${(classCursor.page % classTotalPages) + 1}/${classTotalPages} 페이지` : ''}
-                  {' · '}반 {currentClassIndex + 1}/{classCount}
+                  {isAllClassesAuto ? ` · 반 ${currentClassIndex + 1}/${classCount}` : ''}
                 </p>
               </div>
               <EventPanelsGrid panels={classPanels} rowAnimDuration={rowAnimDuration} rowStaggerStep={rowStaggerStep} />
