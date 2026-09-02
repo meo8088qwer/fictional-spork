@@ -1255,16 +1255,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               above a separate full-width drop zone, matching the record-
               entry tab's excel section. */}
           <div>
-            <div className="flex items-center gap-2 py-2">
-              <span className="p-1.5 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs">
-                엑셀 명단 일괄 등록
-              </span>
-              <h3 className="text-sm font-bold text-slate-900 flex-1">
-                전체 수련생 명단(80~100명+) 엑셀 한 번에 올리기
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* 1. Template Download */}
               <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col">
                 <div className="flex items-center gap-2 mb-2">
