@@ -74,12 +74,26 @@ export function useEvents() {
     onSuccess: invalidate,
   });
 
+  const updateEventBenchmarks = useMutation({
+    mutationFn: ({
+      key,
+      benchmarkGood,
+      benchmarkPro,
+    }: {
+      key: string;
+      benchmarkGood: number;
+      benchmarkPro: number;
+    }) => eventsApi.updateEventBenchmarks(gymId!, key, benchmarkGood, benchmarkPro),
+    onSuccess: invalidate,
+  });
+
   return {
     events: query.data ?? {},
     isLoading: query.isLoading,
     addCustomEvent: addCustomEvent.mutateAsync,
     deleteCustomEvent: deleteCustomEvent.mutateAsync,
     resetDefaultEvents: resetDefaultEvents.mutateAsync,
+    updateEventBenchmarks: updateEventBenchmarks.mutateAsync,
   };
 }
 

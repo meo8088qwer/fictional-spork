@@ -76,6 +76,26 @@ export async function createEvent(gymId: string, meta: EventMeta): Promise<Event
   return mapEventRow(data);
 }
 
+// Gyms differ on what counts as "우수"/"프로" for their students, so the
+// benchmark thresholds seeded from DEFAULT_EVENTS are just a starting
+// point -- editable per gym like any other event field.
+export async function updateEventBenchmarks(
+  gymId: string,
+  key: string,
+  benchmarkGood: number,
+  benchmarkPro: number
+): Promise<EventMeta> {
+  const { data, error } = await supabase
+    .from('events')
+    .update({ benchmark_good: benchmarkGood, benchmark_pro: benchmarkPro })
+    .eq('gym_id', gymId)
+    .eq('key', key)
+    .select('*')
+    .single();
+  throwOnDbError(error);
+  return mapEventRow(data);
+}
+
 export async function deleteEvent(gymId: string, key: string): Promise<void> {
   const { error } = await supabase.from('events').delete().eq('gym_id', gymId).eq('key', key);
   if (error) throw error;

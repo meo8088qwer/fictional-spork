@@ -65,6 +65,8 @@ import {
   ArrowUpDown,
   Lock,
   Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
@@ -84,6 +86,11 @@ interface AdminBatchEntryProps {
   onAddCustomEvent: (eventMeta: EventMeta) => Promise<EventMeta>;
   onDeleteCustomEvent: (eventKey: string) => Promise<void>;
   onResetDefaultEvents: () => Promise<Record<string, EventMeta>>;
+  onUpdateEventBenchmarks: (args: {
+    key: string;
+    benchmarkGood: number;
+    benchmarkPro: number;
+  }) => Promise<EventMeta>;
   onDeleteRecord: (recordId: string) => Promise<void>;
   onClose: (lastEventKey?: EventKey) => void;
   onNavigateToPricing: () => void;
@@ -104,6 +111,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   onAddCustomEvent,
   onDeleteCustomEvent,
   onResetDefaultEvents,
+  onUpdateEventBenchmarks,
   onDeleteRecord,
   onClose,
   onNavigateToPricing,
@@ -193,6 +201,21 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const [eventToDelete, setEventToDelete] = useState<{ key: string; title: string } | null>(null);
   const [showResetEventsConfirm, setShowResetEventsConfirm] = useState<boolean>(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+
+  // Benchmark ("표준 기준") inline edit -- gyms differ on what counts as
+  // 우수/프로 for their own students, so the DEFAULT_EVENTS seed values are
+  // just a starting point every gym can override per event.
+  const [editingBenchmarkKey, setEditingBenchmarkKey] = useState<string | null>(null);
+  const [benchmarkGoodDraft, setBenchmarkGoodDraft] = useState<string>('');
+  const [benchmarkProDraft, setBenchmarkProDraft] = useState<string>('');
+
+  const handleSaveBenchmarks = async (key: string) => {
+    const good = Number(benchmarkGoodDraft);
+    const pro = Number(benchmarkProDraft);
+    if (!Number.isFinite(good) || !Number.isFinite(pro) || good < 0 || pro < 0) return;
+    await onUpdateEventBenchmarks({ key, benchmarkGood: good, benchmarkPro: pro });
+    setEditingBenchmarkKey(null);
+  };
 
   // Filter students for batch entry, sorted to match a printed roster order
   const filteredStudents = students
@@ -1231,9 +1254,58 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                     <h4 className="text-sm font-bold text-slate-900 mb-1">{meta.title}</h4>
                     <p className="text-xs text-slate-500 font-medium mb-2">{meta.technique}</p>
 
-                    <div className="flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 p-2 rounded-xl font-mono">
-                      <span>표준 기준: 우수 {meta.benchmarkGood ?? 50}회 / 프로 {meta.benchmarkPro ?? 80}회</span>
-                    </div>
+                    {editingBenchmarkKey === key ? (
+                      <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-xl">
+                        <span className="text-[11px] text-slate-600 font-bold shrink-0">우수</span>
+                        <input
+                          type="number"
+                          min={0}
+                          autoFocus
+                          value={benchmarkGoodDraft}
+                          onChange={(e) => setBenchmarkGoodDraft(e.target.value)}
+                          className="w-14 px-1.5 py-1 rounded-lg bg-white border border-[#66BB6A] text-[11px] font-bold text-slate-900 focus:outline-none"
+                        />
+                        <span className="text-[11px] text-slate-600 font-bold shrink-0">프로</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={benchmarkProDraft}
+                          onChange={(e) => setBenchmarkProDraft(e.target.value)}
+                          className="w-14 px-1.5 py-1 rounded-lg bg-white border border-[#66BB6A] text-[11px] font-bold text-slate-900 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSaveBenchmarks(key)}
+                          className="ml-auto p-1 text-emerald-600 hover:bg-emerald-100 rounded-md cursor-pointer shrink-0"
+                          title="저장"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingBenchmarkKey(null)}
+                          className="p-1 text-slate-400 hover:bg-slate-200 rounded-md cursor-pointer shrink-0"
+                          title="취소"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingBenchmarkKey(key);
+                          setBenchmarkGoodDraft(String(meta.benchmarkGood ?? 50));
+                          setBenchmarkProDraft(String(meta.benchmarkPro ?? 80));
+                        }}
+                        className="w-full flex items-center gap-2 text-[11px] text-slate-600 bg-slate-50 hover:bg-slate-100 p-2 rounded-xl font-mono transition-colors cursor-pointer"
+                      >
+                        <span className="flex-1 text-left">
+                          표준 기준: 우수 {meta.benchmarkGood ?? 50}회 / 프로 {meta.benchmarkPro ?? 80}회
+                        </span>
+                        <Pencil className="w-3 h-3 text-slate-400 shrink-0" />
+                      </button>
+                    )}
                   </div>
 
                   {meta.isCustom && (

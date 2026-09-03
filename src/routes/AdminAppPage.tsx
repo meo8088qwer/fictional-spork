@@ -43,6 +43,7 @@ export default function AdminAppPage() {
     addCustomEvent,
     deleteCustomEvent,
     resetDefaultEvents,
+    updateEventBenchmarks,
   } = useEvents();
   const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord } = useRecords();
 
@@ -171,6 +172,7 @@ export default function AdminAppPage() {
             onAddCustomEvent={addCustomEvent}
             onDeleteCustomEvent={deleteCustomEvent}
             onResetDefaultEvents={resetDefaultEvents}
+            onUpdateEventBenchmarks={updateEventBenchmarks}
             onDeleteRecord={deleteRecord}
             onClose={(lastEventKey) => {
               if (lastEventKey) setActiveTab(lastEventKey);
