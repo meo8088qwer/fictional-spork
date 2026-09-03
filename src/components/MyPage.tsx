@@ -1,5 +1,19 @@
-import React, { useState } from 'react';
-import { Mail, Lock, Building2, AlertCircle, CheckCircle2, CreditCard, XCircle, Receipt, FileText, HelpCircle } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import {
+  Mail,
+  Lock,
+  Building2,
+  AlertCircle,
+  CheckCircle2,
+  CreditCard,
+  XCircle,
+  Receipt,
+  FileText,
+  HelpCircle,
+  Image as ImageIcon,
+  Upload,
+  Trash2,
+} from 'lucide-react';
 import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription, usePayments } from '../hooks/useGymData';
@@ -50,7 +64,7 @@ export const MyPage: React.FC<MyPageProps> = ({
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
 
-  const { refreshGym } = useAuth();
+  const { refreshGym, updateGymLogo, removeGymLogo } = useAuth();
   const { subscription, ensureSubscription, cancelSubscription } = useSubscription();
   const { payments } = usePayments();
   const { banner: billingBanner, setBanner: setBillingBanner } = useTossRedirect();
@@ -59,6 +73,10 @@ export const MyPage: React.FC<MyPageProps> = ({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const [receiptPayment, setReceiptPayment] = useState<PaymentRecord | null>(null);
+
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
+  const [isSavingLogo, setIsSavingLogo] = useState(false);
+  const [logoError, setLogoError] = useState('');
 
   const paidPayments = payments.filter((p) => p.status === 'paid');
   const firstPaidAt = paidPayments.length > 0 ? paidPayments[paidPayments.length - 1].paidAt : null;
@@ -108,6 +126,33 @@ export const MyPage: React.FC<MyPageProps> = ({
     } finally {
       setIsCanceling(false);
       setShowCancelConfirm(false);
+    }
+  };
+
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoError('');
+    setIsSavingLogo(true);
+    try {
+      await updateGymLogo(file);
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : '업로드 중 오류가 발생했습니다.');
+    } finally {
+      setIsSavingLogo(false);
+      if (logoFileInputRef.current) logoFileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    setLogoError('');
+    setIsSavingLogo(true);
+    try {
+      await removeGymLogo();
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : '삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsSavingLogo(false);
     }
   };
 
@@ -530,6 +575,74 @@ export const MyPage: React.FC<MyPageProps> = ({
             {isSavingGym ? '저장 중...' : '저장'}
           </button>
         </form>
+      </div>
+
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm mt-6">
+        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">
+          <ImageIcon className="w-4 h-4 text-slate-400" />
+          체육관 로고
+        </h2>
+
+        {gym.plan !== 'pro' ? (
+          <button
+            type="button"
+            onClick={onNavigateToPricing}
+            className="w-full bg-slate-50/80 border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-4 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5"
+          >
+            <Lock className="w-5 h-5 text-slate-400" />
+            <span className="text-xs font-bold text-slate-900">로고 업로드 (프로 전용)</span>
+            <span className="text-[11px] text-slate-500 font-medium">눌러서 업그레이드하면 바로 사용할 수 있어요.</span>
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                {gym.logoUrl ? (
+                  <img src={gym.logoUrl} alt="체육관 로고" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-lg font-black text-[#1B5E20]">{gym.name.charAt(0)}</span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                <input
+                  ref={logoFileInputRef}
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                  onChange={handleLogoFileChange}
+                  className="hidden"
+                  id="gym-logo-file-input"
+                />
+                <label
+                  htmlFor="gym-logo-file-input"
+                  className="cursor-pointer w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isSavingLogo ? '처리 중...' : gym.logoUrl ? '로고 변경' : '로고 업로드'}</span>
+                </label>
+                {gym.logoUrl && (
+                  <button
+                    type="button"
+                    disabled={isSavingLogo}
+                    onClick={handleRemoveLogo}
+                    className="w-full py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 disabled:opacity-60 text-rose-600 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>로고 삭제</span>
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 font-medium pl-1">
+              PNG, JPG, WEBP, SVG · 2MB 이하 · 사이드바와 공개 게시판, 전광판에 표시돼요.
+            </p>
+            {logoError && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-600 p-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{logoError}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

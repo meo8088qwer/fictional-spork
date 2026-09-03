@@ -149,6 +149,7 @@ export default function AdminAppPage() {
         {activeView === 'TV_MODE' && (
           <BroadcastTVMode
             gymName={gymName}
+            gymLogoUrl={gym.logoUrl}
             students={students}
             records={records}
             events={events}

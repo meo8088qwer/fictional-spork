@@ -41,6 +41,7 @@ export default function PublicTvPage() {
   return (
     <BroadcastTVMode
       gymName={board.gymName}
+      gymLogoUrl={board.gymLogoUrl}
       students={board.students}
       records={board.records}
       events={board.events}

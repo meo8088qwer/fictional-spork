@@ -7,6 +7,7 @@ export interface Gym {
   slug: string;
   name: string;
   plan: 'free' | 'basic' | 'pro';
+  logoUrl?: string;
 }
 
 function mapGymRow(row: any): Gym {
@@ -16,6 +17,7 @@ function mapGymRow(row: any): Gym {
     slug: row.slug,
     name: row.name,
     plan: row.plan,
+    logoUrl: row.logo_url ?? undefined,
   };
 }
 
@@ -116,5 +118,52 @@ export async function updateGymSlug(gymId: string, slug: string): Promise<Gym> {
     }
     throw error;
   }
+  return mapGymRow(data);
+}
+
+const LOGO_BUCKET = 'gym-logos';
+const MAX_LOGO_BYTES = 2 * 1024 * 1024;
+const ALLOWED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+
+export async function uploadGymLogo(gymId: string, file: File): Promise<Gym> {
+  if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+    throw new Error('PNG, JPG, WEBP, SVG 파일만 업로드할 수 있어요.');
+  }
+  if (file.size > MAX_LOGO_BYTES) {
+    throw new Error('로고 파일은 2MB 이하만 업로드할 수 있어요.');
+  }
+
+  // Fixed path per gym (upsert overwrites it) -- avoids piling up old logo
+  // files in storage every time a gym re-uploads.
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+  const path = `${gymId}/logo.${ext}`;
+  const { error: uploadError } = await supabase.storage
+    .from(LOGO_BUCKET)
+    .upload(path, file, { upsert: true, contentType: file.type });
+  if (uploadError) throw uploadError;
+
+  const { data: publicUrlData } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path);
+  // Cache-bust so browsers/CDN don't keep serving the previous logo from the
+  // same fixed path after a re-upload.
+  const logoUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
+
+  const { data, error } = await supabase
+    .from('gyms')
+    .update({ logo_url: logoUrl })
+    .eq('id', gymId)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return mapGymRow(data);
+}
+
+export async function removeGymLogo(gymId: string): Promise<Gym> {
+  const { data, error } = await supabase
+    .from('gyms')
+    .update({ logo_url: null })
+    .eq('id', gymId)
+    .select('*')
+    .single();
+  if (error) throw error;
   return mapGymRow(data);
 }

@@ -60,8 +60,12 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={() => goTo('LEADERBOARD')}
           className="flex items-center gap-2.5 min-w-0 cursor-pointer"
         >
-          <div className="w-8 h-8 shrink-0 bg-[#1B5E20] rounded-lg flex items-center justify-center font-bold text-white text-sm">
-            {gymName.charAt(0)}
+          <div className="w-8 h-8 shrink-0 bg-[#1B5E20] rounded-lg flex items-center justify-center font-bold text-white text-sm overflow-hidden">
+            {gym?.logoUrl ? (
+              <img src={gym.logoUrl} alt={gymName} className="w-full h-full object-cover" />
+            ) : (
+              gymName.charAt(0)
+            )}
           </div>
           <span className="font-bold text-sm text-slate-900 truncate max-w-[45vw]">{gymName}</span>
         </button>
@@ -92,8 +96,12 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => goTo('LEADERBOARD')}
               className="flex items-center gap-3 text-left flex-1 min-w-0 cursor-pointer"
             >
-              <div className="w-10 h-10 shrink-0 bg-[#1B5E20] rounded-xl flex items-center justify-center font-bold text-white text-lg">
-                {gymName.charAt(0)}
+              <div className="w-10 h-10 shrink-0 bg-[#1B5E20] rounded-xl flex items-center justify-center font-bold text-white text-lg overflow-hidden">
+                {gym?.logoUrl ? (
+                  <img src={gym.logoUrl} alt={gymName} className="w-full h-full object-cover" />
+                ) : (
+                  gymName.charAt(0)
+                )}
               </div>
               <div className="min-w-0">
                 <span className="font-bold text-sm text-slate-900 truncate block">{gymName}</span>

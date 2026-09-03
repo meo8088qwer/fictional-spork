@@ -78,8 +78,12 @@ export default function PublicBoardPage() {
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3.5 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 shrink-0 bg-[#1B5E20] rounded-xl flex items-center justify-center font-bold text-white text-lg">
-              {board.gymName.charAt(0)}
+            <div className="w-10 h-10 shrink-0 bg-[#1B5E20] rounded-xl flex items-center justify-center font-bold text-white text-lg overflow-hidden">
+              {board.gymLogoUrl ? (
+                <img src={board.gymLogoUrl} alt={board.gymName} className="w-full h-full object-cover" />
+              ) : (
+                board.gymName.charAt(0)
+              )}
             </div>
             <div>
               <span className="font-bold text-base sm:text-lg tracking-tight text-slate-900 block">

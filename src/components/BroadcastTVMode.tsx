@@ -169,6 +169,7 @@ const EventPanelsGrid: React.FC<{
 
 interface BroadcastTVModeProps {
   gymName: string;
+  gymLogoUrl?: string;
   students: Student[];
   records: JumpRecord[];
   events: Record<string, EventMeta>;
@@ -177,6 +178,7 @@ interface BroadcastTVModeProps {
 
 export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
   gymName,
+  gymLogoUrl,
   students,
   records,
   events,
@@ -395,8 +397,12 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       {/* Top Header Bar */}
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 shrink-0 rounded-2xl bg-[#1B5E20] flex items-center justify-center">
-            <Flame className="w-7 h-7 text-white" />
+          <div className="w-12 h-12 shrink-0 rounded-2xl bg-[#1B5E20] flex items-center justify-center overflow-hidden">
+            {gymLogoUrl ? (
+              <img src={gymLogoUrl} alt={gymName} className="w-full h-full object-cover" />
+            ) : (
+              <Flame className="w-7 h-7 text-white" />
+            )}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-3 flex-wrap">

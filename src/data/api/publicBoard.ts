@@ -5,6 +5,7 @@ import { mapEventRow } from './events';
 export interface PublicBoard {
   gymName: string;
   gymSlug: string;
+  gymLogoUrl?: string;
   events: Record<string, EventMeta>;
   students: Student[];
   records: JumpRecord[];
@@ -55,6 +56,7 @@ export async function fetchPublicBoard(gymSlug: string): Promise<PublicBoard> {
   return {
     gymName: data.gym.name,
     gymSlug: data.gym.slug,
+    gymLogoUrl: data.gym.logo_url ?? undefined,
     events,
     students,
     records,

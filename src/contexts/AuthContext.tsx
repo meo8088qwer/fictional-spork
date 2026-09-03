@@ -5,6 +5,8 @@ import {
   ensureGymForUser,
   updateGymName as apiUpdateGymName,
   updateGymSlug as apiUpdateGymSlug,
+  uploadGymLogo as apiUploadGymLogo,
+  removeGymLogo as apiRemoveGymLogo,
   Gym,
 } from '../data/api/gyms';
 
@@ -39,6 +41,8 @@ interface AuthContextValue {
   refreshGym: () => Promise<void>;
   updateGymName: (name: string) => Promise<void>;
   updateGymSlug: (slug: string) => Promise<void>;
+  updateGymLogo: (file: File) => Promise<void>;
+  removeGymLogo: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
 }
 
@@ -150,6 +154,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [gym]
   );
 
+  const updateGymLogo = useCallback(
+    async (file: File) => {
+      if (!gym) throw new Error('체육관 정보가 없습니다.');
+      const updated = await apiUploadGymLogo(gym.id, file);
+      setGym(updated);
+    },
+    [gym]
+  );
+
+  const removeGymLogo = useCallback(async () => {
+    if (!gym) throw new Error('체육관 정보가 없습니다.');
+    const updated = await apiRemoveGymLogo(gym.id);
+    setGym(updated);
+  }, [gym]);
+
   const updatePassword = useCallback(async (newPassword: string) => {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
@@ -169,6 +188,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     refreshGym,
     updateGymName,
     updateGymSlug,
+    updateGymLogo,
+    removeGymLogo,
     updatePassword,
   };
 
