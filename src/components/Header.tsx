@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Tv, ClipboardEdit, LogOut, Share2, UserCog, Menu, X, Sparkles, Globe, Users, ListChecks, BookOpen, Radio } from 'lucide-react';
+import { Trophy, Tv, ClipboardEdit, LogOut, Share2, UserCog, Menu, X, Sparkles, Globe, Users, ListChecks, BookOpen, Radio, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 type AdminView =
   | 'LEADERBOARD'
+  | 'DASHBOARD'
   | 'ADMIN_BATCH'
   | 'LIVE_COUNT'
   | 'EVENT_MANAGE'
@@ -29,6 +30,7 @@ const NAV_ITEMS: Array<{
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   { view: 'LEADERBOARD', label: '랭킹보드', icon: Trophy },
+  { view: 'DASHBOARD', label: '대시보드', icon: LayoutDashboard },
   { view: 'ADMIN_BATCH', label: '기록 관리', icon: ClipboardEdit },
   { view: 'LIVE_COUNT', label: '실시간 측정', icon: Radio },
   { view: 'EVENT_MANAGE', label: '종목 관리', icon: ListChecks },

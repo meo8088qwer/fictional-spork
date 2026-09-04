@@ -14,6 +14,7 @@ import { LiveCountEntry } from '../components/LiveCountEntry';
 import { PricingPage } from '../components/PricingPage';
 import { UserGuidePage } from '../components/UserGuidePage';
 import { GlobalLeaderboard } from '../components/GlobalLeaderboard';
+import { GymDashboard } from '../components/GymDashboard';
 import { MyPage } from '../components/MyPage';
 import { BroadcastTVMode } from '../components/BroadcastTVMode';
 import { StudentProfileModal } from '../components/StudentProfileModal';
@@ -49,6 +50,7 @@ export default function AdminAppPage() {
 
   type AdminView =
     | 'LEADERBOARD'
+    | 'DASHBOARD'
     | 'ADMIN_BATCH'
     | 'LIVE_COUNT'
     | 'EVENT_MANAGE'
@@ -190,6 +192,15 @@ export default function AdminAppPage() {
             events={events}
             onBatchSaveRecords={batchSaveRecords}
             onClose={() => setActiveView('LEADERBOARD')}
+          />
+        )}
+
+        {activeView === 'DASHBOARD' && (
+          <GymDashboard
+            students={students}
+            records={records}
+            events={events}
+            onOpenStudentManage={() => setActiveView('STUDENT_MANAGE')}
           />
         )}
 
