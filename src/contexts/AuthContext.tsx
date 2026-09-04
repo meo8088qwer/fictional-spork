@@ -20,7 +20,7 @@ const PENDING_GYM_NAME_KEY = 'pending_gym_name';
 // signup link across the email-confirmation gap. Referral program isn't
 // publicly announced yet; this only ever gets set when someone lands on
 // /signup with a ?ref= param, which nothing in the UI currently links to.
-const PENDING_REFERRAL_SLUG_KEY = 'pending_referral_slug';
+const PENDING_REFERRAL_CODE_KEY = 'pending_referral_code';
 
 interface AuthContextValue {
   session: Session | null;
@@ -33,7 +33,7 @@ interface AuthContextValue {
     email: string,
     password: string,
     gymName: string,
-    referralSlug?: string
+    referralCode?: string
   ) => Promise<{ needsEmailConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -65,14 +65,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.getItem(PENDING_GYM_NAME_KEY) ||
       activeSession.user.email?.split('@')[0] ||
       '내 체육관';
-    const referralSlug = localStorage.getItem(PENDING_REFERRAL_SLUG_KEY) || undefined;
+    const referralCode = localStorage.getItem(PENDING_REFERRAL_CODE_KEY) || undefined;
     setGymLoading(true);
     setGymError(null);
     try {
-      const g = await ensureGymForUser(fallbackName, referralSlug);
+      const g = await ensureGymForUser(fallbackName, referralCode);
       setGym(g);
       localStorage.removeItem(PENDING_GYM_NAME_KEY);
-      localStorage.removeItem(PENDING_REFERRAL_SLUG_KEY);
+      localStorage.removeItem(PENDING_REFERRAL_CODE_KEY);
     } catch (e) {
       console.error('Failed to load/create gym for user', e);
       setGym(null);
@@ -106,9 +106,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [loadGymForSession]);
 
-  const signUp = useCallback(async (email: string, password: string, gymName: string, referralSlug?: string) => {
+  const signUp = useCallback(async (email: string, password: string, gymName: string, referralCode?: string) => {
     localStorage.setItem(PENDING_GYM_NAME_KEY, gymName);
-    if (referralSlug) localStorage.setItem(PENDING_REFERRAL_SLUG_KEY, referralSlug);
+    if (referralCode) localStorage.setItem(PENDING_REFERRAL_CODE_KEY, referralCode);
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
     // If email confirmation is required, there's no session yet -- the gym

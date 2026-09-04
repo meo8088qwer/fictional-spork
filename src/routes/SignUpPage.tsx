@@ -8,9 +8,9 @@ export default function SignUpPage() {
   const navigate = useNavigate();
   // Referral program isn't publicly announced yet -- no UI here reveals or
   // explains this, it only ever does anything when someone arrives via a
-  // ?ref=<gym-slug> link handed out directly.
+  // ?ref=<gym-referral-code> link handed out directly.
   const [searchParams] = useSearchParams();
-  const referralSlug = searchParams.get('ref') || undefined;
+  const referralCode = searchParams.get('ref') || undefined;
 
   const [gymName, setGymName] = useState('');
   const [email, setEmail] = useState('');
@@ -39,7 +39,7 @@ export default function SignUpPage() {
 
     setIsSubmitting(true);
     try {
-      const { needsEmailConfirmation: needsConfirm } = await signUp(email, password, gymName.trim(), referralSlug);
+      const { needsEmailConfirmation: needsConfirm } = await signUp(email, password, gymName.trim(), referralCode);
       if (needsConfirm) {
         setNeedsEmailConfirmation(true);
       } else {

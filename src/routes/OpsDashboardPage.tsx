@@ -243,6 +243,26 @@ function GymDetailPanel({ gymId, onClose }: { gymId: string; onClose: () => void
               </div>
             )}
 
+            <div className="mb-4 text-xs">
+              <h3 className="font-bold text-slate-700 mb-1.5">추천 프로그램 (비공개 v2)</h3>
+              <div className="bg-slate-50 rounded-xl p-3 space-y-1 text-slate-600 font-medium">
+                <div>
+                  추천 코드: <span className="font-mono font-bold text-slate-900">{detailQuery.data.gym.referralCode}</span>
+                </div>
+                <div>누적 추천 성공: {detailQuery.data.gym.referralSuccessCount}명</div>
+                <div>보상 반영된 추천 수: {detailQuery.data.gym.referralRewardClaimedCount}명</div>
+                <div>누적 지급 개월(24개월 한도): {detailQuery.data.gym.referralRewardMonthsUsed}개월</div>
+                <div>
+                  인증된 전화번호:{' '}
+                  {detailQuery.data.gym.referralVerifiedPhone ? (
+                    <span className="font-mono">{detailQuery.data.gym.referralVerifiedPhone}</span>
+                  ) : (
+                    '미인증'
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div>
               <h3 className="text-xs font-bold text-slate-700 mb-1.5">결제 내역</h3>
               {detailQuery.data.payments.length === 0 ? (

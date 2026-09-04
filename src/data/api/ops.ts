@@ -156,7 +156,15 @@ export async function fetchOpsGymList(search: string, limit: number, offset: num
 }
 
 export interface OpsGymDetail {
-  gym: OpsGymListItem & { referredByGymId: string | null; planOverrideExpiresAt: string | null };
+  gym: OpsGymListItem & {
+    referredByGymId: string | null;
+    planOverrideExpiresAt: string | null;
+    referralCode: string;
+    referralSuccessCount: number;
+    referralRewardClaimedCount: number;
+    referralRewardMonthsUsed: number;
+    referralVerifiedPhone: string | null;
+  };
   subscription: {
     status: string;
     desiredPlan: string;
@@ -193,6 +201,11 @@ export async function fetchOpsGymDetail(gymId: string): Promise<OpsGymDetail> {
       lastRecordDate: g.last_record_date,
       referredByGymId: g.referred_by_gym_id,
       planOverrideExpiresAt: g.plan_override_expires_at,
+      referralCode: g.referral_code,
+      referralSuccessCount: g.referral_success_count,
+      referralRewardClaimedCount: g.referral_reward_claimed_count,
+      referralRewardMonthsUsed: g.referral_reward_months_used,
+      referralVerifiedPhone: g.referral_verified_phone,
     },
     subscription: sub
       ? {

@@ -47,13 +47,14 @@ export async function getMyGym(): Promise<Gym | null> {
   return data ? mapGymRow(data) : null;
 }
 
-async function createGym(name: string, referralSlug?: string): Promise<Gym> {
+async function createGym(name: string, referralCode?: string): Promise<Gym> {
   // Routed through the create_gym_with_referral RPC (not a plain insert) so
   // referred_by_gym_id can only ever be resolved server-side from a real
-  // gym's slug -- gyms RLS select is owner-scoped, so a new signer-up has
-  // no way to look up another gym's id themselves, and a plain insert would
-  // otherwise let a client pass an arbitrary gym_id in directly. See
-  // supabase/migrations/0016_referral_program.sql.
+  // gym's referral_code -- gyms RLS select is owner-scoped, so a new
+  // signer-up has no way to look up another gym's id themselves, and a
+  // plain insert would otherwise let a client pass an arbitrary gym_id in
+  // directly. See supabase/migrations/0016_referral_program.sql and
+  // 0023_referral_v2.sql (slug -> referral_code switch).
   let lastError: unknown = null;
 
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -61,7 +62,7 @@ async function createGym(name: string, referralSlug?: string): Promise<Gym> {
     const { data, error } = await supabase.rpc('create_gym_with_referral', {
       p_name: name,
       p_slug: slug,
-      p_referral_slug: referralSlug ?? null,
+      p_referral_code: referralCode ?? null,
     });
 
     if (!error) {
@@ -84,13 +85,13 @@ async function createGym(name: string, referralSlug?: string): Promise<Gym> {
 /**
  * Idempotent: returns the caller's existing gym, or creates one if this is
  * their first time (right after signup, or a self-heal if the tab closed
- * before gym creation finished last time). `referralSlug` is only used on
- * that first creation -- see AuthContext's PENDING_REFERRAL_SLUG_KEY.
+ * before gym creation finished last time). `referralCode` is only used on
+ * that first creation -- see AuthContext's PENDING_REFERRAL_CODE_KEY.
  */
-export async function ensureGymForUser(fallbackName: string, referralSlug?: string): Promise<Gym> {
+export async function ensureGymForUser(fallbackName: string, referralCode?: string): Promise<Gym> {
   const existing = await getMyGym();
   if (existing) return existing;
-  return createGym(fallbackName, referralSlug);
+  return createGym(fallbackName, referralCode);
 }
 
 export async function updateGymName(gymId: string, name: string): Promise<Gym> {
