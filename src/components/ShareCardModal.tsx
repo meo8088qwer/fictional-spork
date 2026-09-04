@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Student, JumpRecord, EventMeta } from '../types';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { EVENT_KEYS, DEFAULT_EVENTS } from '../data/constants';
-import { X, Download, Share2, Loader2, Crown, TrendingUp, Calendar, Sparkles } from 'lucide-react';
+import { X, Download, Loader2, Crown, TrendingUp, Calendar, Sparkles } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 
 // Pure client-side, read-only: every card type below is computed from the
@@ -79,8 +79,11 @@ const CARD_TYPES: { id: CardType; label: string; sublabel: string }[] = [
   { id: 'MONTHLY_REPORT', label: '월간 리포트 인증', sublabel: '이번달 리포트' },
 ];
 
-const CARD_WIDTH = 300;
-const CARD_HEIGHT = 533; // 9:16
+// Kept small deliberately -- has to fit inside the modal with room to spare
+// on the narrowest common phone width (~320px) without any horizontal
+// scrolling.
+const CARD_WIDTH = 260;
+const CARD_HEIGHT = 462; // 9:16
 
 interface ShareCardModalProps {
   student: Student;
@@ -234,10 +237,8 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
   const [paletteKey, setPaletteKey] = useState<PaletteKey>('BLACK_GREEN');
   const [selectedEventKey, setSelectedEventKey] = useState<string>(defaultEventKey);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const palette = PALETTES[paletteKey];
-  const canShareFiles = typeof navigator !== 'undefined' && !!navigator.share && !!navigator.canShare;
 
   const meta = events[selectedEventKey];
   const eventRecords = useMemo(
@@ -293,34 +294,6 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
       alert('이미지 생성 중 오류가 발생했습니다.');
     } finally {
       setIsDownloading(false);
-    }
-  };
-
-  const handleShare = async () => {
-    if (!cardRef.current || !canRenderCard) return;
-    setIsSharing(true);
-    try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: palette.bg,
-        logging: false,
-      });
-      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error('이미지 생성에 실패했습니다.');
-      const file = new File([blob], `${student.name}_ROPERANK.png`, { type: 'image/png' });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: `${student.name} 줄넘기 기록` });
-      } else {
-        alert('이 브라우저는 공유를 지원하지 않아요. "이미지 다운로드"로 저장한 뒤 직접 올려주세요.');
-      }
-    } catch (err) {
-      if ((err as { name?: string })?.name !== 'AbortError') {
-        console.error('Share card share error:', err);
-        alert('공유 중 오류가 발생했습니다.');
-      }
-    } finally {
-      setIsSharing(false);
     }
   };
 
@@ -629,29 +602,29 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs grid place-items-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl relative my-auto">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
+    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs grid place-items-start sm:place-items-center p-0 sm:p-6 overflow-y-auto">
+      <div className="bg-white sm:border sm:border-slate-200 sm:rounded-3xl w-full max-w-lg min-h-screen sm:min-h-0 p-4 sm:p-5 shadow-2xl relative sm:my-auto">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="p-2 rounded-xl bg-slate-100 text-slate-600 shrink-0">
               <Sparkles className="w-4 h-4" />
             </span>
-            <div>
-              <h2 className="text-sm font-bold text-slate-900">스토리 공유 카드</h2>
-              <p className="text-[11px] text-slate-500 font-medium">인스타 스토리(9:16)로 바로 공유할 수 있어요.</p>
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-slate-900 truncate">스토리 공유 카드</h2>
+              <p className="text-[11px] text-slate-500 font-medium truncate">인스타 스토리(9:16)로 다운로드할 수 있어요.</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Card type tabs */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 mb-3 -mx-1 px-1">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 mb-2.5 -mx-1 px-1">
           {CARD_TYPES.map((t) => (
             <button
               key={t.id}
@@ -669,7 +642,7 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
         </div>
 
         {/* Palette swatches */}
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-2.5">
           {(Object.keys(PALETTES) as PaletteKey[]).map((key) => (
             <button
               key={key}
@@ -682,27 +655,30 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
               style={{ background: PALETTES[key].swatch }}
             />
           ))}
-          {cardType !== 'ABILITY' && eventKeys.length > 0 && (
-            <select
-              value={selectedEventKey}
-              onChange={(e) => setSelectedEventKey(e.target.value)}
-              className="ml-auto px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            >
-              {eventKeys.map((k) => (
-                <option key={k} value={k}>
-                  {events[k]?.title || k}
-                </option>
-              ))}
-            </select>
-          )}
         </div>
 
+        {/* Event picker -- its own row so a long event title never forces
+            the palette row wider than the screen. */}
+        {cardType !== 'ABILITY' && eventKeys.length > 0 && (
+          <select
+            value={selectedEventKey}
+            onChange={(e) => setSelectedEventKey(e.target.value)}
+            className="w-full mb-3 px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400"
+          >
+            {eventKeys.map((k) => (
+              <option key={k} value={k}>
+                {events[k]?.title || k}
+              </option>
+            ))}
+          </select>
+        )}
+
         {/* Preview */}
-        <div className="flex justify-center py-3 bg-slate-100 rounded-2xl">
+        <div className="flex justify-center overflow-x-auto py-3 bg-slate-100 rounded-2xl">
           <div
             ref={cardRef}
             style={{ width: CARD_WIDTH, height: CARD_HEIGHT, background: palette.bg }}
-            className="flex flex-col p-5 shadow-lg rounded-xl overflow-hidden"
+            className="flex flex-col p-4 shadow-lg rounded-xl overflow-hidden shrink-0"
           >
             {renderCardBody()}
             <Footer />
@@ -710,28 +686,15 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 mt-4">
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={isDownloading || !canRenderCard}
-            className="flex-1 py-3 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-50 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            <span>이미지 다운로드</span>
-          </button>
-          {canShareFiles && (
-            <button
-              type="button"
-              onClick={handleShare}
-              disabled={isSharing || !canRenderCard}
-              className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              {isSharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
-              <span>바로 공유</span>
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={isDownloading || !canRenderCard}
+          className="w-full mt-3 py-3 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 disabled:opacity-50 text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          <span>이미지 다운로드</span>
+        </button>
       </div>
     </div>
   );
