@@ -12,6 +12,11 @@ import { Gym } from '../data/api/gyms';
 // same <select> as the real event keys without colliding.
 const ALL_EVENTS_KEY = '__ALL__';
 
+// Sentinel class-filter value for "students with no 반 assigned at all" --
+// never a real class name (those come from parsing classLabel), so it can
+// share the same <select> as real class names without colliding.
+const UNASSIGNED_CLASS_KEY = '__UNASSIGNED__';
+
 // Next student_no for the current year, based on the highest existing
 // suffix rather than the current headcount -- headcount undercounts once
 // any student has ever been deleted, which collided with a still-existing
@@ -221,7 +226,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const filteredStudents = students
     .filter((student) => {
       const matchesGrade = gradeFilter === 'ALL' || student.grade === gradeFilter;
-      const matchesClass = classFilter === 'ALL' || studentInClass(student.classLabel, classFilter);
+      const matchesClass =
+        classFilter === 'ALL' ||
+        (classFilter === UNASSIGNED_CLASS_KEY
+          ? parseClassLabels(student.classLabel).length === 0
+          : studentInClass(student.classLabel, classFilter));
       const matchesSearch =
         !searchQuery ||
         student.name.includes(searchQuery) ||
@@ -979,6 +988,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none shadow-xs font-semibold"
                 >
                   <option value="ALL">전체 반</option>
+                  <option value={UNASSIGNED_CLASS_KEY}>미배정</option>
                   {classOptions.map((cls) => (
                     <option key={cls} value={cls}>
                       {cls}
@@ -1558,6 +1568,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   className="w-full sm:w-36 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none"
                 >
                   <option value="ALL">전체 반</option>
+                  <option value={UNASSIGNED_CLASS_KEY}>미배정</option>
                   {classOptions.map((cls) => (
                     <option key={cls} value={cls}>
                       {cls}
@@ -1573,7 +1584,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 .filter((student) => {
                   const matchesSearch = student.name.toLowerCase().includes(studentRosterSearch.toLowerCase());
                   const matchesGrade = studentRosterGrade === 'ALL' || student.grade === studentRosterGrade;
-                  const matchesClass = studentRosterClass === 'ALL' || studentInClass(student.classLabel, studentRosterClass);
+                  const matchesClass =
+                    studentRosterClass === 'ALL' ||
+                    (studentRosterClass === UNASSIGNED_CLASS_KEY
+                      ? parseClassLabels(student.classLabel).length === 0
+                      : studentInClass(student.classLabel, studentRosterClass));
                   return matchesSearch && matchesGrade && matchesClass;
                 })
                 .map((student) => (
