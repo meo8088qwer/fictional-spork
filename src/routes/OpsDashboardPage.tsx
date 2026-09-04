@@ -229,15 +229,32 @@ function GymDetailPanel({ gymId, onClose }: { gymId: string; onClose: () => void
 
 export default function OpsDashboardPage() {
   const { session, loading: authLoading } = useAuth();
-  const [adminCheck, setAdminCheck] = useState<'checking' | 'allowed' | 'denied'>('checking');
+  const [adminCheck, setAdminCheck] = useState<'checking' | 'allowed' | 'denied' | 'error'>('checking');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
+  // Bumping this re-runs the admin check below -- the retry button on the
+  // network-error screen just increments it.
+  const [checkAttempt, setCheckAttempt] = useState(0);
 
   useEffect(() => {
     if (authLoading || !session) return;
-    isPlatformAdmin().then((ok) => setAdminCheck(ok ? 'allowed' : 'denied'));
-  }, [authLoading, session]);
+    let cancelled = false;
+    setAdminCheck('checking');
+    isPlatformAdmin()
+      .then((ok) => {
+        if (!cancelled) setAdminCheck(ok ? 'allowed' : 'denied');
+      })
+      .catch(() => {
+        // A flaky/slow connection throwing here used to leave this stuck on
+        // "checking" forever with no way out -- surface it instead so a
+        // retry is possible.
+        if (!cancelled) setAdminCheck('error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, session, checkAttempt]);
 
   const summaryQuery = useQuery({
     queryKey: ['ops', 'summary'],
@@ -268,6 +285,27 @@ export default function OpsDashboardPage() {
           <ShieldAlert className="w-10 h-10 text-rose-400 mx-auto mb-3" />
           <h2 className="text-lg font-black text-slate-900 mb-2">접근 권한이 없어요</h2>
           <p className="text-xs text-slate-500 font-medium">이 페이지는 운영자 계정만 볼 수 있어요.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (adminCheck === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8] p-4">
+        <div className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full p-8 shadow-lg text-center">
+          <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
+          <h2 className="text-lg font-black text-slate-900 mb-2">확인 중 문제가 발생했어요</h2>
+          <p className="text-xs text-slate-500 font-medium mb-5">
+            네트워크 상태를 확인하고 다시 시도해 주세요.
+          </p>
+          <button
+            type="button"
+            onClick={() => setCheckAttempt((n) => n + 1)}
+            className="px-4 py-2.5 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-sm cursor-pointer"
+          >
+            다시 시도
+          </button>
         </div>
       </div>
     );
