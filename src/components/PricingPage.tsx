@@ -39,7 +39,7 @@ const TIERS: Tier[] = [
     monthlyPrice: 4900,
     studentLimit: 150,
     features: [
-      '커스텀 종목 +5개 추가',
+      '커스텀 종목 +3개 추가',
       '기록관리 (전체 이력)',
       '엑셀 대량 등록',
       '전체랭킹 참가',
