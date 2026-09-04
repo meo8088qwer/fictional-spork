@@ -67,6 +67,19 @@
   }
 }
 
+/* iOS Safari auto-zooms the whole page when a focused input's font-size is
+   under 16px -- our text-sm/text-xs inputs trigger it, and since this is an
+   SPA the zoom never resets on route change, so it looks "stuck zoomed in"
+   from then on. Forcing 16px (mobile widths only) stops the zoom; applied
+   always rather than just on :focus so the field doesn't visibly resize. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 @media print {
   /* Hide all background content by default */
   body * {
