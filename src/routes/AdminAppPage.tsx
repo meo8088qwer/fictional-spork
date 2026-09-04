@@ -46,7 +46,7 @@ export default function AdminAppPage() {
     resetDefaultEvents,
     updateEventBenchmarks,
   } = useEvents();
-  const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord } = useRecords();
+  const { records, isLoading: recordsLoading, batchSaveRecords, deleteRecord, updateRecordCount } = useRecords();
 
   type AdminView =
     | 'LEADERBOARD'
@@ -295,6 +295,7 @@ export default function AdminAppPage() {
           }}
           onDeleteStudent={handleDeleteStudent}
           onDeleteRecord={deleteRecord}
+          onUpdateRecordCount={(recordId, count) => updateRecordCount({ recordId, count })}
           onOpenCertificate={(st) => {
             setSelectedStudent(null);
             setCertificateStudent(st);

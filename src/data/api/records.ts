@@ -90,3 +90,50 @@ export async function deleteRecord(recordId: string): Promise<void> {
   const { error } = await supabase.from('jump_records').delete().eq('id', recordId);
   if (error) throw error;
 }
+
+/**
+ * Fixes a mistyped count in place, instead of the only previous option
+ * (delete + re-add). `currentRecords` is the already-loaded records list --
+ * same pattern as batchSaveRecords -- used to recompute which record is the
+ * true personal best for that student+event after the edit, so a typo fix
+ * doesn't leave the is_personal_best flag on the wrong row.
+ */
+export async function updateRecordCount(
+  recordId: string,
+  count: number,
+  currentRecords: JumpRecord[]
+): Promise<JumpRecord> {
+  const target = currentRecords.find((r) => r.id === recordId);
+  if (!target) throw new Error('기록을 찾을 수 없습니다.');
+
+  const sameEventRecords = currentRecords
+    .filter((r) => r.studentId === target.studentId && r.eventKey === target.eventKey)
+    .map((r) => (r.id === recordId ? { ...r, count } : r));
+  sameEventRecords.sort((a, b) => b.count - a.count || new Date(b.date).getTime() - new Date(a.date).getTime());
+  const newBestId = sameEventRecords[0]?.id;
+
+  const { error: updateError } = await supabase
+    .from('jump_records')
+    .update({ count, is_personal_best: recordId === newBestId })
+    .eq('id', recordId);
+  if (updateError) throw updateError;
+
+  const staleBestIds = sameEventRecords
+    .filter((r) => r.id !== newBestId && r.id !== recordId && r.isPersonalBest)
+    .map((r) => r.id);
+  if (staleBestIds.length > 0) {
+    const { error: clearError } = await supabase
+      .from('jump_records')
+      .update({ is_personal_best: false })
+      .in('id', staleBestIds);
+    if (clearError) throw clearError;
+  }
+
+  const { data, error } = await supabase
+    .from('jump_records')
+    .select('*, students(name)')
+    .eq('id', recordId)
+    .single();
+  if (error) throw error;
+  return mapRecordRow(data);
+}

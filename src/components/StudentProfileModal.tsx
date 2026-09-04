@@ -3,7 +3,7 @@ import { Student, JumpRecord, EventKey, EventMeta } from '../types';
 import { Gym } from '../data/api/gyms';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { Trophy, TrendingUp, Calendar, Printer, X, Trash2, Lock, Share2 } from 'lucide-react';
+import { Trophy, TrendingUp, Calendar, Printer, X, Trash2, Lock, Share2, Pencil, Check } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
 
@@ -22,6 +22,7 @@ interface StudentProfileModalProps {
   initialEventKey?: EventKey;
   onDeleteStudent?: (studentId: string) => void;
   onDeleteRecord?: (recordId: string) => void;
+  onUpdateRecordCount?: (recordId: string, count: number) => Promise<unknown>;
   onOpenCertificate?: (student: Student) => void;
   onUpgradeRequired?: () => void;
   onClose: () => void;
@@ -44,6 +45,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   initialEventKey,
   onDeleteStudent,
   onDeleteRecord,
+  onUpdateRecordCount,
   onOpenCertificate,
   onUpgradeRequired,
   onClose,
@@ -54,6 +56,9 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   );
   const [showStudentDeleteConfirm, setShowStudentDeleteConfirm] = useState<boolean>(false);
   const [recordToDelete, setRecordToDelete] = useState<JumpRecord | null>(null);
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [editCountDraft, setEditCountDraft] = useState<string>('');
+  const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
   const [upgradeReason, setUpgradeReason] = useState<'BASIC_FEATURE_LOCKED' | 'PRO_FEATURE_LOCKED' | null>(null);
   const [showShareCard, setShowShareCard] = useState<boolean>(false);
 
@@ -160,17 +165,6 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               <span>스토리 공유</span>
             </button>
 
-            {onDeleteStudent && (
-              <button
-                type="button"
-                onClick={() => setShowStudentDeleteConfirm(true)}
-                className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>수련생 삭제</span>
-              </button>
-            )}
-
             {onOpenCertificate && (
               <button
                 type="button"
@@ -189,6 +183,17 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               >
                 {!canIssueCertificate ? <Lock className="w-3.5 h-3.5" /> : <Printer className="w-4 h-4" />}
                 <span>기록 인증 상장 발급</span>
+              </button>
+            )}
+
+            {onDeleteStudent && (
+              <button
+                type="button"
+                onClick={() => setShowStudentDeleteConfirm(true)}
+                className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>수련생 삭제</span>
               </button>
             )}
           </div>
@@ -370,9 +375,9 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
               <Calendar className="w-4 h-4 text-slate-400" />
               <span>[{selectedMeta?.title || '선택 종목'}] 상세 기록 이력 관리</span>
             </h4>
-            {onDeleteRecord && (
+            {(onDeleteRecord || onUpdateRecordCount) && (
               <span className="text-[10px] text-slate-400 font-mono font-medium">
-                잘못 입력된 기록은 즉시 삭제할 수 있습니다
+                잘못 입력된 기록은 수정하거나 즉시 삭제할 수 있습니다
               </span>
             )}
           </div>
@@ -395,7 +400,65 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                   {visibleRecords.map((r) => (
                     <tr key={r.id} className="hover:bg-slate-50/80">
                       <td className="p-2 pl-3 font-mono text-slate-600">{r.date}</td>
-                      <td className="p-2 text-right font-bold text-slate-900">{r.count}회</td>
+                      <td className="p-2 text-right font-bold text-slate-900">
+                        {editingRecordId === r.id ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <input
+                              type="number"
+                              min={1}
+                              value={editCountDraft}
+                              onChange={(e) => setEditCountDraft(e.target.value)}
+                              autoFocus
+                              className="w-16 px-1.5 py-1 rounded-lg border border-slate-300 text-right text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#66BB6A]"
+                            />
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const newCount = Number(editCountDraft);
+                                if (!Number.isFinite(newCount) || newCount <= 0 || !onUpdateRecordCount) return;
+                                setIsSavingEdit(true);
+                                try {
+                                  await onUpdateRecordCount(r.id, newCount);
+                                  setEditingRecordId(null);
+                                } finally {
+                                  setIsSavingEdit(false);
+                                }
+                              }}
+                              disabled={isSavingEdit}
+                              className="p-1 rounded-lg text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer disabled:opacity-50"
+                              title="저장"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingRecordId(null)}
+                              disabled={isSavingEdit}
+                              className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 transition-colors cursor-pointer"
+                              title="취소"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1">
+                            <span>{r.count}회</span>
+                            {onUpdateRecordCount && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingRecordId(r.id);
+                                  setEditCountDraft(String(r.count));
+                                }}
+                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                                title="기록 수정"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </td>
                       {onDeleteRecord && (
                         <td className="p-2 pr-3 text-right">
                           <button

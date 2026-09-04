@@ -121,11 +121,18 @@ export function useRecords() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['records', gymId] }),
   });
 
+  const updateRecordCount = useMutation({
+    mutationFn: ({ recordId, count }: { recordId: string; count: number }) =>
+      recordsApi.updateRecordCount(recordId, count, currentRecords),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['records', gymId] }),
+  });
+
   return {
     records: currentRecords,
     isLoading: query.isLoading,
     batchSaveRecords: batchSaveRecords.mutateAsync,
     deleteRecord: deleteRecord.mutateAsync,
+    updateRecordCount: updateRecordCount.mutateAsync,
   };
 }
 
