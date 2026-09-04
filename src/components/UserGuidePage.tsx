@@ -15,6 +15,11 @@ import {
   FileSpreadsheet,
   Check,
   Info,
+  Radio,
+  LayoutDashboard,
+  Image as ImageIcon,
+  CreditCard,
+  Pencil,
 } from 'lucide-react';
 import { Student, JumpRecord, DisplayTab, GradeCategoryFilter, TimeFilter } from '../types';
 import { DEFAULT_EVENTS } from '../data/constants';
@@ -149,6 +154,7 @@ export const UserGuidePage: React.FC = () => {
             items={[
               '학년 필터 아래 "반" 필터는 수련생 관리에서 반을 지정한 학생이 한 명이라도 있어야 나타나요.',
               '이름을 누르면 그 학생의 상세 기록/성장 그래프를 볼 수 있어요.',
+              '상세 기록 화면의 "스토리 공유" 버튼을 누르면 최고기록을 인스타 스토리(9:16) 이미지로 바로 다운로드할 수 있어요. 학부모님이 보는 공개 링크에서도 로그인 없이 똑같이 쓸 수 있어요.',
             ]}
           />
         </GuideSection>
@@ -179,6 +185,7 @@ export const UserGuidePage: React.FC = () => {
           </PreviewFrame>
           <Bullets
             items={[
+              '화면 위 종목 선택은 기본이 "전체"라 모든 종목 칸이 한 번에 보이고, 하나만 골라 그 종목만 집중해서 입력할 수도 있어요.',
               '"일괄 기록 저장하기"를 누르면 어떤 종목으로 저장하는지 한 번 더 확인 팝업이 떠요(잘못 저장 방지).',
               '저장 후에도 랭킹보드로 이동하지 않고 이 페이지에 그대로 남아요 -- 입력칸만 비워집니다.',
               '오늘 저장한 기록은 화면 위쪽에 목록으로 뜨고, 되돌리기 버튼으로 바로 취소할 수 있어요.',
@@ -232,6 +239,37 @@ export const UserGuidePage: React.FC = () => {
           />
         </GuideSection>
 
+        <GuideSection icon={Radio} title="실시간 측정">
+          <p className="text-xs text-slate-500 font-medium">
+            여러 기기로 동시에 기록을 입력하는 기능이에요. 반과 종목을 고르고 출석 체크(기본은 전원 출석,
+            결석한 아이만 체크 해제)를 한 뒤 측정을 시작하면 접속 링크가 생겨요. 그 링크를 다른 기기(코치
+            휴대폰 등)에서 열면 같은 화면을 보면서 실시간으로 숫자를 입력할 수 있고, 모든 기기에 바로
+            반영돼요.
+          </p>
+          <Bullets
+            items={[
+              '요금제 제한 없이 모든 플랜에서 쓸 수 있어요.',
+              '입력 중인 숫자는 화면끼리만 실시간 공유되고, "전체 저장"을 눌러야 실제 기록으로 저장돼요 -- 중간에 잘못 눌러도 안전해요.',
+              '결석 체크는 그 반 전체가 아니라 오늘 측정에만 적용돼요(수련생 명단 자체는 그대로).',
+            ]}
+          />
+        </GuideSection>
+
+        <GuideSection icon={LayoutDashboard} title="대시보드">
+          <p className="text-xs text-slate-500 font-medium">
+            체육관 전체 현황과 반별 현황을 한눈에 보는 화면이에요. 반을 배정한 학생이 있어야 반별 카드가
+            나타나요.
+          </p>
+          <Bullets
+            items={[
+              '상단 4개 요약: 전체 수련생 수 · 이번달 신규 등록 · 이번달 측정 건수 · 이번달 신기록 갱신 건수.',
+              '반별 카드: 인원수, 이번달 신기록을 세운 인원 비율(진행바), 평균 종합점수, 반 1위 학생을 보여줘요.',
+              '반별 카드는 이번달 신기록 갱신 비율이 높은 반부터 순서대로 정렬돼요.',
+              '반을 지정하지 않은 학생은 "미배정" 카드로 따로 모여요.',
+            ]}
+          />
+        </GuideSection>
+
         <GuideSection icon={ListChecks} title="종목 관리">
           <p className="text-xs text-slate-500 font-medium">
             기본 6종목 외에 체육관만의 특화 종목(예: 2중 3단계 30초)을 추가할 수 있어요. 추가한 종목은 기록관리
@@ -240,9 +278,14 @@ export const UserGuidePage: React.FC = () => {
           <Bullets
             items={[
               '무료 플랜은 기본 6종목만 이용할 수 있어요. 베이직은 커스텀 종목을 5개까지 추가할 수 있고(총 11종목), 프로는 무제한이에요.',
+              '각 종목 카드의 "표준 기준: 우수 N회 / 프로 M회" 부분을 누르면 그 체육관만의 기준으로 직접 수정할 수 있어요 -- 체육관마다 수련생 수준이 달라서 기본값은 참고용이에요.',
               '기본 종목을 실수로 삭제했다면 "기본 종목 초기화"로 되돌릴 수 있어요.',
             ]}
           />
+          <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold">
+            <Pencil className="w-3.5 h-3.5" />
+            <span>표준 기준 직접 수정 가능</span>
+          </div>
         </GuideSection>
 
         <GuideSection icon={Users} title="수련생 관리">
@@ -272,36 +315,39 @@ export const UserGuidePage: React.FC = () => {
               '학생 카드의 "반 지정" 배지를 누르면 바로 그 자리에서 반을 입력/수정할 수 있어요.',
               '요일마다 다른 반에 오는 학생은 콤마(,)로 구분해서 여러 반을 함께 입력할 수 있어요 (예: 월1부, 화2부).',
               '이미 등록된 학생도 명단 엑셀에 "반" 열만 채워서 다시 올리면 반 정보만 갱신돼요(이름/학년은 안 바뀜).',
-              '반을 지정하면 랭킹보드/기록관리에 반 필터가 자동으로 나타나요.',
+              '반을 지정하면 랭킹보드/기록관리/대시보드에 반 필터가 자동으로 나타나요.',
+              '"전체 반" 필터 옆에 "미배정"을 고르면 아직 반이 없는 학생만 걸러볼 수 있어요.',
             ]}
           />
         </GuideSection>
 
         <GuideSection icon={Tv} title="TV 전광판">
           <p className="text-xs text-slate-500 font-medium">
-            체육관 모니터에 띄워두는 화면이에요. "자동 전환"과 "고정 화면" 두 모드가 있어요.
+            체육관 모니터에 띄워두는 화면이에요. Version 1/2/3 세 가지 방식이 있고, 낮은 순위 아이들도 자기
+            이름이 나올 때까지 기다릴 수 있도록 셋 다 전체 인원을 끝까지 순서대로 보여줘요(상위 몇 명만 보여주고
+            끝나지 않아요).
           </p>
           <PreviewFrame label="TV 전광판">
             <div className="flex items-center gap-2 mb-2.5">
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-[#1B5E20] text-white">Version 1</span>
               <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700">
-                → 자동 전환
+                Version 2
               </span>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-[#1B5E20] text-white">고정 화면</span>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-500">
-                종합 순위 ▾
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700">
+                Version 3
               </span>
             </div>
             <div className="bg-white rounded-lg border-2 border-[#1B5E20] p-2 flex items-center justify-between text-[11px] font-bold">
-              <span className="text-slate-700">1위 김민준</span>
-              <span className="text-slate-900">132회</span>
+              <span className="text-slate-700">11~20위 표시 중</span>
+              <span className="text-slate-900">3초~10초마다 자동 전환</span>
             </div>
           </PreviewFrame>
           <Bullets
             items={[
-              '자동 전환: 종목이 순서대로 자동으로 넘어가며 상위 10명씩 보여줘요.',
-              '고정 화면 - 종합 순위: 기본 6종목 합산 점수로 20명(2열)을 한 화면에 고정으로 보여줘요.',
-              '고정 화면 - 종목별 한눈에 보기: 6종목 미니 순위를 한 화면에서 동시에 볼 수 있어요.',
-              '고정 화면 - 종목별 순위: 특정 종목(커스텀 포함) 하나를 골라 고정으로 보여줘요.',
+              'Version 1 (자동 전환): 종목이 순서대로 넘어가면서, 한 종목 안에서도 1~10위, 11~20위 ... 순서로 전체 인원을 끝까지 보여줘요.',
+              'Version 2 (고정 화면): "종합 순위"(기본 6종목 합산), "종목별 한눈에 보기"(6종목 미니 순위 동시 표시), "종목별 순위"(커스텀 포함 종목 하나 고정) 중 골라서 볼 수 있고, 셋 다 전체 인원을 끝까지 페이지 넘기며 보여줘요.',
+              'Version 3 (부별 보기): 반 하나를 고정으로 보거나 "전체 반 순차 표시"로 반이 자동으로 바뀌면서, 그 반 학생들의 종목별 순위를 끝까지 보여줘요.',
+              '화면 넘어가는 속도(3~10초)는 세 버전 모두 각자 따로 설정할 수 있어요. 화면 아래 초록색 바가 다음 화면까지 남은 시간이에요.',
             ]}
           />
         </GuideSection>
@@ -332,8 +378,21 @@ export const UserGuidePage: React.FC = () => {
 
         <GuideSection icon={UserCog} title="마이페이지">
           <p className="text-xs text-slate-500 font-medium">
-            체육관 이름, 공개 링크 주소(슬러그), 비밀번호를 여기서 바꿀 수 있어요.
+            체육관 이름, 공개 링크 주소(슬러그), 비밀번호, 구독/결제, 체육관 로고를 여기서 관리해요.
           </p>
+          <Bullets
+            items={[
+              '구독 관리 카드에서 결제 수단·다음 결제일·결제 내역을 확인하고, 주기(월간/연간) 변경이나 구독 해지를 할 수 있어요.',
+              '체육관 로고는 프로 플랜 전용이에요. 업로드하면 사이드바, 공개 게시판, TV 전광판의 색상 이니셜 아바타를 대체해서 표시돼요.',
+            ]}
+          />
+          <div className="flex items-center gap-2 text-[11px] text-slate-400 font-bold">
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>구독 관리</span>
+            <span className="text-slate-300">·</span>
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span>체육관 로고 (프로)</span>
+          </div>
         </GuideSection>
       </div>
 
