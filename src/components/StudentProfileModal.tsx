@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta } from '../types';
 import { Gym } from '../data/api/gyms';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { Trophy, TrendingUp, Calendar, Printer, X, Trash2, Lock } from 'lucide-react';
+import { Trophy, TrendingUp, Calendar, Printer, X, Trash2, Lock, Share2 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
+
+// Lazy-loaded: pulls in html2canvas-pro (~270kB), which every profile view
+// would otherwise pay for even when nobody taps "스토리 공유" -- this modal
+// opens on every student a parent clicks on the public board, so keeping
+// the share-card code out of that path matters for mobile data/load time.
+const ShareCardModal = lazy(() => import('./ShareCardModal').then((m) => ({ default: m.ShareCardModal })));
 
 interface StudentProfileModalProps {
   student: Student;
@@ -49,6 +55,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   const [showStudentDeleteConfirm, setShowStudentDeleteConfirm] = useState<boolean>(false);
   const [recordToDelete, setRecordToDelete] = useState<JumpRecord | null>(null);
   const [upgradeReason, setUpgradeReason] = useState<'BASIC_FEATURE_LOCKED' | 'PRO_FEATURE_LOCKED' | null>(null);
+  const [showShareCard, setShowShareCard] = useState<boolean>(false);
 
   const isFreePlan = gymPlan === 'free';
   // Certificate issuance is PRO-only (moved up from "basic and above").
@@ -110,13 +117,23 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs grid place-items-center p-4 overflow-y-auto">
       <div className="bg-white border border-slate-200 rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-xl relative my-8">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-xl bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Top-right controls: share + close */}
+        <div className="absolute top-5 right-5 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowShareCard(true)}
+            className="px-3 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>스토리 공유</span>
+          </button>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         {/* Student Profile Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 mb-6">
@@ -440,6 +457,18 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
         }}
         onClose={() => setUpgradeReason(null)}
       />
+
+      {showShareCard && (
+        <Suspense fallback={null}>
+          <ShareCardModal
+            student={student}
+            records={records}
+            events={events}
+            initialEventKey={selectedEventKey}
+            onClose={() => setShowShareCard(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
