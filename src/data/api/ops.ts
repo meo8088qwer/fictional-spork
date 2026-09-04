@@ -156,7 +156,7 @@ export async function fetchOpsGymList(search: string, limit: number, offset: num
 }
 
 export interface OpsGymDetail {
-  gym: OpsGymListItem & { referredByGymId: string | null };
+  gym: OpsGymListItem & { referredByGymId: string | null; planOverrideExpiresAt: string | null };
   subscription: {
     status: string;
     desiredPlan: string;
@@ -192,6 +192,7 @@ export async function fetchOpsGymDetail(gymId: string): Promise<OpsGymDetail> {
       recordCount: g.record_count,
       lastRecordDate: g.last_record_date,
       referredByGymId: g.referred_by_gym_id,
+      planOverrideExpiresAt: g.plan_override_expires_at,
     },
     subscription: sub
       ? {
@@ -215,7 +216,13 @@ export async function fetchOpsGymDetail(gymId: string): Promise<OpsGymDetail> {
   };
 }
 
-export async function updateOpsGymPlan(gymId: string, plan: 'free' | 'basic' | 'pro'): Promise<void> {
-  const { error } = await withTimeout(supabase.rpc('ops_update_gym_plan', { p_gym_id: gymId, p_plan: plan }));
+export async function updateOpsGymPlan(
+  gymId: string,
+  plan: 'free' | 'basic' | 'pro',
+  durationMonths: number | null = null
+): Promise<void> {
+  const { error } = await withTimeout(
+    supabase.rpc('ops_update_gym_plan', { p_gym_id: gymId, p_plan: plan, p_duration_months: durationMonths })
+  );
   if (error) throw error;
 }

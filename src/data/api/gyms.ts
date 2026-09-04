@@ -8,6 +8,11 @@ export interface Gym {
   name: string;
   plan: 'free' | 'basic' | 'pro';
   logoUrl?: string;
+  // Set only when the ops dashboard granted a time-limited plan (e.g. an
+  // Instagram-event "1개월 프로 체험"). Reverts to free automatically the
+  // next time get_my_gym() runs past this time -- see
+  // supabase/migrations/0022_gym_plan_override_expiry.sql.
+  planOverrideExpiresAt?: string;
 }
 
 function mapGymRow(row: any): Gym {
@@ -18,6 +23,7 @@ function mapGymRow(row: any): Gym {
     name: row.name,
     plan: row.plan,
     logoUrl: row.logo_url ?? undefined,
+    planOverrideExpiresAt: row.plan_override_expires_at ?? undefined,
   };
 }
 
@@ -32,7 +38,11 @@ function makeSlug(name: string): string {
 }
 
 export async function getMyGym(): Promise<Gym | null> {
-  const { data, error } = await supabase.from('gyms').select('*').maybeSingle();
+  // Routed through the get_my_gym() RPC (not a plain select) so a
+  // time-limited plan override that has expired gets reverted to free
+  // right here, on the very next load -- see
+  // supabase/migrations/0022_gym_plan_override_expiry.sql.
+  const { data, error } = await supabase.rpc('get_my_gym');
   if (error) throw error;
   return data ? mapGymRow(data) : null;
 }

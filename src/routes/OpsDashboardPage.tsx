@@ -84,18 +84,38 @@ function SignupBarChart({ data }: { data: { date: string; count: number }[] }) {
 
 const PLAN_LABEL: Record<string, string> = { free: 'FREE', basic: 'BASIC', pro: 'PRO' };
 
+const DURATION_OPTIONS = [
+  { value: 'permanent', label: '기간 없음(영구)' },
+  { value: '1', label: '1개월' },
+  { value: '2', label: '2개월' },
+  { value: '3', label: '3개월' },
+  { value: '6', label: '6개월' },
+];
+
 function GymDetailPanel({ gymId, onClose }: { gymId: string; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [isSavingPlan, setIsSavingPlan] = useState(false);
+  const [planDraft, setPlanDraft] = useState<'free' | 'basic' | 'pro'>('free');
+  const [durationDraft, setDurationDraft] = useState<string>('permanent');
   const detailQuery = useQuery({
     queryKey: ['ops', 'gymDetail', gymId],
     queryFn: () => fetchOpsGymDetail(gymId),
   });
 
-  const handlePlanChange = async (plan: 'free' | 'basic' | 'pro') => {
+  // Re-sync the draft to the server's current plan/expiry whenever it
+  // changes -- on first load, and again right after a successful apply (so
+  // the controls reflect what was actually saved, not what was mid-edit).
+  useEffect(() => {
+    if (!detailQuery.data) return;
+    setPlanDraft(detailQuery.data.gym.plan);
+    setDurationDraft('permanent');
+  }, [detailQuery.data?.gym.plan, detailQuery.data?.gym.planOverrideExpiresAt]);
+
+  const handleApplyPlan = async () => {
     setIsSavingPlan(true);
     try {
-      await updateOpsGymPlan(gymId, plan);
+      const months = durationDraft === 'permanent' ? null : Number(durationDraft);
+      await updateOpsGymPlan(gymId, planDraft, months);
       await queryClient.invalidateQueries({ queryKey: ['ops', 'gymDetail', gymId] });
       await queryClient.invalidateQueries({ queryKey: ['ops', 'gymList'] });
     } finally {
@@ -156,21 +176,47 @@ function GymDetailPanel({ gymId, onClose }: { gymId: string; onClose: () => void
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
               <label className="text-[11px] font-bold text-amber-800 block mb-1.5">플랜 수동 변경</label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-2">
                 <select
-                  value={detailQuery.data.gym.plan}
+                  value={planDraft}
                   disabled={isSavingPlan}
-                  onChange={(e) => handlePlanChange(e.target.value as 'free' | 'basic' | 'pro')}
+                  onChange={(e) => setPlanDraft(e.target.value as 'free' | 'basic' | 'pro')}
                   className="flex-1 px-2.5 py-1.5 rounded-lg bg-white border border-amber-300 text-xs font-bold text-slate-800 focus:outline-none disabled:opacity-50"
                 >
                   <option value="free">FREE</option>
                   <option value="basic">BASIC</option>
                   <option value="pro">PRO</option>
                 </select>
-                {isSavingPlan && <Loader2 className="w-4 h-4 animate-spin text-amber-700" />}
+                <select
+                  value={durationDraft}
+                  disabled={isSavingPlan || planDraft === 'free'}
+                  onChange={(e) => setDurationDraft(e.target.value)}
+                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-white border border-amber-300 text-xs font-bold text-slate-800 focus:outline-none disabled:opacity-50"
+                >
+                  {DURATION_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </div>
+              <button
+                type="button"
+                onClick={handleApplyPlan}
+                disabled={isSavingPlan}
+                className="w-full py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-xs cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                {isSavingPlan && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                <span>적용</span>
+              </button>
+              {detailQuery.data.gym.planOverrideExpiresAt && (
+                <p className="text-[11px] text-amber-900 font-bold mt-2">
+                  ⏰ {detailQuery.data.gym.planOverrideExpiresAt.slice(0, 10)}에 자동으로 FREE로 되돌아가요.
+                </p>
+              )}
               <p className="text-[10px] text-amber-700 font-medium mt-1.5">
-                결제 없이 등급만 직접 바꿔요 (체험판 제공, CS 처리 등). 자동 결제 갱신에는 영향 없어요.
+                결제 없이 등급만 직접 바꿔요 (이벤트/체험판 제공, CS 처리 등). 기간을 정하면 그날 자동으로
+                FREE로 돌아가고, "기간 없음"이면 다시 바꿀 때까지 유지돼요. 자동 결제 갱신에는 영향 없어요.
               </p>
             </div>
 
