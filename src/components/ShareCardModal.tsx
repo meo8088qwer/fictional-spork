@@ -71,12 +71,12 @@ const PALETTES: Record<PaletteKey, Palette> = {
   },
 };
 
+// The other 4 types (GROWTH/TODAY/ABILITY/MONTHLY_REPORT) are built and
+// working, just temporarily hidden from the tab list below while only
+// "최고기록 인증" ships -- re-add their entries here when it's time to
+// bring them back, no other code needs to change.
 const CARD_TYPES: { id: CardType; label: string; sublabel: string }[] = [
   { id: 'RECORD', label: '최고기록 인증', sublabel: '최고기록만 심플하게' },
-  { id: 'GROWTH', label: '성장 그래프 인증', sublabel: '최근 3개월 성장' },
-  { id: 'TODAY', label: '오늘의 기록 인증', sublabel: '가장 최근 기록' },
-  { id: 'ABILITY', label: '종합 기록 인증', sublabel: '6각형 능력치' },
-  { id: 'MONTHLY_REPORT', label: '월간 리포트 인증', sublabel: '이번달 리포트' },
 ];
 
 // Kept small deliberately -- has to fit inside the modal with room to spare
