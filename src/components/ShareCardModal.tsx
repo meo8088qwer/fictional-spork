@@ -82,8 +82,8 @@ const CARD_TYPES: { id: CardType; label: string; sublabel: string }[] = [
 // Kept small deliberately -- has to fit inside the modal with room to spare
 // on the narrowest common phone width (~320px) without any horizontal
 // scrolling.
-const CARD_WIDTH = 260;
-const CARD_HEIGHT = 462; // 9:16
+const CARD_WIDTH = 230;
+const CARD_HEIGHT = 409; // 9:16
 
 interface ShareCardModalProps {
   student: Student;
@@ -602,8 +602,8 @@ export const ShareCardModal: React.FC<ShareCardModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs grid place-items-start sm:place-items-center p-0 sm:p-6 overflow-y-auto">
-      <div className="bg-white sm:border sm:border-slate-200 sm:rounded-3xl w-full max-w-lg min-h-screen sm:min-h-0 p-4 sm:p-5 shadow-2xl relative sm:my-auto">
+    <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs grid place-items-start sm:place-items-center p-0 sm:p-6 overflow-y-auto overflow-x-hidden">
+      <div className="bg-white sm:border sm:border-slate-200 sm:rounded-3xl w-full max-w-lg min-h-screen sm:min-h-0 p-4 sm:p-5 shadow-2xl relative sm:my-auto overflow-x-hidden">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 min-w-0">
             <span className="p-2 rounded-xl bg-slate-100 text-slate-600 shrink-0">

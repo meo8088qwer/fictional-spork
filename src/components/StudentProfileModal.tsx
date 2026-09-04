@@ -117,10 +117,17 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs grid place-items-center p-4 overflow-y-auto">
       <div className="bg-white border border-slate-200 rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-xl relative my-8">
-        {/* Top controls row: share + close -- its own row (not absolutely
-            positioned) so it can never overlap the name/grade row below it
-            on narrow screens or with a long student name. */}
-        <div className="flex items-center justify-end gap-2 mb-4">
+        {/* Top controls: close above, share below -- stacked (not side by
+            side) so the row never needs to be wide, and it's in normal
+            flow (not absolutely positioned) so it can't overlap the
+            name/grade row below it on narrow screens or a long name. */}
+        <div className="flex flex-col items-end gap-2 mb-4">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
+          >
+            <X className="w-5 h-5" />
+          </button>
           <button
             type="button"
             onClick={() => setShowShareCard(true)}
@@ -128,12 +135,6 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
           >
             <Share2 className="w-3.5 h-3.5" />
             <span>스토리 공유</span>
-          </button>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
-          >
-            <X className="w-5 h-5" />
           </button>
         </div>
 
