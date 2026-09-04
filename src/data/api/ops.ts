@@ -6,8 +6,28 @@ import { supabase } from '../../lib/supabaseClient';
 // this file does. isPlatformAdmin() below is just the UI-layer guard that
 // decides whether to render the page at all.
 
+// Some mobile carriers/proxies leave a stalled request open instead of
+// erroring it, so a plain await can hang forever with no way for the UI to
+// ever leave its loading state. Race every call here against a timeout so
+// each one always settles one way or another.
+function withTimeout<T>(promise: PromiseLike<T>, ms = 10000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('요청 시간이 초과됐어요. 다시 시도해 주세요.')), ms);
+    Promise.resolve(promise).then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 export async function isPlatformAdmin(): Promise<boolean> {
-  const { data, error } = await supabase.rpc('is_platform_admin');
+  const { data, error } = await withTimeout(supabase.rpc('is_platform_admin'));
   if (error) return false;
   return !!data;
 }
@@ -67,7 +87,7 @@ function mapInactiveGym(row: any): OpsInactiveGym {
 }
 
 export async function fetchOpsDashboardSummary(): Promise<OpsDashboardSummary> {
-  const { data, error } = await supabase.rpc('ops_dashboard_summary');
+  const { data, error } = await withTimeout(supabase.rpc('ops_dashboard_summary'));
   if (error) throw error;
   return {
     signupsDaily: (data.signups_daily ?? []).map((r: any) => ({ date: r.date, count: r.count })),
@@ -112,11 +132,13 @@ export interface OpsGymListResult {
 }
 
 export async function fetchOpsGymList(search: string, limit: number, offset: number): Promise<OpsGymListResult> {
-  const { data, error } = await supabase.rpc('ops_list_gyms', {
-    p_search: search || null,
-    p_limit: limit,
-    p_offset: offset,
-  });
+  const { data, error } = await withTimeout(
+    supabase.rpc('ops_list_gyms', {
+      p_search: search || null,
+      p_limit: limit,
+      p_offset: offset,
+    })
+  );
   if (error) throw error;
   return {
     total: data.total,
@@ -155,7 +177,7 @@ export interface OpsGymDetail {
 }
 
 export async function fetchOpsGymDetail(gymId: string): Promise<OpsGymDetail> {
-  const { data, error } = await supabase.rpc('ops_gym_detail', { p_gym_id: gymId });
+  const { data, error } = await withTimeout(supabase.rpc('ops_gym_detail', { p_gym_id: gymId }));
   if (error) throw error;
   const g = data.gym;
   const sub = data.subscription;
@@ -194,6 +216,6 @@ export async function fetchOpsGymDetail(gymId: string): Promise<OpsGymDetail> {
 }
 
 export async function updateOpsGymPlan(gymId: string, plan: 'free' | 'basic' | 'pro'): Promise<void> {
-  const { error } = await supabase.rpc('ops_update_gym_plan', { p_gym_id: gymId, p_plan: plan });
+  const { error } = await withTimeout(supabase.rpc('ops_update_gym_plan', { p_gym_id: gymId, p_plan: plan }));
   if (error) throw error;
 }

@@ -114,7 +114,19 @@ function GymDetailPanel({ gymId, onClose }: { gymId: string; onClose: () => void
           <X className="w-5 h-5" />
         </button>
 
-        {detailQuery.isLoading || !detailQuery.data ? (
+        {detailQuery.isError ? (
+          <div className="py-16 flex flex-col items-center gap-3">
+            <AlertTriangle className="w-8 h-8 text-amber-400" />
+            <p className="text-xs text-slate-500 font-medium">불러오지 못했어요.</p>
+            <button
+              type="button"
+              onClick={() => detailQuery.refetch()}
+              className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs cursor-pointer"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : detailQuery.isLoading || !detailQuery.data ? (
           <div className="py-16 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
           </div>
@@ -241,14 +253,14 @@ export default function OpsDashboardPage() {
     if (authLoading || !session) return;
     let cancelled = false;
     setAdminCheck('checking');
+    // isPlatformAdmin() itself is timeout-guarded (see data/api/ops.ts), so
+    // this always settles one way or another within a bounded time -- no
+    // separate race needed here.
     isPlatformAdmin()
       .then((ok) => {
         if (!cancelled) setAdminCheck(ok ? 'allowed' : 'denied');
       })
       .catch(() => {
-        // A flaky/slow connection throwing here used to leave this stuck on
-        // "checking" forever with no way out -- surface it instead so a
-        // retry is possible.
         if (!cancelled) setAdminCheck('error');
       });
     return () => {
@@ -329,7 +341,19 @@ export default function OpsDashboardPage() {
           <h1 className="text-xl font-bold text-slate-900">운영자 대시보드</h1>
         </div>
 
-        {summaryQuery.isLoading || !s ? (
+        {summaryQuery.isError ? (
+          <div className="py-16 flex flex-col items-center gap-3">
+            <AlertTriangle className="w-8 h-8 text-amber-400" />
+            <p className="text-xs text-slate-500 font-medium">불러오지 못했어요. 네트워크를 확인해 주세요.</p>
+            <button
+              type="button"
+              onClick={() => summaryQuery.refetch()}
+              className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#1B5E20]/90 text-white font-bold text-xs cursor-pointer"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : summaryQuery.isLoading || !s ? (
           <div className="py-24 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
           </div>
@@ -482,7 +506,18 @@ export default function OpsDashboardPage() {
                 />
               </div>
 
-              {listQuery.isLoading || !listQuery.data ? (
+              {listQuery.isError ? (
+                <div className="py-8 flex flex-col items-center gap-2">
+                  <p className="text-xs text-slate-500 font-medium">불러오지 못했어요.</p>
+                  <button
+                    type="button"
+                    onClick={() => listQuery.refetch()}
+                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+                  >
+                    다시 시도
+                  </button>
+                </div>
+              ) : listQuery.isLoading || !listQuery.data ? (
                 <div className="py-10 flex justify-center">
                   <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
                 </div>
