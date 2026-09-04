@@ -17,6 +17,7 @@ const PublicTvPage = lazy(() => import('./routes/PublicTvPage'));
 const PublicGlobalRankingPage = lazy(() => import('./routes/PublicGlobalRankingPage'));
 const PrivacyPolicyPage = lazy(() => import('./routes/PrivacyPolicyPage'));
 const TermsOfServicePage = lazy(() => import('./routes/TermsOfServicePage'));
+const OpsDashboardPage = lazy(() => import('./routes/OpsDashboardPage'));
 
 function RootRedirect() {
   const { session, loading } = useAuth();
@@ -55,6 +56,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/ops" element={<OpsDashboardPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
