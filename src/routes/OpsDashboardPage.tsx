@@ -280,7 +280,12 @@ export default function OpsDashboardPage() {
     enabled: adminCheck === 'allowed',
   });
 
-  if (authLoading || adminCheck === 'checking') {
+  // Order matters here: without a session the admin-check effect below
+  // never runs (it bails out immediately), so adminCheck stays stuck on
+  // 'checking' forever -- checking session first (and redirecting before
+  // ever looking at adminCheck) is what actually gets a logged-out visitor
+  // to the login page instead of an infinite spinner.
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8]">
         <span className="w-8 h-8 border-4 border-[#1B5E20] border-t-transparent rounded-full animate-spin" />
@@ -289,6 +294,14 @@ export default function OpsDashboardPage() {
   }
 
   if (!session) return <Navigate to="/login" replace />;
+
+  if (adminCheck === 'checking') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f4f5f8]">
+        <span className="w-8 h-8 border-4 border-[#1B5E20] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (adminCheck === 'denied') {
     return (
