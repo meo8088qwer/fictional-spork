@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+import * as Sentry from '@sentry/react';
 import { supabase } from '../lib/supabaseClient';
 import {
   ensureGymForUser,
@@ -74,11 +75,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem(PENDING_GYM_NAME_KEY);
       localStorage.removeItem(PENDING_REFERRAL_CODE_KEY);
     } catch (e) {
-      console.error('Failed to load/create gym for user', e);
-      setGym(null);
-      setGymError(
-        e instanceof Error ? e.message : '체육관 정보를 불러오지 못했습니다. 다시 시도해 주세요.'
-      );
+      // A brand-new session's very first request can lose a race with the
+      // Supabase client's internal token attachment right after an
+      // email-confirm/recovery redirect -- seen in prod as a stray 401 on
+      // get_my_gym that permanently stranded two fresh signups with no gym
+      // ever created, since there was no retry. One short retry clears
+      // that race without the user having to do anything.
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        const g = await ensureGymForUser(fallbackName, referralCode);
+        setGym(g);
+        localStorage.removeItem(PENDING_GYM_NAME_KEY);
+        localStorage.removeItem(PENDING_REFERRAL_CODE_KEY);
+      } catch (e2) {
+        console.error('Failed to load/create gym for user', e2);
+        Sentry.captureException(e2);
+        setGym(null);
+        setGymError(
+          e2 instanceof Error ? e2.message : '체육관 정보를 불러오지 못했습니다. 다시 시도해 주세요.'
+        );
+      }
     } finally {
       setGymLoading(false);
     }
