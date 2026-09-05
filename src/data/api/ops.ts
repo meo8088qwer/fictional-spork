@@ -119,6 +119,7 @@ export interface OpsGymListItem {
   id: string;
   name: string;
   slug: string;
+  email: string;
   plan: 'free' | 'basic' | 'pro';
   createdAt: string;
   studentCount: number;
@@ -146,6 +147,7 @@ export async function fetchOpsGymList(search: string, limit: number, offset: num
       id: g.id,
       name: g.name,
       slug: g.slug,
+      email: g.email,
       plan: g.plan,
       createdAt: g.created_at,
       studentCount: g.student_count,
@@ -194,6 +196,7 @@ export async function fetchOpsGymDetail(gymId: string): Promise<OpsGymDetail> {
       id: g.id,
       name: g.name,
       slug: g.slug,
+      email: g.email,
       plan: g.plan,
       createdAt: g.created_at,
       studentCount: g.student_count,

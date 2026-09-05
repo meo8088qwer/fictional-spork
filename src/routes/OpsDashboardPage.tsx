@@ -153,6 +153,7 @@ function GymDetailPanel({ gymId, onClose }: { gymId: string; onClose: () => void
         ) : (
           <>
             <h2 className="text-lg font-bold text-slate-900 mb-1">{detailQuery.data.gym.name}</h2>
+            <p className="text-xs text-slate-500 font-bold mb-1">{detailQuery.data.gym.email}</p>
             <p className="text-xs text-slate-400 font-mono mb-4">
               /{detailQuery.data.gym.slug} · 가입일 {detailQuery.data.gym.createdAt.slice(0, 10)}
             </p>
@@ -580,7 +581,7 @@ export default function OpsDashboardPage() {
                     setSearch(e.target.value);
                     setPage(0);
                   }}
-                  placeholder="이름/주소 검색..."
+                  placeholder="이름/주소/이메일 검색..."
                   className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-slate-400"
                 />
               </div>
@@ -603,10 +604,11 @@ export default function OpsDashboardPage() {
               ) : (
                 <>
                   <div className="border border-slate-200 rounded-xl overflow-hidden overflow-x-auto">
-                    <table className="w-full text-xs text-left border-collapse min-w-[560px]">
+                    <table className="w-full text-xs text-left border-collapse min-w-[680px]">
                       <thead className="bg-slate-50 border-b border-slate-200 font-bold text-slate-500">
                         <tr>
                           <th className="p-2.5 pl-3">이름</th>
+                          <th className="p-2.5">가입 이메일</th>
                           <th className="p-2.5">가입일</th>
                           <th className="p-2.5">플랜</th>
                           <th className="p-2.5 text-right">학생수</th>
@@ -622,6 +624,7 @@ export default function OpsDashboardPage() {
                             className="hover:bg-slate-50 cursor-pointer"
                           >
                             <td className="p-2.5 pl-3 font-bold">{g.name}</td>
+                            <td className="p-2.5 text-slate-500">{g.email}</td>
                             <td className="p-2.5 font-mono text-slate-500">{g.createdAt.slice(0, 10)}</td>
                             <td className="p-2.5">
                               <span className="font-bold px-1.5 py-0.5 rounded bg-slate-100">
@@ -635,7 +638,7 @@ export default function OpsDashboardPage() {
                         ))}
                         {listQuery.data.items.length === 0 && (
                           <tr>
-                            <td colSpan={6} className="p-6 text-center text-slate-400 font-medium">
+                            <td colSpan={7} className="p-6 text-center text-slate-400 font-medium">
                               검색 결과가 없어요.
                             </td>
                           </tr>
