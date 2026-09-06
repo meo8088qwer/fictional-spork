@@ -83,7 +83,7 @@ export default function SignUpPage() {
           </div>
           <h1 className="text-lg font-bold text-slate-900">체육관 계정 만들기</h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            무료 플랜(기본 종목 6개 · 학생 50명)으로 바로 시작하세요.
+            가입 즉시 PRO 플랜을 14일간 무료로 체험할 수 있어요.
           </p>
         </div>
 
