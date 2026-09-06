@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import { supabase } from '../../lib/supabaseClient';
 import { seedDefaultEvents } from './events';
 
@@ -44,7 +45,24 @@ export async function getMyGym(): Promise<Gym | null> {
   // supabase/migrations/0022_gym_plan_override_expiry.sql.
   const { data, error } = await supabase.rpc('get_my_gym');
   if (error) throw error;
-  return data ? mapGymRow(data) : null;
+  if (!data) return null;
+  if (!data.id) {
+    // Multiple real signups ended up with no gym and no thrown error
+    // anywhere -- the working theory is this RPC call resolving with some
+    // truthy-but-shapeless value (instead of the plain SQL NULL confirmed
+    // server-side) right when a fresh session's very first request goes
+    // out, which made `if (existing) return existing;` below treat that as
+    // "gym already exists" and skip creating one, forever, silently. Since
+    // that's never been reproduced directly, treat anything without a real
+    // id as no-gym (self-heals into createGym below) and capture the raw
+    // shape so an actual recurrence is finally visible somewhere.
+    Sentry.captureMessage('get_my_gym returned a truthy non-gym value', {
+      level: 'error',
+      extra: { data },
+    });
+    return null;
+  }
+  return mapGymRow(data);
 }
 
 async function createGym(name: string, referralCode?: string): Promise<Gym> {
