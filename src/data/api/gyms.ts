@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/react';
 import { supabase } from '../../lib/supabaseClient';
-import { seedDefaultEvents } from './events';
 
 export interface Gym {
   id: string;
@@ -72,7 +71,11 @@ async function createGym(name: string, referralCode?: string): Promise<Gym> {
   // signer-up has no way to look up another gym's id themselves, and a
   // plain insert would otherwise let a client pass an arbitrary gym_id in
   // directly. See supabase/migrations/0016_referral_program.sql and
-  // 0023_referral_v2.sql (slug -> referral_code switch).
+  // 0023_referral_v2.sql (slug -> referral_code switch). The 6 default
+  // events are seeded server-side in the SAME call (see
+  // 0028_guarantee_default_events.sql) -- they used to be a separate
+  // seedDefaultEvents() round-trip after this one, which is exactly the
+  // gap that left several real signups with a gym but zero events.
   let lastError: unknown = null;
 
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -84,9 +87,7 @@ async function createGym(name: string, referralCode?: string): Promise<Gym> {
     });
 
     if (!error) {
-      const gym = mapGymRow(data);
-      await seedDefaultEvents(gym.id);
-      return gym;
+      return mapGymRow(data);
     }
 
     // 23505 = unique_violation (slug collision) -- retry with a new random slug.

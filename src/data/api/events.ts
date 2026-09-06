@@ -101,22 +101,28 @@ export async function deleteEvent(gymId: string, key: string): Promise<void> {
   if (error) throw error;
 }
 
-// Free-plan gyms get all 6 built-in events (30초/10초 x 양발모아뛰기/
-// 번갈아뛰기/이중뛰기) -- the free-plan event cap in the enforce_event_limit
-// DB trigger is set to exactly 6 to match, so seeding the full default set
-// never trips it. Paid plan lifts the cap entirely for adding events beyond
-// these defaults.
-/** Idempotent: inserts the built-in event set for a gym that has none yet. */
-export async function seedDefaultEvents(gymId: string): Promise<void> {
-  const rows = Object.values(DEFAULT_EVENTS).map((meta) => toEventRow(gymId, { ...meta, isCustom: false }));
-  const { error } = await supabase.from('events').insert(rows);
-  if (error) throw error;
-}
+// The 6 built-in events (30초/10초 x 양발모아뛰기/번갈아뛰기/이중뛰기) are
+// seeded server-side, atomically with gym creation itself (see
+// create_gym_with_referral() in 0028_guarantee_default_events.sql) and can
+// never be deleted (a DB trigger blocks it) -- every gym unconditionally
+// has all 6, so there's no client-side seeding path anymore.
 
-/** Deletes every event for the gym and re-seeds the built-in defaults. */
+/**
+ * Removes any custom events (base events can't be deleted -- enforced
+ * server-side) and restores the 6 base events' fields to their canonical
+ * defaults, undoing any benchmark/description edits.
+ */
 export async function resetEventsToDefault(gymId: string): Promise<Record<string, EventMeta>> {
-  const { error: deleteError } = await supabase.from('events').delete().eq('gym_id', gymId);
+  const { error: deleteError } = await supabase
+    .from('events')
+    .delete()
+    .eq('gym_id', gymId)
+    .eq('is_custom', true);
   if (deleteError) throw deleteError;
-  await seedDefaultEvents(gymId);
+
+  const rows = Object.values(DEFAULT_EVENTS).map((meta) => toEventRow(gymId, { ...meta, isCustom: false }));
+  const { error: upsertError } = await supabase.from('events').upsert(rows, { onConflict: 'gym_id,key' });
+  if (upsertError) throw upsertError;
+
   return listEvents(gymId);
 }
