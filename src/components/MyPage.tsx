@@ -232,7 +232,7 @@ export const MyPage: React.FC<MyPageProps> = ({
           <div className="mb-4 p-2.5 rounded-xl text-xs font-bold flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>
-              이벤트로 {gym.plan.toUpperCase()} 플랜을 이용 중이에요. {gym.planOverrideExpiresAt.slice(0, 10)}
+              무료체험/이벤트로 {gym.plan.toUpperCase()} 플랜을 이용 중이에요. {gym.planOverrideExpiresAt.slice(0, 10)}
               에 자동으로 FREE 플랜으로 전환돼요.
             </span>
           </div>
