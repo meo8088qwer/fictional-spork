@@ -676,7 +676,12 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       )}
 
       {/* Main Discipline Banner & Rankings */}
-      {displayMode === 'ROTATE' && (
+      {displayMode === 'ROTATE' && !eventMeta && (
+        <div className="relative z-10 my-auto text-center text-slate-400 font-bold">
+          아직 등록된 종목이 없어요. 관리자 화면에서 종목을 추가해 주세요.
+        </div>
+      )}
+      {displayMode === 'ROTATE' && eventMeta && (
       <div
         key={`${currentEventKey}-${currentPage}`}
         className="relative z-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-tv-transition"
