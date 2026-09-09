@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Radio, Copy, Check, Save, Wifi, X, Users } from 'lucide-react';
+import { Radio, Copy, Check, Save, Wifi, X, Users, Hash } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { Gym } from '../data/api/gyms';
 import { Student, EventMeta, JumpRecord } from '../types';
 import { BatchRecordEntry } from '../data/api/records';
 import { parseClassLabels, studentInClass } from '../lib/classLabels';
+import { CounterEntry } from './CounterEntry';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface LiveCountEntryProps {
@@ -50,6 +51,10 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  // Counter mode is single-device only (no realtime broadcast needed -- see
+  // CounterEntry) and lives entirely in local state rather than the URL, so
+  // it deliberately doesn't reuse the session/broadcast machinery below.
+  const [counterRoster, setCounterRoster] = useState<Student[] | null>(null);
 
   const pickedClassRoster = useMemo(
     () => students.filter((s) => pickedClass === ALL_CLASSES || studentInClass(s.classLabel, pickedClass)),
@@ -64,6 +69,26 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
       else next.add(studentId);
       return next;
     });
+  };
+
+  const startCounterMode = () => {
+    if (!pickedEvent) return;
+    const present = pickedClassRoster.filter((s) => !absentIds.has(s.id));
+    if (present.length === 0) return;
+    setCounterRoster(present);
+  };
+
+  const saveCounterEntry = async (studentId: string, count: number) => {
+    const student = counterRoster?.find((s) => s.id === studentId);
+    await onBatchSaveRecords([
+      {
+        studentId,
+        studentName: student?.name ?? '',
+        eventKey: pickedEvent,
+        count,
+        date: new Date().toISOString().slice(0, 10),
+      },
+    ]);
   };
 
   const startSession = () => {
@@ -105,6 +130,26 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
       channelRef.current = null;
     };
   }, [gym.id, sessionId]);
+
+  if (counterRoster) {
+    return (
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
+            <Hash className="w-5 h-5" />
+          </span>
+          <h1 className="text-xl font-bold text-slate-900">계수기 측정</h1>
+        </div>
+        <CounterEntry
+          roster={counterRoster}
+          eventMeta={events[pickedEvent]}
+          classLabel={pickedClass === ALL_CLASSES ? '전체' : pickedClass}
+          onSaveOne={saveCounterEntry}
+          onExit={() => setCounterRoster(null)}
+        />
+      </div>
+    );
+  }
 
   if (!sessionId || !eventParam) {
     return (
@@ -206,6 +251,20 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
             <Radio className="w-4 h-4" />
             <span>실시간 측정 시작 ({presentCount}명)</span>
           </button>
+
+          <button
+            type="button"
+            disabled={!pickedEvent || presentCount === 0}
+            onClick={startCounterMode}
+            className="w-full mt-2 py-3 rounded-xl bg-white hover:bg-slate-50 disabled:opacity-50 text-[#1B5E20] font-bold text-sm flex items-center justify-center gap-2 border-2 border-[#1B5E20] cursor-pointer"
+          >
+            <Hash className="w-4 h-4" />
+            <span>계수기 측정 시작 ({presentCount}명)</span>
+          </button>
+          <p className="text-[11px] text-slate-400 font-medium mt-2 text-center leading-relaxed">
+            한 명씩 화면 속 버튼으로 직접 탭하며 세는 방식이에요. 이중뛰기 오래하기처럼 천천히 세는 종목에 잘
+            맞아요.
+          </p>
         </div>
       </div>
     );
