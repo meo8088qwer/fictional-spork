@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Radio, Copy, Check, Save, Wifi, X, Users, Hash } from 'lucide-react';
+import { Radio, Copy, Check, Save, Wifi, X, Users, Hash, Volume2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { Gym } from '../data/api/gyms';
 import { Student, EventMeta, JumpRecord } from '../types';
@@ -24,6 +24,13 @@ function randomSessionId(): string {
 
 const ALL_CLASSES = '__ALL__';
 
+// 종목 timeSeconds(10초/30초)에 맞춰 재생할 라운드별 진행 음원. 30초 음원은
+// 아직 안 받아서 비워둠 -- 나중에 파일 받으면 여기 3줄만 채우면 됨.
+const ROUND_AUDIO: Record<number, Partial<Record<1 | 3 | 5, string>>> = {
+  10: { 1: '/audio/10s-round1.mp3', 3: '/audio/10s-round3.mp3', 5: '/audio/10s-round5.mp3' },
+  30: {},
+};
+
 export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
   gym,
   students,
@@ -43,6 +50,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
 
   const [pickedClass, setPickedClass] = useState(ALL_CLASSES);
   const [pickedEvent, setPickedEvent] = useState(eventList[0]?.key ?? '');
+  const [selectedRound, setSelectedRound] = useState<1 | 3 | 5>(1);
   // Kids who showed up on a fixed schedule are the common case, so default
   // to everyone in the class checked -- coaches uncheck the few who are
   // out today rather than checking everyone who's in.
@@ -267,6 +275,47 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
             맞아요.
           </p>
         </div>
+
+        {(() => {
+          const timeSeconds = events[pickedEvent]?.timeSeconds;
+          const tracksForDuration = timeSeconds ? ROUND_AUDIO[timeSeconds] : undefined;
+          if (!tracksForDuration) return null;
+          const trackUrl = tracksForDuration[selectedRound];
+          return (
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg mt-4">
+              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1">
+                <Volume2 className="w-4 h-4 text-slate-400" />
+                라운드 음원 재생
+              </h2>
+              <p className="text-[11px] text-slate-500 font-medium mb-3 leading-relaxed">
+                측정 시작 신호로 틀어주는 음원이에요. {timeSeconds}초 종목용 라운드를 골라 재생하세요.
+              </p>
+              <div className="flex gap-2 mb-3">
+                {([1, 3, 5] as const).map((round) => (
+                  <button
+                    key={round}
+                    type="button"
+                    onClick={() => setSelectedRound(round)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border-2 ${
+                      selectedRound === round
+                        ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    {round}라운드
+                  </button>
+                ))}
+              </div>
+              {trackUrl ? (
+                <audio key={trackUrl} controls preload="none" src={trackUrl} className="w-full" />
+              ) : (
+                <p className="text-xs text-slate-400 font-medium text-center py-2">
+                  {timeSeconds}초 음원은 아직 준비 중이에요.
+                </p>
+              )}
+            </div>
+          );
+        })()}
       </div>
     );
   }
