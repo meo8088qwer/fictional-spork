@@ -74,6 +74,7 @@ import {
   Pencil,
   Check,
   X,
+  HelpCircle,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
@@ -101,6 +102,7 @@ interface AdminBatchEntryProps {
   onDeleteRecord: (recordId: string) => Promise<void>;
   onClose: (lastEventKey?: EventKey) => void;
   onNavigateToPricing: () => void;
+  onOpenGuide: (section: string) => void;
   // Which sub-section to land on -- the sidebar now links directly to
   // 종목 관리/수련생 관리 instead of them being buttons inside this dashboard.
   initialSubTab?: 'BATCH' | 'EVENTS' | 'STUDENTS';
@@ -122,6 +124,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   onDeleteRecord,
   onClose,
   onNavigateToPricing,
+  onOpenGuide,
   initialSubTab = 'BATCH',
 }) => {
   const eventKeys = Object.keys(events);
@@ -681,19 +684,33 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
       {/* Header Bar -- title matches whichever of the 3 subtabs is active,
           instead of one long generic sentence repeated on all of them */}
       <div className="border-b border-slate-100 pb-4 mb-6">
-        <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
-            {activeSubTab === 'EVENTS' ? (
-              <ListChecks className="w-5 h-5" />
-            ) : activeSubTab === 'STUDENTS' ? (
-              <Users className="w-5 h-5" />
-            ) : (
-              <ClipboardEdit className="w-5 h-5" />
-            )}
-          </span>
-          <h2 className="text-lg font-bold text-slate-900">
-            {activeSubTab === 'EVENTS' ? '종목 관리' : activeSubTab === 'STUDENTS' ? '수련생 관리' : '기록 관리'}
-          </h2>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
+              {activeSubTab === 'EVENTS' ? (
+                <ListChecks className="w-5 h-5" />
+              ) : activeSubTab === 'STUDENTS' ? (
+                <Users className="w-5 h-5" />
+              ) : (
+                <ClipboardEdit className="w-5 h-5" />
+              )}
+            </span>
+            <h2 className="text-lg font-bold text-slate-900">
+              {activeSubTab === 'EVENTS' ? '종목 관리' : activeSubTab === 'STUDENTS' ? '수련생 관리' : '기록 관리'}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              onOpenGuide(
+                activeSubTab === 'EVENTS' ? 'event-manage' : activeSubTab === 'STUDENTS' ? 'student-manage' : 'record-entry'
+              )
+            }
+            className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-[#1B5E20] cursor-pointer"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>사용법</span>
+          </button>
         </div>
       </div>
 

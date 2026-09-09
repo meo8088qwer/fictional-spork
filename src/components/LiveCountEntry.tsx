@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Radio, Copy, Check, Save, Wifi, X, Users, Hash, Volume2 } from 'lucide-react';
+import { Radio, Copy, Check, Save, Wifi, X, Users, Hash, Volume2, HelpCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { Gym } from '../data/api/gyms';
 import { Student, EventMeta, JumpRecord } from '../types';
@@ -16,6 +16,7 @@ interface LiveCountEntryProps {
   events: Record<string, EventMeta>;
   onBatchSaveRecords: (entries: BatchRecordEntry[]) => Promise<JumpRecord[]>;
   onClose: () => void;
+  onOpenGuide: () => void;
 }
 
 function randomSessionId(): string {
@@ -38,6 +39,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
   events,
   onBatchSaveRecords,
   onClose,
+  onOpenGuide,
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const sessionId = searchParams.get('session');
@@ -243,13 +245,23 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
             </span>
             <h1 className="text-xl font-bold text-slate-900">실시간 측정</h1>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => onOpenGuide()}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-[11px] font-bold text-slate-400 hover:bg-slate-100 hover:text-[#1B5E20] cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>사용법</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {roundAudioCard}

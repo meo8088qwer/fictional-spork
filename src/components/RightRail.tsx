@@ -1,6 +1,7 @@
 import React from 'react';
 import { Student, JumpRecord } from '../types';
 import { Users } from 'lucide-react';
+import { UpdateFeed } from './UpdateFeed';
 
 interface RightRailProps {
   students: Student[];
@@ -68,6 +69,7 @@ export const RightRail: React.FC<RightRailProps> = ({ students, records, onOpenB
           </>
         )}
       </div>
+      <UpdateFeed />
     </div>
   );
 };

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   BookOpen,
   Trophy,
@@ -45,12 +46,13 @@ const SAMPLE_RECORDS: JumpRecord[] = [
 ];
 
 const GuideSection: React.FC<{
+  id?: string;
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   tag?: string;
   children: React.ReactNode;
-}> = ({ icon: Icon, title, tag, children }) => (
-  <section className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-5 sm:p-6">
+}> = ({ id, icon: Icon, title, tag, children }) => (
+  <section id={id} className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-5 sm:p-6 scroll-mt-4">
     <div className="flex items-center gap-2.5 mb-3">
       <span className="w-9 h-9 rounded-xl bg-[#E8F5E9] text-[#1B5E20] flex items-center justify-center shrink-0">
         <Icon className="w-4.5 h-4.5" />
@@ -90,6 +92,17 @@ const Bullets: React.FC<{ items: string[] }> = ({ items }) => (
 );
 
 export const UserGuidePage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const section = searchParams.get('section');
+
+  // A "❓ 사용법" button on the 기록관리/실시간측정/종목관리/수련생관리
+  // screens links here with ?section=<id> instead of duplicating this
+  // page's content inline on each of those screens.
+  useEffect(() => {
+    if (!section) return;
+    document.getElementById(section)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [section]);
+
   // Local playground state for the live 랭킹보드 mini-demo -- independent
   // of the real app's state, resets whenever this page is left.
   const [demoTab, setDemoTab] = useState<DisplayTab>('30s_basic');
@@ -159,7 +172,7 @@ export const UserGuidePage: React.FC = () => {
           />
         </GuideSection>
 
-        <GuideSection icon={ClipboardEdit} title="기록관리 -- 기록 직접 입력">
+        <GuideSection id="record-entry" icon={ClipboardEdit} title="기록관리 -- 기록 직접 입력">
           <p className="text-xs text-slate-500 font-medium">
             기본 6종목(30초 3개 + 10초 3개)을 한 화면에서 동시에 입력하고, 드롭다운에서 커스텀 종목을 고르면
             7번째 칸으로 추가돼요.
@@ -239,7 +252,7 @@ export const UserGuidePage: React.FC = () => {
           />
         </GuideSection>
 
-        <GuideSection icon={Radio} title="실시간 측정">
+        <GuideSection id="live-count" icon={Radio} title="실시간 측정">
           <p className="text-xs text-slate-500 font-medium">
             여러 기기로 동시에 기록을 입력하는 기능이에요. 반과 종목을 고르고 출석 체크(기본은 전원 출석,
             결석한 아이만 체크 해제)를 한 뒤 측정을 시작하면 접속 링크가 생겨요. 그 링크를 다른 기기(코치
@@ -270,7 +283,7 @@ export const UserGuidePage: React.FC = () => {
           />
         </GuideSection>
 
-        <GuideSection icon={ListChecks} title="종목 관리">
+        <GuideSection id="event-manage" icon={ListChecks} title="종목 관리">
           <p className="text-xs text-slate-500 font-medium">
             기본 6종목 외에 체육관만의 특화 종목(예: 2중 3단계 30초)을 추가할 수 있어요. 추가한 종목은 기록관리
             드롭다운, 엑셀 양식, 랭킹보드 탭에 바로 반영됩니다.
@@ -288,7 +301,7 @@ export const UserGuidePage: React.FC = () => {
           </div>
         </GuideSection>
 
-        <GuideSection icon={Users} title="수련생 관리">
+        <GuideSection id="student-manage" icon={Users} title="수련생 관리">
           <p className="text-xs text-slate-500 font-medium">
             개별 등록, 엑셀 명단 일괄 등록, 그리고 "반/수업시간"(1부, 2부처럼 원하는 이름으로) 지정까지 여기서
             해요.

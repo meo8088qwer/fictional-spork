@@ -71,6 +71,12 @@ export default function AdminAppPage() {
   const setActiveView = (view: AdminView) => {
     setSearchParams(view === 'LEADERBOARD' ? {} : { view });
   };
+  // Lets a "❓ 사용법" button on any admin screen jump straight to that
+  // screen's section in the guide, instead of duplicating the guide's
+  // content inline everywhere it might be useful.
+  const openGuide = (section: string) => {
+    setSearchParams({ view: 'GUIDE', section });
+  };
   const [activeTab, setActiveTab] = useState<DisplayTab>('30s_basic');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('ALL');
   const [gradeFilter, setGradeFilter] = useState<GradeCategoryFilter>('ALL');
@@ -182,6 +188,7 @@ export default function AdminAppPage() {
               setActiveView('LEADERBOARD');
             }}
             onNavigateToPricing={() => setActiveView('PRICING')}
+            onOpenGuide={openGuide}
           />
         )}
 
@@ -192,6 +199,7 @@ export default function AdminAppPage() {
             events={events}
             onBatchSaveRecords={batchSaveRecords}
             onClose={() => setActiveView('LEADERBOARD')}
+            onOpenGuide={() => openGuide('live-count')}
           />
         )}
 
