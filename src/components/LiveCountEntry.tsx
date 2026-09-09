@@ -165,9 +165,57 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
     };
   }, [gym.id, sessionId]);
 
+  // Shared across every screen of this flow (setup, counter mode, and the
+  // live session itself) so a coach can start/switch the signal audio
+  // without leaving whichever screen they're on. Kept as one JSX value
+  // (not a helper component) so it closes over audioRef/activeTrack/
+  // playRound directly instead of needing a prop-drilled wrapper.
+  const roundAudioCard = (
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg mb-4">
+      <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 mb-1">
+        <Volume2 className="w-4 h-4 text-slate-400" />
+        라운드 음원 재생
+      </h2>
+      <p className="text-[11px] text-slate-500 font-medium mb-3 leading-relaxed">
+        측정 시작 신호로 틀어주는 음원이에요. 종목 선택과는 별개로, 원하는 길이/라운드를 눌러 재생하세요.
+      </p>
+
+      {([10, 30] as const).map((duration) => (
+        <div key={duration} className="mb-3">
+          <p className="text-[11px] font-bold text-slate-600 mb-1.5">{duration}초 음원</p>
+          <div className="flex gap-2">
+            {([1, 3, 5] as const).map((round) => (
+              <button
+                key={round}
+                type="button"
+                onClick={() => playRound(duration, round)}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border-2 ${
+                  activeTrack?.duration === duration && activeTrack.round === round
+                    ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
+                    : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                }`}
+              >
+                {round}라운드
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <audio
+        ref={audioRef}
+        controls
+        controlsList="nodownload noplaybackrate"
+        onContextMenu={(e) => e.preventDefault()}
+        className="w-full"
+      />
+    </div>
+  );
+
   if (counterRoster) {
     return (
       <div>
+        {roundAudioCard}
         <div className="flex items-center gap-2 mb-4">
           <span className="p-2 rounded-xl bg-slate-100 text-slate-600">
             <Hash className="w-5 h-5" />
@@ -204,45 +252,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
           </button>
         </div>
 
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg mb-4">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 mb-1">
-            <Volume2 className="w-4 h-4 text-slate-400" />
-            라운드 음원 재생
-          </h2>
-          <p className="text-[11px] text-slate-500 font-medium mb-3 leading-relaxed">
-            측정 시작 신호로 틀어주는 음원이에요. 종목 선택과는 별개로, 원하는 길이/라운드를 눌러 재생하세요.
-          </p>
-
-          {([10, 30] as const).map((duration) => (
-            <div key={duration} className="mb-3">
-              <p className="text-[11px] font-bold text-slate-600 mb-1.5">{duration}초 음원</p>
-              <div className="flex gap-2">
-                {([1, 3, 5] as const).map((round) => (
-                  <button
-                    key={round}
-                    type="button"
-                    onClick={() => playRound(duration, round)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border-2 ${
-                      activeTrack?.duration === duration && activeTrack.round === round
-                        ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    {round}라운드
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          <audio
-            ref={audioRef}
-            controls
-            controlsList="nodownload noplaybackrate"
-            onContextMenu={(e) => e.preventDefault()}
-            className="w-full"
-          />
-        </div>
+        {roundAudioCard}
 
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg">
           <p className="text-xs text-slate-500 font-medium mb-5 leading-relaxed">
@@ -397,6 +407,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
 
   return (
     <div>
+      {roundAudioCard}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
