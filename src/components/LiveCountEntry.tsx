@@ -24,8 +24,10 @@ function randomSessionId(): string {
 
 const ALL_CLASSES = '__ALL__';
 
-// 종목 timeSeconds(10초/30초)에 맞춰 재생할 라운드별 진행 음원.
-const ROUND_AUDIO: Record<number, Partial<Record<1 | 3 | 5, string>>> = {
+// 10초/30초 라운드별 진행 음원. 선택한 종목과 무관하게 항상 둘 다 노출됨
+// -- 종목이랑 실제 트는 음원이 꼭 같은 길이일 필요는 없다는 요청에 따라 분리.
+type AudioDuration = 10 | 30;
+const ROUND_AUDIO: Record<AudioDuration, Record<1 | 3 | 5, string>> = {
   10: { 1: '/audio/10s-round1.mp3', 3: '/audio/10s-round3.mp3', 5: '/audio/10s-round5.mp3' },
   30: { 1: '/audio/30s-round1.mp3', 3: '/audio/30s-round3.mp3', 5: '/audio/30s-round5.mp3' },
 };
@@ -49,7 +51,6 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
 
   const [pickedClass, setPickedClass] = useState(ALL_CLASSES);
   const [pickedEvent, setPickedEvent] = useState(eventList[0]?.key ?? '');
-  const [selectedRound, setSelectedRound] = useState<1 | 3 | 5>(1);
   // Kids who showed up on a fixed schedule are the common case, so default
   // to everyone in the class checked -- coaches uncheck the few who are
   // out today rather than checking everyone who's in.
@@ -68,27 +69,14 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
   // Tracks which url is currently loaded into audioRef so a repeat click on
   // the same round toggles play/pause instead of restarting from 0.
   const loadedAudioUrlRef = useRef<string | null>(null);
-  const roundTracks = ROUND_AUDIO[events[pickedEvent]?.timeSeconds ?? -1];
+  const [activeTrack, setActiveTrack] = useState<{ duration: AudioDuration; round: 1 | 3 | 5 } | null>(
+    null
+  );
 
-  // Switching to an event with a different (or no) duration category makes
-  // the currently loaded track irrelevant. Clearing src (not just pausing)
-  // matters -- otherwise the player keeps showing the old track's title/
-  // duration until a round is clicked, which reads as "there's no audio for
-  // this event" even though clicking a round does load the right one.
-  useEffect(() => {
+  const playRound = (duration: AudioDuration, round: 1 | 3 | 5) => {
+    const url = ROUND_AUDIO[duration][round];
     const audio = audioRef.current;
     if (!audio) return;
-    audio.pause();
-    audio.removeAttribute('src');
-    audio.load();
-    loadedAudioUrlRef.current = null;
-  }, [roundTracks]);
-
-  const playRound = (round: 1 | 3 | 5) => {
-    setSelectedRound(round);
-    const url = roundTracks?.[round];
-    const audio = audioRef.current;
-    if (!url || !audio) return;
     // Direct, synchronous play() call inside the click handler -- keeps the
     // call attributed to the user gesture so browsers don't block autoplay.
     if (loadedAudioUrlRef.current === url) {
@@ -98,6 +86,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
     }
     audio.src = url;
     loadedAudioUrlRef.current = url;
+    setActiveTrack({ duration, round });
     audio.play().catch(() => {});
   };
 
@@ -215,48 +204,45 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
           </button>
         </div>
 
-        {roundTracks && (
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg mb-4">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 mb-1">
-              <Volume2 className="w-4 h-4 text-slate-400" />
-              라운드 음원 재생
-            </h2>
-            <p className="text-[11px] text-slate-500 font-medium mb-3 leading-relaxed">
-              측정 시작 신호로 틀어주는 음원이에요. {events[pickedEvent]?.timeSeconds}초 종목용 라운드를 골라
-              재생하세요.
-            </p>
-            <div className="flex gap-2 mb-3">
-              {([1, 3, 5] as const).map((round) => (
-                <button
-                  key={round}
-                  type="button"
-                  disabled={!roundTracks[round]}
-                  onClick={() => playRound(round)}
-                  className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border-2 disabled:opacity-40 disabled:cursor-not-allowed ${
-                    selectedRound === round
-                      ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
-                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                  }`}
-                >
-                  {round}라운드
-                </button>
-              ))}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg mb-4">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 mb-1">
+            <Volume2 className="w-4 h-4 text-slate-400" />
+            라운드 음원 재생
+          </h2>
+          <p className="text-[11px] text-slate-500 font-medium mb-3 leading-relaxed">
+            측정 시작 신호로 틀어주는 음원이에요. 종목 선택과는 별개로, 원하는 길이/라운드를 눌러 재생하세요.
+          </p>
+
+          {([10, 30] as const).map((duration) => (
+            <div key={duration} className="mb-3">
+              <p className="text-[11px] font-bold text-slate-600 mb-1.5">{duration}초 음원</p>
+              <div className="flex gap-2">
+                {([1, 3, 5] as const).map((round) => (
+                  <button
+                    key={round}
+                    type="button"
+                    onClick={() => playRound(duration, round)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border-2 ${
+                      activeTrack?.duration === duration && activeTrack.round === round
+                        ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    }`}
+                  >
+                    {round}라운드
+                  </button>
+                ))}
+              </div>
             </div>
-            {roundTracks[selectedRound] ? (
-              <audio
-                ref={audioRef}
-                controls
-                controlsList="nodownload noplaybackrate"
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-full"
-              />
-            ) : (
-              <p className="text-xs text-slate-400 font-medium text-center py-2">
-                {events[pickedEvent]?.timeSeconds}초 음원은 아직 준비 중이에요.
-              </p>
-            )}
-          </div>
-        )}
+          ))}
+
+          <audio
+            ref={audioRef}
+            controls
+            controlsList="nodownload noplaybackrate"
+            onContextMenu={(e) => e.preventDefault()}
+            className="w-full"
+          />
+        </div>
 
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg">
           <p className="text-xs text-slate-500 font-medium mb-5 leading-relaxed">
