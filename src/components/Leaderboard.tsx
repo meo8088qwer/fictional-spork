@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { StudentLeaderboardItem, DisplayTab, GradeCategory, GradeCategoryFilter, GradeGroup, EventMeta } from '../types';
 import { GRADE_CATEGORY_LABELS, GRADE_SUBCATEGORIES, getBadgeForCount } from '../data/constants';
+import { DebouncedSearchInput } from './DebouncedSearchInput';
 import { Search, Filter, Trophy, Sparkles } from 'lucide-react';
 
 const CATEGORY_OPTIONS: GradeCategory[] = ['ALL', 'KINDER', 'LOWER_ELEM', 'UPPER_ELEM', 'SECONDARY'];
@@ -55,12 +56,11 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
+          <DebouncedSearchInput
             ref={searchInputRef}
             type="text"
-            lang="ko"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={setSearchQuery}
             placeholder="수련생 이름 또는 번호 검색..."
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#66BB6A] focus:ring-1 focus:ring-[#66BB6A] transition-all font-medium shadow-xs"
           />

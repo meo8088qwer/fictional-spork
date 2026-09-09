@@ -13,6 +13,7 @@ import {
   X,
   Loader2,
 } from 'lucide-react';
+import { DebouncedSearchInput } from '../components/DebouncedSearchInput';
 import { useAuth } from '../contexts/AuthContext';
 import {
   isPlatformAdmin,
@@ -574,12 +575,11 @@ export default function OpsDashboardPage() {
                   <Search className="w-4 h-4 text-slate-400" />
                   체육관 목록 {listQuery.data && `(총 ${listQuery.data.total}개)`}
                 </h2>
-                <input
+                <DebouncedSearchInput
                   type="text"
-                  lang="ko"
                   value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
+                  onChange={(v) => {
+                    setSearch(v);
                     setPage(0);
                   }}
                   placeholder="이름/주소/이메일 검색..."

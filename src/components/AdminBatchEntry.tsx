@@ -3,6 +3,7 @@ import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
 import { GRADE_GROUPS } from '../data/constants';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { todayLocalDate } from '../lib/dateHelper';
+import { DebouncedSearchInput } from './DebouncedSearchInput';
 import { parseClassLabels, studentInClass, normalizeClassLabels } from '../lib/classLabels';
 import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
 import { Gym } from '../data/api/gyms';
@@ -150,6 +151,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const [measurementDate, setMeasurementDate] = useState<string>(todayLocalDate());
   const [gradeFilter, setGradeFilter] = useState<string>('ALL');
   const [classFilter, setClassFilter] = useState<string>('ALL');
+  // Rendered via DebouncedSearchInput below -- this only updates ~200ms
+  // after typing pauses, so this whole component (and its 100+ row table)
+  // doesn't re-render on every keystroke. See DebouncedSearchInput's
+  // comment for why that matters beyond performance.
   const [searchQuery, setSearchQuery] = useState<string>('');
   const classOptions = Array.from(
     new Set(students.flatMap((s) => parseClassLabels(s.classLabel)))
@@ -222,22 +227,32 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     setEditingBenchmarkKey(null);
   };
 
-  // Filter students for batch entry, sorted to match a printed roster order
-  const filteredStudents = students
-    .filter((student) => {
-      const matchesGrade = gradeFilter === 'ALL' || student.grade === gradeFilter;
-      const matchesClass =
-        classFilter === 'ALL' ||
-        (classFilter === UNASSIGNED_CLASS_KEY
-          ? parseClassLabels(student.classLabel).length === 0
-          : studentInClass(student.classLabel, classFilter));
-      const matchesSearch =
-        !searchQuery ||
-        student.name.includes(searchQuery) ||
-        student.studentNo.includes(searchQuery);
-      return matchesGrade && matchesClass && matchesSearch;
-    })
-    .sort((a, b) => a.studentNo.localeCompare(b.studentNo));
+  // Filter students for batch entry, sorted to match a printed roster order.
+  // Memoized -- for a gym with 100+ students and thousands of records, the
+  // getStudentPersonalBest lookup below this (per filtered student) is
+  // expensive enough that recomputing it on *every* render (typing a score
+  // into any table cell re-renders this whole component too, not just
+  // typing in the search box) measured 300ms+ of main-thread blocking per
+  // keystroke -- long enough to plausibly starve the browser's Korean IME
+  // composition handling, which is what "이름 검색하고 다시 검색할 때
+  // 영문으로 바뀐다" turned out to be.
+  const filteredStudents = useMemo(
+    () =>
+      students
+        .filter((student) => {
+          const matchesGrade = gradeFilter === 'ALL' || student.grade === gradeFilter;
+          const matchesClass =
+            classFilter === 'ALL' ||
+            (classFilter === UNASSIGNED_CLASS_KEY
+              ? parseClassLabels(student.classLabel).length === 0
+              : studentInClass(student.classLabel, classFilter));
+          const matchesSearch =
+            !searchQuery || student.name.includes(searchQuery) || student.studentNo.includes(searchQuery);
+          return matchesGrade && matchesClass && matchesSearch;
+        })
+        .sort((a, b) => a.studentNo.localeCompare(b.studentNo)),
+    [students, gradeFilter, classFilter, searchQuery]
+  );
 
   // Column sort for the batch entry table -- click a header to sort by it,
   // click again to flip direction. Unset = keep the default 번호 order above.
@@ -253,21 +268,44 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
     }
   };
 
-  const sortedRows = filteredStudents.map((student) => ({
-    student,
-    pb: getStudentPersonalBest(records, student.id, pbSortEventKey),
-  }));
-  if (sortKey) {
-    sortedRows.sort((a, b) => {
-      const cmp =
-        sortKey === 'name'
-          ? a.student.name.localeCompare(b.student.name)
-          : sortKey === 'grade'
-          ? a.student.grade.localeCompare(b.student.grade)
-          : (a.pb?.count ?? -1) - (b.pb?.count ?? -1);
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
-  }
+  // getStudentPersonalBest scans the whole (gym-wide) records array per
+  // call, which is fine for a one-off lookup but was previously called once
+  // per filtered student on every render -- for a real gym (100+ students,
+  // thousands of records) that's O(students x records) redone on every
+  // single search keystroke, measured at 200ms+ of blocking. Build the
+  // per-event best-record index once (only depends on records/event, not on
+  // the search text), so typing in the search box only re-runs a cheap
+  // O(students) filter against an already-built lookup instead.
+  const bestByStudentForEvent = useMemo(() => {
+    const map = new Map<string, { count: number; date: string }>();
+    for (const r of records) {
+      if (r.eventKey !== pbSortEventKey) continue;
+      const current = map.get(r.studentId);
+      if (!current || r.count > current.count || (r.count === current.count && r.date > current.date)) {
+        map.set(r.studentId, { count: r.count, date: r.date });
+      }
+    }
+    return map;
+  }, [records, pbSortEventKey]);
+
+  const sortedRows = useMemo(() => {
+    const rows = filteredStudents.map((student) => ({
+      student,
+      pb: bestByStudentForEvent.get(student.id) ?? null,
+    }));
+    if (sortKey) {
+      rows.sort((a, b) => {
+        const cmp =
+          sortKey === 'name'
+            ? a.student.name.localeCompare(b.student.name)
+            : sortKey === 'grade'
+            ? a.student.grade.localeCompare(b.student.grade)
+            : (a.pb?.count ?? -1) - (b.pb?.count ?? -1);
+        return sortDir === 'asc' ? cmp : -cmp;
+      });
+    }
+    return rows;
+  }, [filteredStudents, bestByStudentForEvent, sortKey, sortDir]);
 
   const handleInputChange = (eventKey: EventKey, studentId: string, value: string) => {
     setCountsMap((prev) => ({ ...prev, [eventKey]: { ...prev[eventKey], [studentId]: value } }));
@@ -1000,11 +1038,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               {/* Search */}
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <input
+                <DebouncedSearchInput
                   type="text"
-                  lang="ko"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={setSearchQuery}
                   placeholder="이름 검색..."
                   className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none shadow-xs font-medium"
                 />
@@ -1540,12 +1577,11 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
             <div className="flex flex-col sm:flex-row items-center gap-2 pt-1 border-t border-slate-100">
               <div className="relative flex-1 w-full">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-                <input
+                <DebouncedSearchInput
                   type="text"
-                  lang="ko"
                   placeholder="수련생 이름 검색..."
                   value={studentRosterSearch}
-                  onChange={(e) => setStudentRosterSearch(e.target.value)}
+                  onChange={setStudentRosterSearch}
                   className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#66BB6A]"
                 />
               </div>
