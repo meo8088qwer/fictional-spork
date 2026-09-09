@@ -1188,14 +1188,26 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                               <input
                                 type="text"
                                 data-role="count-cell"
+                                data-event-key={eventKey}
                                 placeholder="0"
                                 value={currentVal}
                                 onChange={(e) => handleInputChange(eventKey, student.id, digitsOnly(e.target.value))}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
+                                    // Scoped to cells of the SAME event only -- when every
+                                    // event is shown side by side ("전체"), a student's row
+                                    // has one cell per event, so jumping to "the next input
+                                    // in the DOM" from the last event column would land on
+                                    // the NEXT STUDENT's FIRST event column, not their own
+                                    // next event. That let coaches who were rapidly hitting
+                                    // Enter down one event's column type a value meant for
+                                    // (say) 30초 양발모아뛰기 into the neighboring 30초
+                                    // 번갈아뛰기 cell instead -- a real duplicate reported
+                                    // by a coach whose 번갈아뛰기 PB matched a stray, lower
+                                    // 양발모아뛰기 entry to the digit.
                                     const inputs = Array.from(
                                       document.querySelectorAll<HTMLInputElement>('input[data-role="count-cell"]')
-                                    );
+                                    ).filter((el) => el.dataset.eventKey === eventKey);
                                     const idx = inputs.indexOf(e.currentTarget);
                                     if (idx !== -1 && idx + 1 < inputs.length) {
                                       inputs[idx + 1].focus();
