@@ -1002,6 +1002,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
                   type="text"
+                  lang="ko"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="이름 검색..."
@@ -1541,6 +1542,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
                 <input
                   type="text"
+                  lang="ko"
                   placeholder="수련생 이름 검색..."
                   value={studentRosterSearch}
                   onChange={(e) => setStudentRosterSearch(e.target.value)}

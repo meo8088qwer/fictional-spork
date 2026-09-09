@@ -576,6 +576,7 @@ export default function OpsDashboardPage() {
                 </h2>
                 <input
                   type="text"
+                  lang="ko"
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);

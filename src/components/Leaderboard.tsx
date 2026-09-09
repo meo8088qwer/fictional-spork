@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { StudentLeaderboardItem, DisplayTab, GradeCategory, GradeCategoryFilter, GradeGroup, EventMeta } from '../types';
 import { GRADE_CATEGORY_LABELS, GRADE_SUBCATEGORIES, getBadgeForCount } from '../data/constants';
 import { Search, Filter, Trophy, Sparkles } from 'lucide-react';
@@ -34,6 +34,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   onSelectStudent,
   onOpenBatchEntry,
 }) => {
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const currentEventMeta = activeTab !== 'OVERALL' ? events[activeTab] : null;
   const maxCountInList = items.length > 0 ? items[0].personalBestCount || 1 : 1;
 
@@ -55,7 +56,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
+            ref={searchInputRef}
             type="text"
+            lang="ko"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="수련생 이름 또는 번호 검색..."
@@ -63,7 +66,15 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           />
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => {
+                setSearchQuery('');
+                // Clearing via this button blurs the input on mobile --
+                // without refocusing, the user has to tap back in manually,
+                // and that blur/refocus round trip on an emptied field is
+                // when some Android Korean keyboards reset to their default
+                // (English) layout instead of remembering Korean was active.
+                searchInputRef.current?.focus();
+              }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600"
             >
               CLEAR
