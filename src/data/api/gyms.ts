@@ -13,6 +13,10 @@ export interface Gym {
   // next time get_my_gym() runs past this time -- see
   // supabase/migrations/0022_gym_plan_override_expiry.sql.
   planOverrideExpiresAt?: string;
+  // Opt-out from appearing in the cross-gym public leaderboard, even on a
+  // plan that would otherwise qualify (BASIC+) -- enforced server-side in
+  // get_global_leaderboard() too, not just hidden client-side.
+  globalRankingOptOut: boolean;
 }
 
 function mapGymRow(row: any): Gym {
@@ -24,6 +28,7 @@ function mapGymRow(row: any): Gym {
     plan: row.plan,
     logoUrl: row.logo_url ?? undefined,
     planOverrideExpiresAt: row.plan_override_expires_at ?? undefined,
+    globalRankingOptOut: row.global_ranking_opt_out ?? false,
   };
 }
 
@@ -191,6 +196,17 @@ export async function removeGymLogo(gymId: string): Promise<Gym> {
   const { data, error } = await supabase
     .from('gyms')
     .update({ logo_url: null })
+    .eq('id', gymId)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return mapGymRow(data);
+}
+
+export async function updateGlobalRankingOptOut(gymId: string, optOut: boolean): Promise<Gym> {
+  const { data, error } = await supabase
+    .from('gyms')
+    .update({ global_ranking_opt_out: optOut })
     .eq('id', gymId)
     .select('*')
     .single();

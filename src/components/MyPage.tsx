@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
   Upload,
   Trash2,
+  Globe,
 } from 'lucide-react';
 import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
@@ -64,7 +65,9 @@ export const MyPage: React.FC<MyPageProps> = ({
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
 
-  const { refreshGym, updateGymLogo, removeGymLogo } = useAuth();
+  const { refreshGym, updateGymLogo, removeGymLogo, updateGlobalRankingOptOut } = useAuth();
+  const [isSavingRankingOptOut, setIsSavingRankingOptOut] = useState(false);
+  const [rankingOptOutError, setRankingOptOutError] = useState('');
   const { subscription, ensureSubscription, cancelSubscription } = useSubscription();
   const { payments } = usePayments();
   const { banner: billingBanner, setBanner: setBillingBanner } = useTossRedirect();
@@ -153,6 +156,18 @@ export const MyPage: React.FC<MyPageProps> = ({
       setLogoError(err instanceof Error ? err.message : '삭제 중 오류가 발생했습니다.');
     } finally {
       setIsSavingLogo(false);
+    }
+  };
+
+  const handleToggleGlobalRanking = async () => {
+    setRankingOptOutError('');
+    setIsSavingRankingOptOut(true);
+    try {
+      await updateGlobalRankingOptOut(!gym.globalRankingOptOut);
+    } catch (err) {
+      setRankingOptOutError(err instanceof Error ? err.message : '변경 중 오류가 발생했습니다.');
+    } finally {
+      setIsSavingRankingOptOut(false);
     }
   };
 
@@ -585,6 +600,56 @@ export const MyPage: React.FC<MyPageProps> = ({
             {isSavingGym ? '저장 중...' : '저장'}
           </button>
         </form>
+      </div>
+
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm mt-6">
+        <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">
+          <Globe className="w-4 h-4 text-slate-400" />
+          전체랭킹 참가
+        </h2>
+
+        {gym.plan === 'free' ? (
+          <p className="text-xs text-slate-500 font-medium leading-relaxed">
+            FREE 플랜은 전체랭킹에 참가할 수 없어요 (조회는 누구나 가능해요). BASIC 플랜부터 참가 여부를 직접
+            선택할 수 있어요.
+          </p>
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800">
+                  {gym.globalRankingOptOut ? '전체랭킹에 참가하지 않음' : '전체랭킹에 참가 중'}
+                </p>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5 leading-relaxed">
+                  꺼두면 우리 체육관 수련생들의 기록이 다른 체육관과 겨루는 전체랭킹에 더 이상 나오지 않아요.
+                  체육관 안에서 보는 랭킹보드에는 영향 없어요.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={!gym.globalRankingOptOut}
+                disabled={isSavingRankingOptOut}
+                onClick={handleToggleGlobalRanking}
+                className={`relative w-11 h-6 rounded-full shrink-0 transition-all disabled:opacity-60 cursor-pointer ${
+                  gym.globalRankingOptOut ? 'bg-slate-300' : 'bg-[#1B5E20]'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                    gym.globalRankingOptOut ? '' : 'translate-x-5'
+                  }`}
+                />
+              </button>
+            </div>
+            {rankingOptOutError && (
+              <div className="mt-3 bg-rose-50 border border-rose-200 text-rose-600 p-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{rankingOptOutError}</span>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm mt-6">
