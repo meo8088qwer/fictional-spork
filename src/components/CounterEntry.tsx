@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Minus, RotateCcw, Pencil, ChevronLeft, ChevronRight, Save, X, PartyPopper } from 'lucide-react';
 import { Student, EventMeta } from '../types';
+import { digitsOnly } from '../lib/numberInput';
 
 interface CounterEntryProps {
   roster: Student[];
@@ -136,11 +137,10 @@ export const CounterEntry: React.FC<CounterEntryProps> = ({ roster, eventMeta, c
         {isEditing ? (
           <input
             ref={inputRef}
-            type="number"
-            min={0}
+            type="text"
             inputMode="numeric"
             value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
+            onChange={(e) => setEditValue(digitsOnly(e.target.value))}
             onBlur={commitEditing}
             onKeyDown={(e) => e.key === 'Enter' && commitEditing()}
             className="w-full text-center text-7xl font-black text-slate-900 bg-slate-50 border-2 border-[#66BB6A] rounded-2xl py-4 focus:outline-none"

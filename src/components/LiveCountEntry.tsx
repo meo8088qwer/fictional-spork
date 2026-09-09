@@ -6,6 +6,7 @@ import { Gym } from '../data/api/gyms';
 import { Student, EventMeta, JumpRecord } from '../types';
 import { BatchRecordEntry } from '../data/api/records';
 import { parseClassLabels, studentInClass } from '../lib/classLabels';
+import { digitsOnly } from '../lib/numberInput';
 import { CounterEntry } from './CounterEntry';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -370,11 +371,10 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
             <div key={s.id} className="flex items-center justify-between gap-3 px-4 py-3">
               <span className="text-sm font-bold text-slate-800 truncate">{s.name}</span>
               <input
-                type="number"
-                min={0}
+                type="text"
                 inputMode="numeric"
                 value={counts[s.id] ?? ''}
-                onChange={(e) => submitCount(s.id, Number(e.target.value) || 0)}
+                onChange={(e) => submitCount(s.id, Number(digitsOnly(e.target.value)) || 0)}
                 placeholder="0"
                 className="w-20 shrink-0 px-2 py-1.5 rounded-lg bg-slate-50 border border-slate-300 text-sm font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#66BB6A]"
               />

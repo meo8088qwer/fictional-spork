@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useState } from 'react';
 import { Student, JumpRecord, EventKey, EventMeta } from '../types';
 import { Gym } from '../data/api/gyms';
 import { getStudentPersonalBest } from '../lib/scoring';
+import { digitsOnly } from '../lib/numberInput';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { Trophy, TrendingUp, Calendar, Printer, X, Trash2, Lock, Share2, Pencil, Check } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
@@ -404,10 +405,10 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                         {editingRecordId === r.id ? (
                           <div className="flex items-center justify-end gap-1">
                             <input
-                              type="number"
-                              min={1}
+                              type="text"
+                              inputMode="numeric"
                               value={editCountDraft}
-                              onChange={(e) => setEditCountDraft(e.target.value)}
+                              onChange={(e) => setEditCountDraft(digitsOnly(e.target.value))}
                               autoFocus
                               className="w-16 px-1.5 py-1 rounded-lg border border-slate-300 text-right text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#66BB6A]"
                             />

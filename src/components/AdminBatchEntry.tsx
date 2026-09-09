@@ -3,6 +3,7 @@ import { Student, JumpRecord, EventKey, EventMeta, GradeGroup } from '../types';
 import { GRADE_GROUPS } from '../data/constants';
 import { getStudentPersonalBest } from '../lib/scoring';
 import { todayLocalDate } from '../lib/dateHelper';
+import { digitsOnly } from '../lib/numberInput';
 import { DebouncedSearchInput } from './DebouncedSearchInput';
 import { parseClassLabels, studentInClass, normalizeClassLabels } from '../lib/classLabels';
 import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
@@ -1185,16 +1186,16 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                                 {pb ? `PB ${pb.count}` : '기록없음'}
                               </div>
                               <input
-                                type="number"
+                                type="text"
                                 inputMode="numeric"
-                                min="0"
+                                data-role="count-cell"
                                 placeholder="0"
                                 value={currentVal}
-                                onChange={(e) => handleInputChange(eventKey, student.id, e.target.value)}
+                                onChange={(e) => handleInputChange(eventKey, student.id, digitsOnly(e.target.value))}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') {
                                     const inputs = Array.from(
-                                      document.querySelectorAll<HTMLInputElement>('input[type="number"]')
+                                      document.querySelectorAll<HTMLInputElement>('input[data-role="count-cell"]')
                                     );
                                     const idx = inputs.indexOf(e.currentTarget);
                                     if (idx !== -1 && idx + 1 < inputs.length) {
@@ -1306,19 +1307,19 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                       <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-xl">
                         <span className="text-[11px] text-slate-600 font-bold shrink-0">우수</span>
                         <input
-                          type="number"
-                          min={0}
+                          type="text"
+                          inputMode="numeric"
                           autoFocus
                           value={benchmarkGoodDraft}
-                          onChange={(e) => setBenchmarkGoodDraft(e.target.value)}
+                          onChange={(e) => setBenchmarkGoodDraft(digitsOnly(e.target.value))}
                           className="w-14 px-1.5 py-1 rounded-lg bg-white border border-[#66BB6A] text-[11px] font-bold text-slate-900 focus:outline-none"
                         />
                         <span className="text-[11px] text-slate-600 font-bold shrink-0">프로</span>
                         <input
-                          type="number"
-                          min={0}
+                          type="text"
+                          inputMode="numeric"
                           value={benchmarkProDraft}
-                          onChange={(e) => setBenchmarkProDraft(e.target.value)}
+                          onChange={(e) => setBenchmarkProDraft(digitsOnly(e.target.value))}
                           className="w-14 px-1.5 py-1 rounded-lg bg-white border border-[#66BB6A] text-[11px] font-bold text-slate-900 focus:outline-none"
                         />
                         <button
@@ -1767,11 +1768,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">측정 시간 (초)</label>
                   <input
-                    type="number"
-                    min="5"
-                    max="600"
+                    type="text"
+                    inputMode="numeric"
                     value={newEventTimeSeconds}
-                    onChange={(e) => setNewEventTimeSeconds(Number(e.target.value))}
+                    onChange={(e) => setNewEventTimeSeconds(Number(digitsOnly(e.target.value)) || 0)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"
                   />
                 </div>
@@ -1792,9 +1792,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">우수 뱃지 기준 (회)</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     value={newEventBenchmarkGood}
-                    onChange={(e) => setNewEventBenchmarkGood(Number(e.target.value))}
+                    onChange={(e) => setNewEventBenchmarkGood(Number(digitsOnly(e.target.value)) || 0)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none font-medium"
                   />
                 </div>
@@ -1802,9 +1803,10 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                 <div>
                   <label className="block text-slate-700 font-bold mb-1">프로 뱃지 기준 (회)</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     value={newEventBenchmarkPro}
-                    onChange={(e) => setNewEventBenchmarkPro(Number(e.target.value))}
+                    onChange={(e) => setNewEventBenchmarkPro(Number(digitsOnly(e.target.value)) || 0)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none font-medium"
                   />
                 </div>
