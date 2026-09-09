@@ -372,7 +372,6 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
               <span className="text-sm font-bold text-slate-800 truncate">{s.name}</span>
               <input
                 type="text"
-                inputMode="numeric"
                 value={counts[s.id] ?? ''}
                 onChange={(e) => submitCount(s.id, Number(digitsOnly(e.target.value)) || 0)}
                 placeholder="0"

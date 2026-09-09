@@ -138,7 +138,6 @@ export const CounterEntry: React.FC<CounterEntryProps> = ({ roster, eventMeta, c
           <input
             ref={inputRef}
             type="text"
-            inputMode="numeric"
             value={editValue}
             onChange={(e) => setEditValue(digitsOnly(e.target.value))}
             onBlur={commitEditing}

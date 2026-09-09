@@ -406,7 +406,6 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                           <div className="flex items-center justify-end gap-1">
                             <input
                               type="text"
-                              inputMode="numeric"
                               value={editCountDraft}
                               onChange={(e) => setEditCountDraft(digitsOnly(e.target.value))}
                               autoFocus

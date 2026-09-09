@@ -1187,7 +1187,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                               </div>
                               <input
                                 type="text"
-                                inputMode="numeric"
                                 data-role="count-cell"
                                 placeholder="0"
                                 value={currentVal}
@@ -1308,7 +1307,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                         <span className="text-[11px] text-slate-600 font-bold shrink-0">우수</span>
                         <input
                           type="text"
-                          inputMode="numeric"
                           autoFocus
                           value={benchmarkGoodDraft}
                           onChange={(e) => setBenchmarkGoodDraft(digitsOnly(e.target.value))}
@@ -1317,7 +1315,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                         <span className="text-[11px] text-slate-600 font-bold shrink-0">프로</span>
                         <input
                           type="text"
-                          inputMode="numeric"
                           value={benchmarkProDraft}
                           onChange={(e) => setBenchmarkProDraft(digitsOnly(e.target.value))}
                           className="w-14 px-1.5 py-1 rounded-lg bg-white border border-[#66BB6A] text-[11px] font-bold text-slate-900 focus:outline-none"
@@ -1769,7 +1766,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   <label className="block text-slate-700 font-bold mb-1">측정 시간 (초)</label>
                   <input
                     type="text"
-                    inputMode="numeric"
                     value={newEventTimeSeconds}
                     onChange={(e) => setNewEventTimeSeconds(Number(digitsOnly(e.target.value)) || 0)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-[#66BB6A] font-medium"
@@ -1793,7 +1789,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   <label className="block text-slate-700 font-bold mb-1">우수 뱃지 기준 (회)</label>
                   <input
                     type="text"
-                    inputMode="numeric"
                     value={newEventBenchmarkGood}
                     onChange={(e) => setNewEventBenchmarkGood(Number(digitsOnly(e.target.value)) || 0)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none font-medium"
@@ -1804,7 +1799,6 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
                   <label className="block text-slate-700 font-bold mb-1">프로 뱃지 기준 (회)</label>
                   <input
                     type="text"
-                    inputMode="numeric"
                     value={newEventBenchmarkPro}
                     onChange={(e) => setNewEventBenchmarkPro(Number(digitsOnly(e.target.value)) || 0)}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none font-medium"
