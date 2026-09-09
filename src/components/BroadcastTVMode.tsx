@@ -3,6 +3,7 @@ import { Student, JumpRecord, EventKey, EventMeta, StudentLeaderboardItem } from
 import { getLeaderboardData } from '../lib/scoring';
 import { parseClassLabels, studentInClass } from '../lib/classLabels';
 import { EVENT_KEYS } from '../data/constants';
+import { useFitToContainer } from '../hooks/useFitToContainer';
 import { Flame, Crown, Play, Pause, Maximize2, Minimize2, ArrowRight, LayoutGrid, Users } from 'lucide-react';
 
 // Rows shown per "page" of a fixed/paged ranking -- laid out 2 columns x 10
@@ -372,6 +373,28 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
     return () => clearTimeout(timer);
   }, [displayMode, classAutoPlay, classAutoPlaySeconds, classCursor, classCount, classTotalPages, isAllClassesAuto]);
 
+  // The whole board is designed at "TV" size -- on a shorter/narrower
+  // screen (a laptop instead of an actual TV) that content would otherwise
+  // overflow and force a scrollbar, which a real TV has no way to use at
+  // all. Shrink the whole middle section down to whatever the current
+  // screen fits, instead of scrolling it. Re-measures whenever the visible
+  // content actually changes shape (mode/page/roster size).
+  const { containerRef: fitContainerRef, contentRef: fitContentRef, scale: fitScale } = useFitToContainer<
+    HTMLDivElement,
+    HTMLDivElement
+  >([
+    displayMode,
+    fixedRenderKey,
+    fixedSinglePage,
+    fixedPage,
+    classCursor.classIndex,
+    classCursor.page,
+    currentEventKey,
+    currentPage,
+    students.length,
+    records.length,
+  ]);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch((err) => console.error(err));
@@ -600,10 +623,17 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
         )}
       </div>
 
+      {/* Fit-to-screen wrapper: measures available space vs. the actual
+          content's natural (TV-sized) footprint and scales it down to fit
+          exactly, so a laptop or other smaller screen never has to scroll --
+          see useFitToContainer for how. */}
+      <div ref={fitContainerRef} className="relative z-10 flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+      <div ref={fitContentRef} className="w-full" style={{ transform: `scale(${fitScale})`, transformOrigin: 'center center' }}>
+
       {displayMode === 'FIXED' && (
         <div
           key={`${fixedRenderKey}-${isAllSixView ? fixedPage : fixedSinglePage}`}
-          className="relative z-10 my-auto animate-tv-transition"
+          className="relative z-10 animate-tv-transition"
         >
           <div className="text-center mb-5">
             <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
@@ -654,7 +684,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
       )}
 
       {displayMode === 'BY_CLASS' && (
-        <div key={`class-${currentClass}-${classCursor.page}`} className="relative z-10 my-auto animate-tv-transition">
+        <div key={`class-${currentClass}-${classCursor.page}`} className="relative z-10 animate-tv-transition">
           {classCount === 0 ? (
             <div className="text-center text-slate-400 font-bold py-16">
               반 정보가 없습니다. 수련생 관리에서 학생들에게 반을 지정해 주세요.
@@ -677,14 +707,14 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
 
       {/* Main Discipline Banner & Rankings */}
       {displayMode === 'ROTATE' && !eventMeta && (
-        <div className="relative z-10 my-auto text-center text-slate-400 font-bold">
+        <div className="relative z-10 text-center text-slate-400 font-bold">
           아직 등록된 종목이 없어요. 관리자 화면에서 종목을 추가해 주세요.
         </div>
       )}
       {displayMode === 'ROTATE' && eventMeta && (
       <div
         key={`${currentEventKey}-${currentPage}`}
-        className="relative z-10 my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-tv-transition"
+        className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-tv-transition"
       >
         {/* Left: Active Discipline Spotlight (4 cols) */}
         <div className="lg:col-span-4 bg-[#1B5E20] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between">
@@ -726,7 +756,7 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
         {/* Right: Live Rankings (8 cols) -- pages through the whole roster
             for this event (1-10, 11-20, ...) instead of stopping at the
             top 10, so kids ranked lower still get their turn on screen. */}
-        <div className="lg:col-span-8 space-y-3 max-h-[80vh] overflow-y-auto pr-1">
+        <div className="lg:col-span-8 space-y-3">
           {pagedLeaderboardItems.length === 0 ? (
             <div className="text-center text-slate-400 font-bold py-16">아직 이 종목 기록이 없습니다.</div>
           ) : (
@@ -744,6 +774,9 @@ export const BroadcastTVMode: React.FC<BroadcastTVModeProps> = ({
         </div>
       </div>
       )}
+
+      </div>
+      </div>
 
       {/* Bottom Ticker Tape */}
       <div className="relative z-10 bg-white border border-slate-200/90 py-2.5 px-4 overflow-hidden rounded-2xl shadow-xs">
