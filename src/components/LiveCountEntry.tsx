@@ -71,10 +71,16 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
   const roundTracks = ROUND_AUDIO[events[pickedEvent]?.timeSeconds ?? -1];
 
   // Switching to an event with a different (or no) duration category makes
-  // the currently loaded track irrelevant -- stop it rather than leaving it
-  // silently playing behind the scenes.
+  // the currently loaded track irrelevant. Clearing src (not just pausing)
+  // matters -- otherwise the player keeps showing the old track's title/
+  // duration until a round is clicked, which reads as "there's no audio for
+  // this event" even though clicking a round does load the right one.
   useEffect(() => {
-    audioRef.current?.pause();
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
     loadedAudioUrlRef.current = null;
   }, [roundTracks]);
 
@@ -237,7 +243,13 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
               ))}
             </div>
             {roundTracks[selectedRound] ? (
-              <audio ref={audioRef} controls className="w-full" />
+              <audio
+                ref={audioRef}
+                controls
+                controlsList="nodownload noplaybackrate"
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-full"
+              />
             ) : (
               <p className="text-xs text-slate-400 font-medium text-center py-2">
                 {events[pickedEvent]?.timeSeconds}초 음원은 아직 준비 중이에요.
