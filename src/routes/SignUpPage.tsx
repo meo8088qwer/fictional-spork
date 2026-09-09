@@ -83,7 +83,7 @@ export default function SignUpPage() {
           </div>
           <h1 className="text-lg font-bold text-slate-900">체육관 계정 만들기</h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            가입 즉시 PRO 플랜을 14일간 무료로 체험할 수 있어요.
+            얼리어답터 이벤트 · 선착순 100명 한정, 가입 즉시 PRO 플랜을 3개월간 무료로 체험할 수 있어요.
           </p>
         </div>
 
