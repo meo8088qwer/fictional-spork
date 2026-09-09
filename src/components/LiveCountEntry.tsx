@@ -24,11 +24,10 @@ function randomSessionId(): string {
 
 const ALL_CLASSES = '__ALL__';
 
-// 종목 timeSeconds(10초/30초)에 맞춰 재생할 라운드별 진행 음원. 30초 음원은
-// 아직 안 받아서 비워둠 -- 나중에 파일 받으면 여기 3줄만 채우면 됨.
+// 종목 timeSeconds(10초/30초)에 맞춰 재생할 라운드별 진행 음원.
 const ROUND_AUDIO: Record<number, Partial<Record<1 | 3 | 5, string>>> = {
   10: { 1: '/audio/10s-round1.mp3', 3: '/audio/10s-round3.mp3', 5: '/audio/10s-round5.mp3' },
-  30: {},
+  30: { 1: '/audio/30s-round1.mp3', 3: '/audio/30s-round3.mp3', 5: '/audio/30s-round5.mp3' },
 };
 
 export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
@@ -64,6 +63,37 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
   // CounterEntry) and lives entirely in local state rather than the URL, so
   // it deliberately doesn't reuse the session/broadcast machinery below.
   const [counterRoster, setCounterRoster] = useState<Student[] | null>(null);
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+  // Tracks which url is currently loaded into audioRef so a repeat click on
+  // the same round toggles play/pause instead of restarting from 0.
+  const loadedAudioUrlRef = useRef<string | null>(null);
+  const roundTracks = ROUND_AUDIO[events[pickedEvent]?.timeSeconds ?? -1];
+
+  // Switching to an event with a different (or no) duration category makes
+  // the currently loaded track irrelevant -- stop it rather than leaving it
+  // silently playing behind the scenes.
+  useEffect(() => {
+    audioRef.current?.pause();
+    loadedAudioUrlRef.current = null;
+  }, [roundTracks]);
+
+  const playRound = (round: 1 | 3 | 5) => {
+    setSelectedRound(round);
+    const url = roundTracks?.[round];
+    const audio = audioRef.current;
+    if (!url || !audio) return;
+    // Direct, synchronous play() call inside the click handler -- keeps the
+    // call attributed to the user gesture so browsers don't block autoplay.
+    if (loadedAudioUrlRef.current === url) {
+      if (audio.paused) audio.play().catch(() => {});
+      else audio.pause();
+      return;
+    }
+    audio.src = url;
+    loadedAudioUrlRef.current = url;
+    audio.play().catch(() => {});
+  };
 
   const pickedClassRoster = useMemo(
     () => students.filter((s) => pickedClass === ALL_CLASSES || studentInClass(s.classLabel, pickedClass)),
@@ -179,6 +209,43 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
           </button>
         </div>
 
+        {roundTracks && (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg mb-4">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5 mb-1">
+              <Volume2 className="w-4 h-4 text-slate-400" />
+              라운드 음원 재생
+            </h2>
+            <p className="text-[11px] text-slate-500 font-medium mb-3 leading-relaxed">
+              측정 시작 신호로 틀어주는 음원이에요. {events[pickedEvent]?.timeSeconds}초 종목용 라운드를 골라
+              재생하세요.
+            </p>
+            <div className="flex gap-2 mb-3">
+              {([1, 3, 5] as const).map((round) => (
+                <button
+                  key={round}
+                  type="button"
+                  disabled={!roundTracks[round]}
+                  onClick={() => playRound(round)}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border-2 disabled:opacity-40 disabled:cursor-not-allowed ${
+                    selectedRound === round
+                      ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  {round}라운드
+                </button>
+              ))}
+            </div>
+            {roundTracks[selectedRound] ? (
+              <audio ref={audioRef} controls className="w-full" />
+            ) : (
+              <p className="text-xs text-slate-400 font-medium text-center py-2">
+                {events[pickedEvent]?.timeSeconds}초 음원은 아직 준비 중이에요.
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg">
           <p className="text-xs text-slate-500 font-medium mb-5 leading-relaxed">
             반과 종목을 선택하고 측정을 시작하면, 같은 계정으로 로그인한 다른 기기(모바일 등)에서 접속 링크로
@@ -275,47 +342,6 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
             맞아요.
           </p>
         </div>
-
-        {(() => {
-          const timeSeconds = events[pickedEvent]?.timeSeconds;
-          const tracksForDuration = timeSeconds ? ROUND_AUDIO[timeSeconds] : undefined;
-          if (!tracksForDuration) return null;
-          const trackUrl = tracksForDuration[selectedRound];
-          return (
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 max-w-lg mt-4">
-              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1">
-                <Volume2 className="w-4 h-4 text-slate-400" />
-                라운드 음원 재생
-              </h2>
-              <p className="text-[11px] text-slate-500 font-medium mb-3 leading-relaxed">
-                측정 시작 신호로 틀어주는 음원이에요. {timeSeconds}초 종목용 라운드를 골라 재생하세요.
-              </p>
-              <div className="flex gap-2 mb-3">
-                {([1, 3, 5] as const).map((round) => (
-                  <button
-                    key={round}
-                    type="button"
-                    onClick={() => setSelectedRound(round)}
-                    className={`flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer border-2 ${
-                      selectedRound === round
-                        ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    {round}라운드
-                  </button>
-                ))}
-              </div>
-              {trackUrl ? (
-                <audio key={trackUrl} controls preload="none" src={trackUrl} className="w-full" />
-              ) : (
-                <p className="text-xs text-slate-400 font-medium text-center py-2">
-                  {timeSeconds}초 음원은 아직 준비 중이에요.
-                </p>
-              )}
-            </div>
-          );
-        })()}
       </div>
     );
   }
