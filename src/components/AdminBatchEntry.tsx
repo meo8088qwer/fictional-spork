@@ -8,6 +8,7 @@ import { DebouncedSearchInput } from './DebouncedSearchInput';
 import { parseClassLabels, studentInClass, normalizeClassLabels } from '../lib/classLabels';
 import { PlanLimitError, PlanLimitCode, planLimitMessage } from '../data/api/errors';
 import { Gym } from '../data/api/gyms';
+import { useRoundAudio } from '../hooks/useRoundAudio';
 
 // Sentinel dropdown value for "show every event column at once" -- never a
 // real event key (those come from the events table), so it can share the
@@ -75,6 +76,7 @@ import {
   Check,
   X,
   HelpCircle,
+  Volume2,
 } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 import { UpgradeModal } from './UpgradeModal';
@@ -135,6 +137,7 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
   const [actionError, setActionError] = useState<string>('');
   const [planLimitPopup, setPlanLimitPopup] = useState<PlanLimitCode | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'BATCH' | 'EVENTS' | 'STUDENTS'>(initialSubTab);
+  const { audioRef, activeTrack, playRound } = useRoundAudio();
 
   // Re-sync when navigating here from a different sidebar link while this
   // component stays mounted (e.g. 종목 관리 -> 수련생 관리 without a remount).
@@ -940,6 +943,54 @@ export const AdminBatchEntry: React.FC<AdminBatchEntryProps> = ({
               </div>
             </div>
           )}
+            </div>
+          </div>
+
+          {/* Round signal audio -- same feature/hook as 실시간 측정, laid
+              out as one compact row here instead of a tall stacked card
+              since this page already has a lot of vertical content above
+              and below it. */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-3 mb-3">
+              <div className="shrink-0">
+                <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <Volume2 className="w-3.5 h-3.5 text-slate-400" />
+                  라운드 음원 재생
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  측정 시작 신호로 틀어주는 음원이에요. 종목 선택과는 별개로, 원하는 길이/라운드를 눌러 재생하세요.
+                </p>
+              </div>
+              <audio
+                ref={audioRef}
+                controls
+                controlsList="nodownload noplaybackrate"
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-full lg:flex-1 lg:max-w-sm lg:ml-auto h-9"
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              {([10, 30] as const).map((duration) => (
+                <div key={duration} className="flex-1 flex items-center gap-2">
+                  <p className="text-[11px] font-bold text-slate-600 shrink-0 w-14">{duration}초 음원</p>
+                  <div className="flex gap-1.5 flex-1">
+                    {([1, 3, 5] as const).map((round) => (
+                      <button
+                        key={round}
+                        type="button"
+                        onClick={() => playRound(duration, round)}
+                        className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer border-2 ${
+                          activeTrack?.duration === duration && activeTrack.round === round
+                            ? 'bg-[#1B5E20] border-[#1B5E20] text-white'
+                            : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                        }`}
+                      >
+                        {round}라운드
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

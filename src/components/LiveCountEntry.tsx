@@ -8,6 +8,7 @@ import { BatchRecordEntry } from '../data/api/records';
 import { parseClassLabels, studentInClass } from '../lib/classLabels';
 import { digitsOnly } from '../lib/numberInput';
 import { CounterEntry } from './CounterEntry';
+import { useRoundAudio } from '../hooks/useRoundAudio';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
 interface LiveCountEntryProps {
@@ -24,14 +25,6 @@ function randomSessionId(): string {
 }
 
 const ALL_CLASSES = '__ALL__';
-
-// 10초/30초 라운드별 진행 음원. 선택한 종목과 무관하게 항상 둘 다 노출됨
-// -- 종목이랑 실제 트는 음원이 꼭 같은 길이일 필요는 없다는 요청에 따라 분리.
-type AudioDuration = 10 | 30;
-const ROUND_AUDIO: Record<AudioDuration, Record<1 | 3 | 5, string>> = {
-  10: { 1: '/audio/10s-round1.mp3', 3: '/audio/10s-round3.mp3', 5: '/audio/10s-round5.mp3' },
-  30: { 1: '/audio/30s-round1.mp3', 3: '/audio/30s-round3.mp3', 5: '/audio/30s-round5.mp3' },
-};
 
 export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
   gym,
@@ -67,30 +60,7 @@ export const LiveCountEntry: React.FC<LiveCountEntryProps> = ({
   // it deliberately doesn't reuse the session/broadcast machinery below.
   const [counterRoster, setCounterRoster] = useState<Student[] | null>(null);
 
-  const audioRef = useRef<HTMLAudioElement>(null);
-  // Tracks which url is currently loaded into audioRef so a repeat click on
-  // the same round toggles play/pause instead of restarting from 0.
-  const loadedAudioUrlRef = useRef<string | null>(null);
-  const [activeTrack, setActiveTrack] = useState<{ duration: AudioDuration; round: 1 | 3 | 5 } | null>(
-    null
-  );
-
-  const playRound = (duration: AudioDuration, round: 1 | 3 | 5) => {
-    const url = ROUND_AUDIO[duration][round];
-    const audio = audioRef.current;
-    if (!audio) return;
-    // Direct, synchronous play() call inside the click handler -- keeps the
-    // call attributed to the user gesture so browsers don't block autoplay.
-    if (loadedAudioUrlRef.current === url) {
-      if (audio.paused) audio.play().catch(() => {});
-      else audio.pause();
-      return;
-    }
-    audio.src = url;
-    loadedAudioUrlRef.current = url;
-    setActiveTrack({ duration, round });
-    audio.play().catch(() => {});
-  };
+  const { audioRef, activeTrack, playRound } = useRoundAudio();
 
   const pickedClassRoster = useMemo(
     () => students.filter((s) => pickedClass === ALL_CLASSES || studentInClass(s.classLabel, pickedClass)),
