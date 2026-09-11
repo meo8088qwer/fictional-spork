@@ -43,6 +43,7 @@ const PublicGlobalRankingPage = lazyWithReloadOnChunkError(() => import('./route
 const PrivacyPolicyPage = lazyWithReloadOnChunkError(() => import('./routes/PrivacyPolicyPage'));
 const TermsOfServicePage = lazyWithReloadOnChunkError(() => import('./routes/TermsOfServicePage'));
 const OpsDashboardPage = lazyWithReloadOnChunkError(() => import('./routes/OpsDashboardPage'));
+const PreviewLoginPage = lazyWithReloadOnChunkError(() => import('./routes/PreviewLoginPage'));
 
 function RootRedirect() {
   const { session, loading } = useAuth();
@@ -73,6 +74,7 @@ export default function App() {
         <Route path="/g/:slug/global-ranking" element={<PublicGlobalRankingPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms" element={<TermsOfServicePage />} />
+        <Route path="/preview" element={<PreviewLoginPage />} />
         <Route
           path="/admin/*"
           element={
