@@ -106,6 +106,13 @@ Deno.serve(async (req) => {
       .single();
     if (!gym) return jsonResponse({ error: '체육관을 찾을 수 없습니다.' }, 404);
 
+    // The public /preview demo account is a shared login handed out for
+    // marketing/showcase use -- real card payments must never go through
+    // on it (see demo-preview/index.ts for the account itself).
+    if (gym.id === '5156bc7a-8eb8-4dd3-bb5e-ace84c497071') {
+      return jsonResponse({ error: '데모 계정에서는 결제를 진행할 수 없습니다.' }, 403);
+    }
+
     // Idempotency check -- if this orderId was already confirmed (e.g. a
     // duplicate request from a client-side re-render race, or the success
     // redirect getting replayed), don't call Toss's confirm API again: it
