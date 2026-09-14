@@ -1,16 +1,9 @@
-// Called right after the browser comes back from Toss's hosted payment
-// widget. Confirms the one-time card payment (server-side, with the secret
-// key) and activates the subscription for one billing cycle.
-//
-// INTERIM FLOW: this gym's Toss account doesn't have 자동결제(빌링)
-// contract approval yet, so this uses a regular one-time payment (no
-// contract required) instead of billing-key registration. It does NOT
-// auto-renew -- billing-charge/index.ts's expiry check downgrades a gym
-// back to free if next_billing_date passes without a manual re-payment.
-// Once the 자동결제 contract is approved: swap src/lib/tossPayments.ts's
-// PricingPage call back to requestCardRegistration, and this function back
-// to calling POST /v1/billing/authorizations/issue + charging the
-// billingKey (see git history for the previous version of this file).
+// Called right after the browser comes back from Toss's hosted billing-auth
+// (card registration) widget. Exchanges the one-time authKey for a
+// long-lived billingKey (server-side, with the secret key), charges the
+// first billing cycle immediately, and activates the subscription. Future
+// cycles are charged automatically by billing-charge/index.ts's scheduled
+// job using the stored billingKey.
 //
 // Self-contained (no ../_shared imports) so it can be pasted directly into
 // Supabase's browser-based Edge Function editor as a single file.
@@ -35,25 +28,48 @@ function authHeader(secretKey: string): string {
   return `Basic ${btoa(`${secretKey}:`)}`;
 }
 
-interface TossPaymentConfirmResult {
-  paymentKey: string;
-  status: string;
-  totalAmount: number;
-  cardCompany?: string;
-  cardNumber?: string;
+interface TossBillingKeyResult {
+  billingKey: string;
   card?: { company?: string; number?: string };
 }
 
-async function confirmOneTimePayment(
+async function issueBillingKey(
   secretKey: string,
-  paymentKey: string,
-  orderId: string,
-  amount: number
-): Promise<TossPaymentConfirmResult> {
-  const res = await fetch(`${TOSS_API_BASE}/payments/confirm`, {
+  authKey: string,
+  customerKey: string
+): Promise<TossBillingKeyResult> {
+  const res = await fetch(`${TOSS_API_BASE}/billing/authorizations/issue`, {
     method: 'POST',
     headers: { Authorization: authHeader(secretKey), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ paymentKey, orderId, amount }),
+    body: JSON.stringify({ authKey, customerKey }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || '카드 등록에 실패했습니다.');
+  return data;
+}
+
+interface TossChargeResult {
+  paymentKey: string;
+  status: string;
+  totalAmount: number;
+}
+
+interface ChargeParams {
+  customerKey: string;
+  orderId: string;
+  orderName: string;
+  amount: number;
+}
+
+async function chargeBillingKey(
+  secretKey: string,
+  billingKey: string,
+  params: ChargeParams
+): Promise<TossChargeResult> {
+  const res = await fetch(`${TOSS_API_BASE}/billing/${billingKey}`, {
+    method: 'POST',
+    headers: { Authorization: authHeader(secretKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || '결제 승인에 실패했습니다.');
@@ -76,8 +92,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const { paymentKey, orderId, customerKey, plan, billingCycle } = await req.json();
-    if (!paymentKey || !orderId || !customerKey || !plan || !billingCycle) {
+    const { authKey, customerKey, plan, billingCycle } = await req.json();
+    if (!authKey || !customerKey || !plan || !billingCycle) {
       return jsonResponse({ error: '잘못된 요청입니다.' }, 400);
     }
     if (!PLAN_PRICE[plan as 'basic' | 'pro']?.[billingCycle as 'monthly' | 'yearly']) {
@@ -113,20 +129,6 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: '데모 계정에서는 결제를 진행할 수 없습니다.' }, 403);
     }
 
-    // Idempotency check -- if this orderId was already confirmed (e.g. a
-    // duplicate request from a client-side re-render race, or the success
-    // redirect getting replayed), don't call Toss's confirm API again: it
-    // rejects a reused paymentKey/orderId with ALREADY_PROCESSED_PAYMENT,
-    // which would otherwise surface as a false "결제 실패" to a user whose
-    // payment already went through.
-    const { data: existingPayment } = await admin
-      .from('gym_payments')
-      .select('id')
-      .eq('gym_id', gym.id)
-      .eq('order_id', orderId)
-      .maybeSingle();
-    if (existingPayment) return jsonResponse({ ok: true });
-
     const { data: sub } = await admin
       .from('gym_subscriptions')
       .select('customer_key')
@@ -136,22 +138,33 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'customerKey가 일치하지 않습니다.' }, 403);
     }
 
-    // Amount is always computed server-side from PLAN_PRICE, never taken
-    // from the client -- Toss's confirm call rejects if it doesn't match
-    // what was actually authorized in the widget, so this doubles as
-    // tamper protection against a client sending a lower price.
-    const amount = PLAN_PRICE[plan as 'basic' | 'pro'][billingCycle as 'monthly' | 'yearly'];
-    const confirmed = await confirmOneTimePayment(tossSecretKey, paymentKey, orderId, amount);
+    // authKey is single-use on Toss's side -- a duplicate request (e.g. a
+    // client-side re-render race, or the success redirect getting
+    // replayed) fails naturally here with Toss's own "already used" error
+    // instead of double-charging, so no separate idempotency table is
+    // needed the way the old one-time-payment flow needed one.
+    const issued = await issueBillingKey(tossSecretKey, authKey, customerKey);
 
-    // Toss's response shape for card details isn't consistent between
-    // endpoints (billing-auth issue returns it top-level, this confirm
-    // endpoint may nest it under `card`) -- check both.
-    const cardCompany = confirmed.card?.company ?? confirmed.cardCompany ?? null;
-    const cardNumber = confirmed.card?.number ?? confirmed.cardNumber ?? null;
+    // Amount is always computed server-side from PLAN_PRICE, never taken
+    // from the client -- doubles as tamper protection against a client
+    // sending a lower price.
+    const amount = PLAN_PRICE[plan as 'basic' | 'pro'][billingCycle as 'monthly' | 'yearly'];
+    const orderId = `${gym.id}-${Date.now()}`;
+    const orderName = `줄넘기 랭킹보드 ${(plan as string).toUpperCase()} 플랜 (${billingCycle === 'yearly' ? '연간' : '월간'})`;
+    const charged = await chargeBillingKey(tossSecretKey, issued.billingKey, {
+      customerKey,
+      orderId,
+      orderName,
+      amount,
+    });
+
+    const cardCompany = issued.card?.company ?? null;
+    const cardNumber = issued.card?.number ?? null;
 
     await admin
       .from('gym_subscriptions')
       .update({
+        billing_key: issued.billingKey,
         card_last4: cardNumber ? cardNumber.slice(-4) : null,
         card_company: cardCompany,
         desired_plan: plan,
@@ -170,14 +183,9 @@ Deno.serve(async (req) => {
       billing_cycle: billingCycle,
       amount,
       status: 'paid',
-      toss_payment_key: confirmed.paymentKey,
+      toss_payment_key: charged.paymentKey,
     });
-    // order_id is unique -- a duplicate here just means this confirm
-    // already ran once (e.g. the success redirect got replayed), and the
-    // subscription update above is idempotent, so it's safe to ignore.
-    if (paymentInsertError && !String(paymentInsertError.message).toLowerCase().includes('duplicate')) {
-      throw new Error(paymentInsertError.message);
-    }
+    if (paymentInsertError) throw new Error(paymentInsertError.message);
 
     await admin.from('gyms').update({ plan }).eq('id', gym.id);
 

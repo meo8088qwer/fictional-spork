@@ -4,8 +4,7 @@ import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useGymData';
 import { useTossRedirect } from '../hooks/useTossRedirect';
-import { requestOneTimePayment } from '../lib/tossPayments';
-import { planAmount } from '../data/pricing';
+import { requestCardRegistration } from '../lib/tossPayments';
 
 type BillingCycle = 'monthly' | 'yearly';
 
@@ -91,9 +90,6 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
     setSubscribingKey(tierKey);
     try {
       const sub = await ensureSubscription();
-      const amount = planAmount(tierKey, billingCycle);
-      const orderId = `${gym.id}-${Date.now()}`;
-      const orderName = `줄넘기 랭킹보드 ${tierKey.toUpperCase()} 플랜 (${billingCycle === 'yearly' ? '연간' : '월간'})`;
       const params = new URLSearchParams({
         view: 'PRICING',
         billing: 'success',
@@ -102,11 +98,8 @@ export const PricingPage: React.FC<PricingPageProps> = ({ gym }) => {
         cycle: billingCycle,
       });
       const failParams = new URLSearchParams({ view: 'PRICING', billing: 'fail' });
-      await requestOneTimePayment(
+      await requestCardRegistration(
         sub.customerKey,
-        orderId,
-        orderName,
-        amount,
         `/admin?${params.toString()}`,
         `/admin?${failParams.toString()}`,
         user?.email,

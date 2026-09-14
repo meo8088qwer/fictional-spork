@@ -96,18 +96,18 @@ export async function listPayments(): Promise<PaymentRecord[]> {
 }
 
 export interface ConfirmPaymentParams {
-  paymentKey: string;
-  orderId: string;
+  authKey: string;
   customerKey: string;
   plan: 'basic' | 'pro';
   billingCycle: 'monthly' | 'yearly';
 }
 
-// Calls the billing-issue Edge Function, which confirms a one-time Toss
-// card payment (server-side, using the secret key) and activates the
-// subscription for one billing cycle. Interim flow -- doesn't auto-renew,
-// see requestOneTimePayment's doc comment. Throws with a user-facing
-// message on failure.
+// Calls the billing-issue Edge Function, which exchanges the one-time
+// authKey from requestBillingAuth for a long-lived billingKey (server-side,
+// using the secret key), charges the first billing cycle immediately, and
+// activates the subscription. Future cycles auto-renew via
+// billing-charge's scheduled job. Throws with a user-facing message on
+// failure.
 export async function confirmPayment(params: ConfirmPaymentParams): Promise<void> {
   const { error } = await supabase.functions.invoke('billing-issue', { body: params });
   if (error) {

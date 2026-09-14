@@ -19,7 +19,7 @@ import { Gym } from '../data/api/gyms';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription, usePayments } from '../hooks/useGymData';
 import { useTossRedirect } from '../hooks/useTossRedirect';
-import { requestOneTimePayment } from '../lib/tossPayments';
+import { requestCardRegistration } from '../lib/tossPayments';
 import { planAmount, BillingCycle } from '../data/pricing';
 import { PaymentRecord } from '../data/api/billing';
 import { ConfirmModal } from './ConfirmModal';
@@ -91,9 +91,6 @@ export const MyPage: React.FC<MyPageProps> = ({
     try {
       const sub = await ensureSubscription();
       const plan = subscription.desiredPlan;
-      const amount = planAmount(plan, repayCycle);
-      const orderId = `${gym.id}-${Date.now()}`;
-      const orderName = `줄넘기 랭킹보드 ${plan.toUpperCase()} 플랜 (${repayCycle === 'yearly' ? '연간' : '월간'})`;
       const params = new URLSearchParams({
         view: 'MYPAGE',
         billing: 'success',
@@ -102,11 +99,8 @@ export const MyPage: React.FC<MyPageProps> = ({
         cycle: repayCycle,
       });
       const failParams = new URLSearchParams({ view: 'MYPAGE', billing: 'fail' });
-      await requestOneTimePayment(
+      await requestCardRegistration(
         sub.customerKey,
-        orderId,
-        orderName,
-        amount,
         `/admin?${params.toString()}`,
         `/admin?${failParams.toString()}`,
         email,
@@ -474,7 +468,7 @@ export const MyPage: React.FC<MyPageProps> = ({
       <ConfirmModal
         isOpen={showCancelConfirm}
         title="구독 해지"
-        message="구독을 해지하면 지금 바로 FREE 플랜으로 전환돼요. 자동 갱신이 아니라서 다시 해지를 무를 방법은 없고, 원하시면 언제든 다시 결제해서 재구독할 수 있어요. 해지할까요?"
+        message="구독을 해지하면 지금 바로 FREE 플랜으로 전환되고, 등록된 카드로의 자동 결제도 함께 중단돼요. 해지를 무를 방법은 없고, 원하시면 언제든 다시 결제해서 재구독할 수 있어요. 해지할까요?"
         confirmText={isCanceling ? '해지 중...' : '해지하기'}
         variant="danger"
         onConfirm={handleCancel}
