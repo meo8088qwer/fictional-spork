@@ -76,7 +76,7 @@ export default function PrivacyPolicyPage() {
           <br />
           통신판매업신고번호: 제2026-경기파주-3725호
           <br />
-          소재지: 경기도 파주시 초롱꽃로 117-36 &nbsp;·&nbsp; 전화: 031-945-6778 &nbsp;·&nbsp; 이메일: meo8088@naver.com
+          소재지: 경기도 파주시 초롱꽃로 117-36, 413호 &nbsp;·&nbsp; 전화: 031-945-6778 &nbsp;·&nbsp; 이메일: meo8088@naver.com
         </div>
 
         <Section title="1. 수집하는 개인정보 항목">
