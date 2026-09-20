@@ -44,6 +44,7 @@ const PrivacyPolicyPage = lazyWithReloadOnChunkError(() => import('./routes/Priv
 const TermsOfServicePage = lazyWithReloadOnChunkError(() => import('./routes/TermsOfServicePage'));
 const OpsDashboardPage = lazyWithReloadOnChunkError(() => import('./routes/OpsDashboardPage'));
 const PreviewLoginPage = lazyWithReloadOnChunkError(() => import('./routes/PreviewLoginPage'));
+const LeagueSeasonPage = lazyWithReloadOnChunkError(() => import('./routes/LeagueSeasonPage'));
 
 function RootRedirect() {
   const { session, loading } = useAuth();
@@ -75,6 +76,7 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/terms" element={<TermsOfServicePage />} />
         <Route path="/preview" element={<PreviewLoginPage />} />
+        <Route path="/league/:seasonId" element={<LeagueSeasonPage />} />
         <Route
           path="/admin/*"
           element={

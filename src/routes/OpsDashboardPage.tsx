@@ -14,6 +14,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { DebouncedSearchInput } from '../components/DebouncedSearchInput';
+import { LeagueSeasonManager } from '../components/LeagueSeasonManager';
 import { useAuth } from '../contexts/AuthContext';
 import {
   isPlatformAdmin,
@@ -555,6 +556,8 @@ export default function OpsDashboardPage() {
                 무료→유료 전환율: <span className="font-bold text-slate-900">{conversionRate}%</span>
               </p>
             </section>
+
+            <LeagueSeasonManager />
 
             {/* 5. 추천 프로그램 */}
             <section className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
