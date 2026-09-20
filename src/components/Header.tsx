@@ -38,7 +38,7 @@ const NAV_ITEMS: Array<{
   { view: 'STUDENT_MANAGE', label: '수련생 관리', icon: Users },
   { view: 'TV_MODE', label: 'TV 전광판', icon: Tv },
   { view: 'GLOBAL_RANKING', label: '전체랭킹', icon: Globe },
-  { view: 'LEAGUE', label: '리그전', icon: Swords },
+  { view: 'LEAGUE', label: '리그전 (예정)', icon: Swords },
 ];
 
 export const Header: React.FC<HeaderProps> = ({
