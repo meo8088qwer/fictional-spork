@@ -76,6 +76,37 @@ export async function createLeagueSeason(params: {
   return data as string;
 }
 
+export interface MyLeagueMatch {
+  seasonId: string;
+  seasonName: string;
+  scoringMode: LeagueScoringMode;
+  roundNo: number;
+  startDate: string;
+  endDate: string;
+  matchId: string | null;
+  opponentGymId: string | null;
+  opponentGymName: string | null;
+}
+
+export async function getMyLeagueMatches(): Promise<MyLeagueMatch[]> {
+  const { data, error } = await supabase.rpc('get_my_league_matches');
+  if (error) throw error;
+  return (data ?? []) as MyLeagueMatch[];
+}
+
+export interface MyLeagueMatchEntry {
+  studentId: string;
+  studentName: string;
+  eventKey: string;
+  count: number;
+}
+
+export async function getMyLeagueMatchEntries(matchId: string): Promise<MyLeagueMatchEntry[]> {
+  const { data, error } = await supabase.rpc('get_my_league_match_entries', { p_match_id: matchId });
+  if (error) throw error;
+  return (data ?? []) as MyLeagueMatchEntry[];
+}
+
 export async function submitLeagueMatchRecord(params: {
   matchId: string;
   studentId: string;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Tv, ClipboardEdit, LogOut, Share2, UserCog, Menu, X, Sparkles, Globe, Users, ListChecks, BookOpen, Radio, LayoutDashboard } from 'lucide-react';
+import { Trophy, Tv, ClipboardEdit, LogOut, Share2, UserCog, Menu, X, Sparkles, Globe, Users, ListChecks, BookOpen, Radio, LayoutDashboard, Swords } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 type AdminView =
@@ -12,6 +12,7 @@ type AdminView =
   | 'STUDENT_MANAGE'
   | 'TV_MODE'
   | 'GLOBAL_RANKING'
+  | 'LEAGUE'
   | 'PRICING'
   | 'GUIDE'
   | 'MYPAGE';
@@ -37,6 +38,7 @@ const NAV_ITEMS: Array<{
   { view: 'STUDENT_MANAGE', label: '수련생 관리', icon: Users },
   { view: 'TV_MODE', label: 'TV 전광판', icon: Tv },
   { view: 'GLOBAL_RANKING', label: '전체랭킹', icon: Globe },
+  { view: 'LEAGUE', label: '리그전', icon: Swords },
 ];
 
 export const Header: React.FC<HeaderProps> = ({

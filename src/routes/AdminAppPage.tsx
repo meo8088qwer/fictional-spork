@@ -14,6 +14,7 @@ import { LiveCountEntry } from '../components/LiveCountEntry';
 import { PricingPage } from '../components/PricingPage';
 import { UserGuidePage } from '../components/UserGuidePage';
 import { GlobalLeaderboard } from '../components/GlobalLeaderboard';
+import { LeagueGymView } from '../components/LeagueGymView';
 import { GymDashboard } from '../components/GymDashboard';
 import { MyPage } from '../components/MyPage';
 import { BroadcastTVMode } from '../components/BroadcastTVMode';
@@ -57,6 +58,7 @@ export default function AdminAppPage() {
     | 'STUDENT_MANAGE'
     | 'TV_MODE'
     | 'GLOBAL_RANKING'
+    | 'LEAGUE'
     | 'PRICING'
     | 'GUIDE'
     | 'MYPAGE';
@@ -215,6 +217,8 @@ export default function AdminAppPage() {
         {activeView === 'GLOBAL_RANKING' && (
           <GlobalLeaderboard gym={gym} onNavigateToPricing={() => setActiveView('PRICING')} />
         )}
+
+        {activeView === 'LEAGUE' && <LeagueGymView students={students} />}
 
         {activeView === 'PRICING' && <PricingPage gym={gym} />}
 
