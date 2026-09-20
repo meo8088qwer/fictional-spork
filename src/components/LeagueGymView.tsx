@@ -188,7 +188,10 @@ export const LeagueGymView: React.FC<LeagueGymViewProps> = ({ students }) => {
             </div>
 
             {rounds.map((round) => {
-              const isBye = !round.matchId;
+              // A bye round still gets a real match row (gym_b_id null on
+              // the DB side) -- matchId is present, only opponentGymId is
+              // null. Checking matchId here rendered "vs null" for a bye.
+              const isBye = !round.opponentGymId;
               const isOpen = expandedMatchId === round.matchId;
               return (
                 <div key={round.roundNo} className="border-b border-slate-100 last:border-b-0">
