@@ -14,6 +14,15 @@ export interface ChangelogEntry {
 // (the dev) ever writes to.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-09-20-signup-gym-load-fix',
+    date: '2026-09-20',
+    title: '가입 직후 체육관 정보가 안 뜨는 문제 수정',
+    summary: '아주 드물게 가입 직후 체육관 화면이 계속 로딩 중으로 남던 문제를 찾아 고쳤어요.',
+    detail:
+      '가입 직후 체육관 정보를 불러오는 과정에서 아주 드물게 값이 잘못 처리돼 체육관 화면이 뜨지 않는 경우가 있었어요. 이 문제로 실제 화면을 못 보고 나간 계정을 확인해서 직접 복구했고, 원인이 된 부분을 고쳐 다시 발생하지 않도록 했어요.',
+    howTo: '별도로 하실 일은 없어요. 자동으로 적용됐어요.',
+  },
+  {
     id: '2026-09-09-round-audio',
     date: '2026-09-09',
     title: '실시간 측정에 라운드 신호음 추가',
