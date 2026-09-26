@@ -91,6 +91,20 @@ export function resolveGradeGroup(inputStr: string): GradeGroup {
   return '초등 3학년';
 }
 
+// Pasted roster: "김민수", "김민수 초3", or an Excel copy ("김민수\t초등 3학년") per line.
+export function parseRoster(text: string, defaultGrade: GradeGroup): Array<{ name: string; grade: GradeGroup }> {
+  const seen = new Set<string>();
+  const rows: Array<{ name: string; grade: GradeGroup }> = [];
+  for (const line of text.split(/\r?\n/)) {
+    const [name, ...rest] = line.trim().split(/[\t,\s]+/);
+    if (!name || name === '이름' || seen.has(name)) continue;
+    seen.add(name);
+    const gradeRaw = rest.join('');
+    rows.push({ name, grade: gradeRaw ? resolveGradeGroup(gradeRaw) : defaultGrade });
+  }
+  return rows;
+}
+
 export interface ExcelParsedRecord {
   studentName: string;
   grade?: GradeGroup;

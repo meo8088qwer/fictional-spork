@@ -14,6 +14,15 @@ export interface ChangelogEntry {
 // (the dev) ever writes to.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-09-26-roster-paste',
+    date: '2026-09-26',
+    title: '수련생 명단 붙여넣기로 한 번에 등록',
+    summary: '처음 시작할 때 이름만 붙여넣으면 수련생이 한 번에 등록돼요.',
+    detail:
+      '수련생이 아직 한 명도 없으면 랭킹보드 화면에 명단 입력칸이 나와요. 이름을 한 줄에 한 명씩 붙여넣고, 이름 뒤에 학년(예: 초3, 7세)을 적으면 학년까지 같이 등록돼요. 엑셀에서 이름·학년 두 칸을 복사해 붙여넣어도 돼요. 등록이 끝나면 바로 기록 입력 화면으로 넘어가요.',
+    howTo: '가입 후 첫 화면(랭킹보드)에서 명단을 붙여넣고 "등록하고 첫 기록 입력하기"를 눌러주세요.',
+  },
+  {
     id: '2026-09-20-signup-gym-load-fix',
     date: '2026-09-20',
     title: '가입 직후 체육관 정보가 안 뜨는 문제 수정',

@@ -23,6 +23,11 @@ export function useStudents() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students', gymId] }),
   });
 
+  const addStudents = useMutation({
+    mutationFn: (students: Omit<Student, 'id'>[]) => studentsApi.createStudents(gymId!, students),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['students', gymId] }),
+  });
+
   const deleteStudent = useMutation({
     mutationFn: (studentId: string) => studentsApi.deleteStudent(studentId),
     onSuccess: () => {
@@ -41,6 +46,7 @@ export function useStudents() {
     students: query.data ?? [],
     isLoading: query.isLoading,
     addStudent: addStudent.mutateAsync,
+    addStudents: addStudents.mutateAsync,
     deleteStudent: deleteStudent.mutateAsync,
     updateStudentClass: updateStudentClass.mutateAsync,
   };

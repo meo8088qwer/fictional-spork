@@ -15,6 +15,7 @@ import { PricingPage } from '../components/PricingPage';
 import { UserGuidePage } from '../components/UserGuidePage';
 import { GlobalLeaderboard } from '../components/GlobalLeaderboard';
 import { LeagueGymView } from '../components/LeagueGymView';
+import { OnboardingRoster } from '../components/OnboardingRoster';
 import { GymDashboard } from '../components/GymDashboard';
 import { MyPage } from '../components/MyPage';
 import { BroadcastTVMode } from '../components/BroadcastTVMode';
@@ -36,6 +37,7 @@ export default function AdminAppPage() {
     students,
     isLoading: studentsLoading,
     addStudent,
+    addStudents,
     deleteStudent,
     updateStudentClass,
   } = useStudents();
@@ -235,7 +237,15 @@ export default function AdminAppPage() {
           />
         )}
 
-        {activeView === 'LEADERBOARD' && (
+        {activeView === 'LEADERBOARD' && students.length === 0 && (
+          <OnboardingRoster
+            onAddStudents={addStudents}
+            onDone={() => setActiveView('ADMIN_BATCH')}
+            onOpenStudentManage={() => setActiveView('STUDENT_MANAGE')}
+          />
+        )}
+
+        {activeView === 'LEADERBOARD' && students.length > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-4">
               <span className="p-2 rounded-xl bg-slate-100 text-slate-600">

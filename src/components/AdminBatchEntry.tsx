@@ -24,7 +24,7 @@ const UNASSIGNED_CLASS_KEY = '__UNASSIGNED__';
 // suffix rather than the current headcount -- headcount undercounts once
 // any student has ever been deleted, which collided with a still-existing
 // higher-numbered student and tripped the DB's unique(gym_id, student_no).
-function nextStudentNo(students: Student[], extraOffset: number): string {
+export function nextStudentNo(students: Student[], extraOffset: number): string {
   const prefix = `${new Date().getFullYear()}-`;
   const maxExisting = students.reduce((max, s) => {
     if (!s.studentNo.startsWith(prefix)) return max;
