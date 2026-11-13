@@ -14,6 +14,15 @@ export interface ChangelogEntry {
 // (the dev) ever writes to.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-11-13-signup-unlimited-pro',
+    date: '2026-11-13',
+    title: '신규 가입 시 PRO 플랜 기간 제한 없이 무료',
+    summary: '이제 가입하면 바로 PRO 플랜이 적용되고, 기간 제한 없이 쓸 수 있어요.',
+    detail:
+      '기존에는 선착순 100명에게 3개월간만 PRO를 제공했는데, 이제는 인원과 기간 제한 없이 가입하는 모든 체육관에 PRO가 바로 적용돼요. 종목·수련생 수 제한 없이 전체랭킹, 로고, 학부모 공개 링크까지 모두 쓸 수 있어요.',
+    howTo: '별도로 하실 일은 없어요. 회원가입만 하면 바로 PRO 플랜으로 시작돼요.',
+  },
+  {
     id: '2026-09-26-roster-paste',
     date: '2026-09-26',
     title: '수련생 명단 붙여넣기로 한 번에 등록',
